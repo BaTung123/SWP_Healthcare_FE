@@ -1,0 +1,66 @@
+.donation-register-container {
+    padding: 2rem;
+    max-width: 600px;
+    margin: auto;
+    background-color: #fffafa;
+    font-family: "Segoe UI", sans-serif;
+    border-radius: 10px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .form-title {
+    font-size: 2rem;
+    color: #b30000;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: bold;
+  }
+  
+  .register-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .form-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #444;
+  }
+  
+  .form-group input,
+  .form-group select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 1rem;
+    outline-color: #b30000;
+  }
+  
+  .submit-btn {
+    padding: 0.8rem;
+    font-size: 1rem;
+    background-color: #b30000;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-weight: bold;
+  }
+  
+  .submit-btn:hover {
+    background-color: #990000;
+  }
+  
+  /* Responsive */
+  @media (max-width: 480px) {
+    .donation-register-container {
+      padding: 1.5rem 1rem;
+    }
+  }  

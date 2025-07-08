@@ -1,0 +1,117 @@
+.compatibility-page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.compatibility-page-container h1 {
+  text-align: center;
+  color: #b30000;
+  margin-bottom: 2rem;
+  font-size: 2rem;
+}
+
+.compatibility-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.compatibility-card {
+  background-color: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.compatibility-card h2 {
+  color: #b30000;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.description {
+  color: #666;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.compatibility-table {
+  overflow-x: auto;
+}
+
+.compatibility-table table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.compatibility-table th {
+  background-color: #b30000;
+  color: white;
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.compatibility-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #eee;
+}
+
+.compatibility-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+.notes-section {
+  background-color: #fff5f5;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.notes-section h3 {
+  color: #b30000;
+  margin-bottom: 1rem;
+}
+
+.notes-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.notes-section li {
+  margin-bottom: 0.75rem;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #444;
+}
+
+.notes-section li:before {
+  content: "•";
+  color: #b30000;
+  position: absolute;
+  left: 0;
+  font-size: 1.2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .compatibility-page-container {
+    padding: 1rem;
+  }
+
+  .compatibility-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .compatibility-card {
+    padding: 1rem;
+  }
+
+  .compatibility-table {
+    font-size: 0.9rem;
+  }
+} 

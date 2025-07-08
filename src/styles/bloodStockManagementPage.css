@@ -1,0 +1,181 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+.dashboard-container {
+  flex-grow: 1;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  margin-left: 1.5rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-container h1 {
+  text-align: center;
+  color: #b71c1c;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  font-size: 2.4rem;
+}
+
+.subtext {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  color: #555;
+  font-size: 1.1rem;
+}
+
+.stock-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+}
+
+.summary-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(183, 28, 28, 0.1);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.summary-card:hover {
+  transform: translateY(-5px);
+}
+
+.summary-card h3 {
+  color: #666;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.summary-card p {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.summary-card.total {
+  border-top: 4px solid #b71c1c;
+}
+
+.summary-card.total p {
+  color: #b71c1c;
+}
+
+.summary-card.low {
+  border-top: 4px solid #e53935;
+}
+
+.summary-card.low p {
+  color: #e53935;
+}
+
+.summary-card.normal {
+  border-top: 4px solid #4caf50;
+}
+
+.summary-card.normal p {
+  color: #4caf50;
+}
+
+.table-container {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(183, 28, 28, 0.1);
+}
+
+.blood-stock-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+}
+
+.blood-stock-table th,
+.blood-stock-table td {
+  padding: 1.2rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.blood-stock-table th {
+  background: #ffebee;
+  color: #b71c1c;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.blood-stock-table tr:hover {
+  background: #fafafa;
+}
+
+.blood-stock-table tr.low-stock {
+  background: #fff3f3;
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.status-badge.low {
+  background: #ffebee;
+  color: #e53935;
+}
+
+.status-badge.normal {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+.status-badge svg {
+  font-size: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .stock-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-container {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+
+  .stock-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-card {
+    padding: 1rem;
+  }
+
+  .table-container {
+    padding: 1rem;
+    overflow-x: auto;
+  }
+
+  .blood-stock-table th,
+  .blood-stock-table td {
+    padding: 0.8rem;
+  }
+}

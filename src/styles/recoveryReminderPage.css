@@ -1,0 +1,55 @@
+.reminder-container {
+  max-width: 700px;
+  margin: 2rem auto;
+  background: #fff4f4;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(220, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  color: #d32f2f;
+  margin-bottom: 2rem;
+}
+
+.reminder-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 10px;
+  border-left: 6px solid #e53935;
+  margin-bottom: 2rem;
+}
+
+.reminder-card p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+}
+
+.status {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.status.ready {
+  color: green;
+}
+
+.status.not-ready {
+  color: #d32f2f;
+}
+
+.tips h2 {
+  color: #b71c1c;
+  margin-bottom: 1rem;
+}
+
+.tips ul {
+  padding-left: 1.2rem;
+  list-style: disc;
+  color: #333;
+}
+
+.tips li {
+  margin-bottom: 0.5rem;
+}

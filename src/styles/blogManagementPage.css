@@ -1,0 +1,212 @@
+.blog-management-container {
+  max-width: 1400px;
+  margin: 2rem auto;
+  padding: 2.5rem 3rem;
+  background: #fffafc;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.12);
+  box-sizing: border-box;
+  min-height: 80vh;
+}
+
+h1 {
+  text-align: center;
+  color: #c2185b;
+  font-size: 2.4rem;
+  margin-bottom: 0.3rem;
+  font-weight: 700;
+}
+
+.subtext {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #666;
+  font-size: 1.15rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.create-btn {
+  background-color: #d32f2f;
+  color: white;
+  padding: 12px 18px;
+  margin-bottom: 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  display: block;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.create-btn:hover {
+  background-color: #b71c1c;
+}
+
+.blog-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.blog-table th,
+.blog-table td {
+  padding: 14px 18px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 1rem;
+  color: #333;
+}
+
+.blog-table th {
+  background-color: #ffebee;
+  color: #b71c1c;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.blog-table tbody tr:hover {
+  background-color: #ffe6e6;
+}
+
+.status {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: inline-block;
+  min-width: 70px;
+}
+
+.status.published {
+  background-color: #c8e6c9;
+  color: #256029;
+}
+
+.status.draft {
+  background-color: #fff3cd;
+  color: #856404;
+}
+
+.edit-btn,
+.delete-btn {
+  padding: 8px 14px;
+  margin: 0 6px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease;
+  user-select: none;
+}
+
+.edit-btn {
+  background-color: #1976d2;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #0d47a1;
+}
+
+.delete-btn {
+  background-color: #e53935;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #b71c1c;
+}
+
+/* Responsive nhẹ */
+@media (max-width: 768px) {
+  .blog-management-container {
+    padding: 1.5rem 1rem;
+    margin: 1rem;
+  }
+
+  .create-btn {
+    width: 100%;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .blog-table th,
+  .blog-table td {
+    padding: 10px 8px;
+    font-size: 0.9rem;
+  }
+
+  .edit-btn,
+  .delete-btn {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+}
+
+.blog-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+/* Giả sử Sidebar component có class "sidebar" */
+.sidebar {
+  width: 260px; /* bạn chỉnh theo chiều rộng mong muốn */
+  border-right: 1px solid #ddd;
+  /* chiều cao full chiều cao màn hình */
+  min-height: 100vh;
+  box-shadow: 2px 0 8px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Phần chính bên phải */
+.blog-main {
+  flex: 1;
+  padding: 2rem 3rem;
+  overflow-x: auto;
+}
+
+/* Giữ nguyên container blog-management-container để định dạng nội dung */
+.blog-management-container {
+  max-width: 1400px;
+  margin: 0 auto; /* ở đây margin top/bottom để trong main */
+  background: #fffafc;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.12);
+  box-sizing: border-box;
+  min-height: 80vh;
+  padding: 2.5rem 3rem;
+}
+
+/* Responsive cho màn hình nhỏ */
+@media (max-width: 768px) {
+  .blog-layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-height: auto;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    box-shadow: none;
+    position: relative;
+  }
+
+  .blog-main {
+    padding: 1.5rem 1rem;
+  }
+
+  .blog-management-container {
+    padding: 1.5rem 1rem;
+  }
+}

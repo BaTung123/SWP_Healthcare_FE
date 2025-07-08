@@ -1,0 +1,133 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #fafafa;
+}
+
+.dashboard-container {
+  flex-grow: 1;
+  padding: 2.5rem 3rem;
+  border-radius: 12px;
+  margin-left: 1.5rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.dashboard-container h1 {
+  text-align: center;
+  color: #b71c1c;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  font-size: 2.4rem;
+}
+
+.subtext {
+  text-align: center;
+  margin-bottom: 2.5rem;
+  color: #555;
+  font-size: 1.1rem;
+}
+
+.incident-container {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(183, 28, 28, 0.1);
+}
+
+.incident-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.incident-card {
+  background: #fff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  border-left: 4px solid #c62828;
+}
+
+.incident-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.incident-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.incident-header h3 {
+  margin: 0;
+  color: #b71c1c;
+  font-size: 1.3rem;
+}
+
+.incident-description {
+  color: #555;
+  margin: 1rem 0;
+  line-height: 1.5;
+}
+
+.incident-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  color: #757575;
+  font-size: 0.9rem;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.status.processing {
+  background: #fff3e0;
+  color: #ff9800;
+}
+
+.status.resolved {
+  background: #e8f5e9;
+  color: #4caf50;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+
+  .dashboard-container {
+    margin-left: 0;
+    padding: 1.5rem;
+  }
+
+  .incident-container {
+    padding: 1rem;
+  }
+
+  .incident-card {
+    padding: 1rem;
+  }
+
+  .incident-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .incident-header h3 {
+    font-size: 1.1rem;
+  }
+}

@@ -1,0 +1,174 @@
+/* styles/header.css */
+
+/* Tổng thể header */
+.main-header-bg {
+    background-color: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 10px 20px;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: sticky;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+  
+  /* Navbar */
+  .main-header-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  
+  /* Logo và tên thương hiệu */
+  .main-header-logo {
+    display: flex;
+    align-items: center;
+  }
+  
+  .main-header-logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: #333;
+  }
+  
+  .main-header-logo-img {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+  }
+  
+  .main-header-brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: #007bff;
+  }
+  
+  /* Menu chính */
+  .main-header-menu {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .main-header-menu li {
+    margin: 0 15px;
+  }
+  
+  .main-header-menu a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+  
+  .main-header-menu a:hover,
+  .main-header-menu .active a,
+  .main-header-menu a[aria-current="page"] {
+    color: #007bff;
+  }
+  
+  /* Submenu icon */
+  .main-header-menu .has-submenu i {
+    margin-left: 5px;
+  }
+  
+  /* Thông tin liên hệ */
+  .main-header-contact {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .main-header-contact-item {
+    display: flex;
+    align-items: flex-start;
+  }
+  
+  .main-header-contact-icon-wrap {
+    font-size: 20px;
+    color: #007bff;
+    margin-right: 10px;
+  }
+  
+  .main-header-contact-label {
+    font-size: 12px;
+    color: #777;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  
+  .main-header-contact-value {
+    font-size: 14px;
+    color: #333;
+    text-decoration: none;
+  }
+  
+  .main-header-contact-value:hover {
+    text-decoration: underline;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .main-header-nav {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .main-header-menu {
+      flex-direction: column;
+      width: 100%;
+      margin-top: 10px;
+    }
+  
+    .main-header-menu li {
+      margin: 5px 0;
+    }
+  
+    .main-header-contact {
+      flex-direction: column;
+      margin-top: 10px;
+    }
+  }
+  
+/* Vùng chứa nút đăng nhập */
+.main-header-auth {
+  margin-left: 20px;
+  display: flex;
+  align-items: center;
+}
+
+/* Nút đăng nhập */
+.main-header-login-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  background: linear-gradient(to right, #007bff, #00c6ff);
+  color: #fff;
+  border-radius: 999px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
+  transition: all 0.3s ease;
+  border: none;
+}
+
+/* Hover effect */
+.main-header-login-btn:hover {
+  background: linear-gradient(to right, #0056b3, #00aaff);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.3);
+  transform: translateY(-1px);
+  color: #fff;
+}
+
+/* Icon bên trái nút */
+.main-header-login-btn i {
+  font-size: 16px;
+  color: white;
+}
+
+  

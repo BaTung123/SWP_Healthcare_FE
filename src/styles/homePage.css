@@ -1,0 +1,666 @@
+.homepage-container {
+    padding: 2rem;
+    font-family: Arial, sans-serif;
+  }
+  
+  .homepage-header {
+    background-color: #4caf50;
+    color: white;
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .homepage-content {
+    background-color: #f9f9f9;
+    padding: 2rem;
+    border-radius: 8px;
+  }
+  
+  .homepage-content h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .homepage-content ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .homepage-content li {
+    padding: 0.5rem 0;
+    font-size: 1.1rem;
+  }
+  
+.home-bg {
+  background: #eaf3fb;
+  min-height: 100vh;
+  padding-bottom: 40px;
+}
+
+/* HERO SECTION */
+.home-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #073a82;
+  border-radius: 0 0 32px 32px;
+  padding: 48px 48px 0 48px;
+  color: #fff;
+  position: relative;
+}
+.home-hero-left {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.home-hero-badge {
+  display: inline-block;
+  background: #eaf3fb;
+  color: #1976d2;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 4px 16px;
+  margin-bottom: 8px;
+  border: 1px solid #1976d2;
+}
+.home-hero-title {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  line-height: 1.1;
+}
+.home-hero-title span {
+  color: #3bb3ff;
+}
+.home-hero-desc {
+  color: #eaf3fb;
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+.home-hero-actions {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  margin-top: 8px;
+}
+.home-hero-btn {
+  background: #3bb3ff;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.home-hero-btn:hover {
+  background: #1976d2;
+}
+.home-hero-phone {
+  background: #1976d2;
+  color: #fff;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 1.08rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.2s;
+}
+.home-hero-phone:hover {
+  background: #3bb3ff;
+}
+.home-hero-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+.home-hero-img {
+  width: 320px;
+  height: 380px;
+  object-fit: cover;
+  border-radius: 24px;
+  box-shadow: 0 2px 24px rgba(7,58,130,0.13);
+  background: #fff;
+  margin-bottom: 20px;
+}
+
+.home-hero-info-row {
+  display: flex;
+  gap: 32px;
+  margin: 40px auto 32px auto;
+  max-width: 900px;
+  justify-content: center;
+  position: relative;
+  z-index: 2;
+}
+.home-hero-info-card {
+  background: #1976d2;
+  color: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.13);
+  padding: 28px 32px 24px 32px;
+  min-width: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.home-hero-info-icon {
+  font-size: 2.2rem;
+  margin-bottom: 8px;
+  color: #3bb3ff;
+}
+.home-hero-info-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+  text-align: center;
+}
+.home-hero-info-desc {
+  font-size: 1rem;
+  color: #eaf3fb;
+  text-align: center;
+}
+
+/* SECTION HEADER */
+.home-section {
+  margin: 48px auto 0 auto;
+  max-width: 1200px;
+  padding: 0 16px;
+}
+
+.home-section-badge {
+  display: inline-block;
+  background: #eaf3fb;
+  color: #1976d2;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  padding: 4px 16px;
+  border: 1px solid #1976d2;
+}
+
+.home-section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #073a82;
+  margin-bottom: 8px;
+}
+
+/* DEPARTMENT */
+.home-department-list {
+  display: flex;
+  gap: 24px;
+  margin-top: 16px;
+}
+.home-department-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 28px 18px 20px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+  position: relative;
+}
+.home-department-number {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  background: #eaf3fb;
+  color: #1976d2;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.home-department-icon {
+  color: #1976d2;
+  font-size: 2.2rem;
+  margin-bottom: 10px;
+  margin-top: 12px;
+}
+.home-department-title {
+  font-weight: 600;
+  font-size: 1.08rem;
+  margin-bottom: 8px;
+  color: #073a82;
+  text-align: center;
+}
+.home-department-desc {
+  color: #888;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+.home-department-link {
+  color: #1976d2;
+  text-decoration: none;
+  font-size: 0.98rem;
+  font-weight: 500;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+.home-department-link:hover {
+  color: #3bb3ff;
+  text-decoration: underline;
+}
+
+/* INTRO */
+.home-intro-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+}
+.home-intro-left {
+  flex: 1.1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 10px;
+}
+.home-intro-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 18px;
+  margin-bottom: 8px;
+}
+.home-intro-img2 {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 18px;
+  margin-bottom: 8px;
+}
+.home-intro-right {
+  flex: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.home-intro-desc {
+  color: #888;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+.home-intro-list {
+  list-style: disc inside;
+  color: #073a82;
+  margin-bottom: 8px;
+  padding-left: 18px;
+}
+.home-intro-list li {
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+.home-intro-hours {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 18px 20px 12px 20px;
+  margin-top: 8px;
+}
+.home-intro-hours-title {
+  font-weight: 600;
+  color: #073a82;
+  font-size: 1.08rem;
+  margin-bottom: 6px;
+}
+.home-intro-hours-table {
+  color: #1976d2;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+.home-intro-hours-table div {
+  margin-bottom: 2px;
+}
+.home-intro-hours-emergency {
+  color: #fff;
+  background: #1976d2;
+  border-radius: 8px;
+  padding: 2px 10px;
+  display: inline-block;
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+/* STATS */
+.home-stats-row {
+  display: flex;
+  gap: 38px;
+  justify-content: center;
+  align-items: center;
+  background: #073a82;
+  color: #fff;
+  border-radius: 28px;
+  padding: 32px 36px;
+  margin: 48px auto 48px auto;
+  max-width: 1100px;
+}
+.home-stats-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.home-stats-icon {
+  font-size: 2.1rem;
+  margin-bottom: 2px;
+}
+.home-stats-value {
+  font-size: 2.1rem;
+  font-weight: 700;
+  color: #3bb3ff;
+}
+.home-stats-label {
+  font-size: 1.05rem;
+  color: #fff;
+}
+
+/* DOCTORS */
+.home-doctors-list {
+  display: flex;
+  gap: 32px;
+  justify-content: flex-start;
+  margin-top: 24px;
+}
+.home-doctor-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 32px 24px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 260px;
+  position: relative;
+}
+.home-doctor-img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border: 3px solid #eaf3fb;
+}
+.home-doctor-name {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #073a82;
+  margin-bottom: 2px;
+  text-align: center;
+}
+.home-doctor-special {
+  font-size: 0.98rem;
+  color: #1976d2;
+  margin-bottom: 8px;
+  text-align: center;
+}
+.home-doctor-icon {
+  font-size: 1.5rem;
+  color: #1976d2;
+  margin-bottom: 12px;
+}
+.home-doctor-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 0;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+.home-doctor-btn:hover {
+  background: #3bb3ff;
+}
+.home-doctors-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 18px;
+}
+.home-doctors-consult-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.home-doctors-consult-btn.outline {
+  background: #fff;
+  color: #1976d2;
+  border: 2px solid #1976d2;
+}
+.home-doctors-consult-btn:hover {
+  background: #3bb3ff;
+  color: #fff;
+}
+
+/* PROCESS */
+.home-process-list {
+  display: flex;
+  gap: 24px;
+  margin-top: 24px;
+}
+.home-process-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 28px 18px 20px 18px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 220px;
+  position: relative;
+}
+.home-process-number {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  background: #eaf3fb;
+  color: #1976d2;
+  font-weight: 700;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+.home-process-img {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  margin-top: 12px;
+}
+.home-process-title {
+  font-weight: 600;
+  font-size: 1.08rem;
+  margin-bottom: 8px;
+  color: #073a82;
+  text-align: center;
+}
+.home-process-desc {
+  color: #888;
+  font-size: 1rem;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+/* REVIEWS */
+.home-reviews-list {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+  justify-content: center;
+}
+.home-review-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 28px 18px 20px 18px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-width: 320px;
+  max-width: 400px;
+}
+.home-review-img {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #eaf3fb;
+}
+.home-review-content {
+  flex: 1;
+}
+.home-review-text {
+  color: #888;
+  font-size: 1.05rem;
+  margin-bottom: 8px;
+}
+.home-review-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #073a82;
+}
+.home-review-role {
+  font-size: 0.98rem;
+  color: #1976d2;
+  margin-bottom: 4px;
+}
+.home-review-stars {
+  color: #f7b731;
+  font-size: 1.1rem;
+}
+.home-reviews-btn {
+  background: #1976d2;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 22px;
+  font-size: 1.08rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 24px auto 0 auto;
+  display: block;
+  transition: background 0.2s;
+}
+.home-reviews-btn:hover {
+  background: #3bb3ff;
+}
+
+/* BLOG */
+.home-blog-row {
+  display: flex;
+  gap: 32px;
+  margin-top: 24px;
+}
+.home-blog-list {
+  display: flex;
+  gap: 24px;
+}
+.home-blog-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(7,58,130,0.07);
+  padding: 18px 18px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 240px;
+  max-width: 260px;
+}
+.home-blog-img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+.home-blog-category {
+  background: #eaf3fb;
+  color: #1976d2;
+  font-size: 0.92rem;
+  font-weight: 500;
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+.home-blog-title {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #073a82;
+  margin-bottom: 4px;
+}
+.home-blog-meta {
+  font-size: 0.95rem;
+  color: #888;
+}
+.home-blog-desc {
+  flex: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+}
+.home-blog-desc-text {
+  color: #888;
+  font-size: 1.05rem;
+  margin-left: 24px;
+  margin-top: 12px;
+  max-width: 320px;
+}
+
+@media (max-width: 1100px) {
+  .home-hero {
+    flex-direction: column;
+    padding: 32px 12px 0 12px;
+    gap: 24px;
+  }
+  .home-hero-img {
+    width: 220px;
+    height: 260px;
+  }
+  .home-hero-info-row, .home-department-list, .home-intro-row, .home-process-list, .home-doctors-list, .home-blog-list, .home-reviews-list, .home-blog-row {
+    flex-direction: column;
+    gap: 18px;
+    align-items: stretch;
+  }
+  .home-section {
+    padding: 0 4px;
+  }
+  .home-stats-row {
+    flex-direction: column;
+    gap: 18px;
+    padding: 18px 8px;
+  }
+}
+  

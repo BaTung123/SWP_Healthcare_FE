@@ -1,0 +1,110 @@
+/* Container chính của trang */
+.blood-page-container {
+    padding: 2rem;
+    margin: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #fdfdfd;
+  }
+  
+  /* Tiêu đề trang */
+  .page-title {
+    font-size: 2rem;
+    color: #b30000;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  /* Phần chứa select component */
+  .search-section-1 {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  
+  /* Label và Select */
+  .left-controls label {
+    font-weight: bold;
+    font-size: 1rem;
+  }
+  
+  .left-controls select {
+    padding: 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+  }
+  
+  /* Section kết quả */
+  .results-section {
+    margin-top: 2rem;
+  }
+  
+  /* Tiêu đề nhỏ */
+  .results-section h2 {
+    color: #073B82;
+    margin-bottom: 1rem;
+  }
+  
+  /* Bảng kết quả */
+  .results-table {
+    width: 100%;
+    border-collapse: collapse;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .results-table th {
+    background-color: #b30000;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 1rem;
+  }
+  
+  .results-table td {
+    border: 1px solid #ccc;
+    padding: 12px;
+    text-align: center;
+    background-color: #fff;
+  }
+  
+  .results-table tr:nth-child(even) td {
+    background-color: #f5f5f5;
+  }
+  
+  /* Responsive bảng trên mobile */
+  @media (max-width: 600px) {
+    .results-table thead {
+      display: none;
+    }
+  
+    .results-table, 
+    .results-table tbody, 
+    .results-table tr, 
+    .results-table td {
+      display: block;
+      width: 100%;
+    }
+  
+    .results-table tr {
+      margin-bottom: 1rem;
+    }
+  
+    .results-table td {
+      text-align: right;
+      padding-left: 50%;
+      position: relative;
+    }
+  
+    .results-table td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 0;
+      width: 50%;
+      padding-left: 1rem;
+      font-weight: bold;
+      text-align: left;
+    }
+  }  

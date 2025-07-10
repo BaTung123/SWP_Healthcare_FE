@@ -147,19 +147,6 @@ const BloodDropPage = () => {
             </div>
           </div>
 
-          {/* Bệnh viện / Cơ sở y tế */}
-          <div>
-            <label className="block font-semibold mb-1">Bệnh viện / Cơ sở y tế</label>
-            <input
-              type="text"
-              name="hospital"
-              value={formData.hospital}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              placeholder="Tên bệnh viện"
-            />
-          </div>
-
           {/* số điện thoại */}
           <div>
             <label className="block font-semibold mb-1">

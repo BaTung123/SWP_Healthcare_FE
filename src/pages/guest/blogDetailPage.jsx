@@ -21,7 +21,7 @@ const BlogDetailPage = () => {
 
   return (
     <div className="blog-detail-container">
-      <div className="blog-detail-header">
+      {/* <div className="blog-detail-header">
         <Button 
           icon={<ArrowLeftOutlined />} 
           onClick={() => navigate('/news')}
@@ -29,7 +29,7 @@ const BlogDetailPage = () => {
         >
           Quay lại
         </Button>
-      </div>
+      </div> */}
 
       <div className="blog-detail-wrapper">
         <div className="blog-detail-image">

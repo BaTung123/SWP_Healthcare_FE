@@ -93,7 +93,7 @@ const AdminDashboardPage = () => {
     <>
       {/* Over View Section */}
       <div className="mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6">
           <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow transition-transform hover:scale-105 min-h-[120px]">
             <FaUser className="text-4xl text-[#2980b9] mb-2" />
             <div className="text-2xl font-bold">{totalUsers}</div>
@@ -103,16 +103,6 @@ const AdminDashboardPage = () => {
             <FaHandHoldingMedical className="text-4xl text-[#e74c3c] mb-2" />
             <div className="text-2xl font-bold">{totalDonors}</div>
             <div className="text-sm text-gray-600 mt-1">Tổng số người hiến máu</div>
-          </div>
-          <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl shadow transition-transform hover:scale-105 min-h-[120px]">
-            <FaPercentage className="text-4xl text-[#16a085] mb-2" />
-            <div className="text-2xl font-bold">{donationRate}%</div>
-            <div className="text-sm text-gray-600 mt-1">Tỉ lệ hiến máu</div>
-          </div>
-          <div className="flex flex-col items-center justify-center p-6 bg-[#fff0f0] rounded-2xl shadow transition-transform hover:scale-105 min-h-[120px]">
-            <FaTint className="text-4xl text-[#c0392b] mb-2" />
-            <div className="text-2xl font-bold">{pendingRequests}</div>
-            <div className="text-sm text-gray-600 mt-1">Yêu cầu máu chưa đáp ứng</div>
           </div>
         </div>
       </div>

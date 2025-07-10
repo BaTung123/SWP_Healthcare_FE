@@ -11,55 +11,53 @@ const bloodTypeList = [
 const initialBloodTypes = [
   {
     bloodType: 'A+',
-    units: 12,
-    status: 'Enough',
+    volume: 450,
+    // status sẽ được tính tự động
   },
   {
     bloodType: 'A-',
-    units: 3,
-    status: 'Not Enough',
+    volume: 350,
   },
   {
     bloodType: 'B+',
-    units: 8,
-    status: 'Enough',
+    volume: 250,
   },
   {
     bloodType: 'B-',
-    units: 1,
-    status: 'Not Enough',
+    volume: 200,
   },
   {
     bloodType: 'AB+',
-    units: 6,
-    status: 'Enough',
+    volume: 500,
   },
   {
     bloodType: 'AB-',
-    units: 0,
-    status: 'Not Enough',
+    volume: 0,
   },
   {
     bloodType: 'O+',
-    units: 16,
-    status: 'Enough',
+    volume: 600,
   },
   {
     bloodType: 'O-',
-    units: 3,
-    status: 'Not Enough',
+    volume: 100,
   },
 ];
 
+// Hàm tính trạng thái dựa trên volume
+const getStatus = (volume) => (volume > 0 ? 'Enough' : 'Not Enough');
+
 const BloodStockManagementPage = () => {
-  const [originalList] = useState(initialBloodTypes);
-  const [filtered, setFiltered] = useState(initialBloodTypes);
+  // Khởi tạo dữ liệu với status tự động
+  const [originalList] = useState(initialBloodTypes.map(item => ({ ...item, status: getStatus(item.volume) })));
+  const [filtered, setFiltered] = useState(originalList);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [newStatus, setNewStatus] = useState('Enough');
+  const [newVolume, setNewVolume] = useState(0);
 
   const handleSearch = (value, status = filterStatus, bloodType = filterBloodType) => {
     let filteredList = originalList;
@@ -87,16 +85,21 @@ const BloodStockManagementPage = () => {
     handleSearch(search, filterStatus, bloodType);
   };
 
+  // Khi chỉnh sửa volume, cập nhật lại status
   const handleEdit = (record) => {
     setEditingRecord(record);
-    setNewStatus(record.status);
+    setNewVolume(record.volume);
+    setNewStatus(getStatus(record.volume));
     setIsModalOpen(true);
   };
 
   const handleModalOk = () => {
     if (editingRecord) {
+      const updatedStatus = getStatus(newVolume);
       setFiltered(prev => prev.map(item =>
-        item === editingRecord ? { ...item, status: newStatus } : item
+        item === editingRecord
+          ? { ...item, volume: newVolume, status: updatedStatus }
+          : item
       ));
     }
     setIsModalOpen(false);
@@ -129,9 +132,9 @@ const BloodStockManagementPage = () => {
       render: (bloodType) => <span className="font-bold">{bloodType}</span>
     },
     {
-      title: 'Số lượng (túi)',
-      dataIndex: 'units',
-      key: 'units',
+      title: 'Số lượng (ml)',
+      dataIndex: 'volume',
+      key: 'volume',
       align: 'center',
       width: 150,
     },
@@ -165,11 +168,6 @@ const BloodStockManagementPage = () => {
           <Tooltip title="Sửa">
             <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
               <EditOutlined />
-            </Button>
-          </Tooltip>
-          <Tooltip title="Xoá">
-            <Button danger onClick={() => handleDelete(record)}>
-              <DeleteOutlined />
             </Button>
           </Tooltip>
         </span>
@@ -222,7 +220,7 @@ const BloodStockManagementPage = () => {
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
         dataSource={filtered}
         columns={columns}
-        rowKey={(record, idx) => idx}
+        rowKey={(record, idx) => `${record.bloodType}-${record.volume}`}
         pagination={{
           pageSize: 8,
           position: ['bottomCenter'],
@@ -231,14 +229,41 @@ const BloodStockManagementPage = () => {
         scroll={{ x: 'max-content' }}
       />
       <Modal
-        title="Chỉnh sửa trạng thái"
+        title="Chỉnh sửa thông tin kho máu"
         open={isModalOpen}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
         okText="Lưu"
         cancelText="Huỷ"
       >
-        <div className="mb-2">Chọn trạng thái mới:</div>
+        {editingRecord && (
+          <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+            <div className="mb-1"><b>Nhóm máu:</b> {editingRecord.bloodType}</div>
+            <div className="mb-1"><b>Số lượng (ml):</b> {editingRecord.volume}</div>
+            <div className="mb-1 flex items-center gap-2">
+              <b>Trạng thái:</b>
+              {editingRecord.status === 'Not Enough' ? (
+                <span className="font-bold text-[#e53935] bg-[#ffebee] border-2 rounded-md p-1">Không đủ</span>
+              ) : (
+                <span className="font-bold text-[#4caf50] bg-[#e8f5e9] border-2 rounded-md p-1">Đủ</span>
+              )}
+            </div>
+          </div>
+        )}
+        <div className="mb-2">Nhập số lượng (ml):</div>
+        <Input
+          type="number"
+          min={0}
+          step={50}
+          className="w-full mb-4"
+          value={newVolume}
+          onChange={e => {
+            const val = Number(e.target.value);
+            setNewVolume(val);
+            setNewStatus(getStatus(val));
+          }}
+        />
+        <div className="mb-2">Trạng thái:</div>
         <Select
           className="w-full"
           value={newStatus}
@@ -247,6 +272,7 @@ const BloodStockManagementPage = () => {
             { value: 'Enough', label: 'Đủ' },
             { value: 'Not Enough', label: 'Không đủ' },
           ]}
+          disabled
         />
       </Modal>
     </div>

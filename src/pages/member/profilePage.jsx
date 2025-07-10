@@ -32,9 +32,9 @@ const ProfilePage = () => {
     avatarUrl: '',
     gender: 'male',
     donationHistory: [
-      { location: 'Bệnh viện A', type: 'Toàn phần', date: '2024-11-15' },
-      { location: 'Bệnh viện B', type: 'Toàn phần', date: '2024-07-10' },
-      { location: 'Hội chữ thập đỏ', type: 'Toàn phần', date: '2024-03-02' },
+      { stt: 1, volume: 350, type: 'Toàn phần', date: '2024-11-15' },
+      { stt: 2, volume: 350, type: 'Toàn phần', date: '2024-07-10' },
+      { stt: 3, volume: 350, type: 'Toàn phần', date: '2024-03-02' },
     ]
   });
 
@@ -126,9 +126,15 @@ const ProfilePage = () => {
   // Thêm columns cho bảng lịch sử hiến máu
   const historyColumns = [
     {
-      title: 'Địa điểm',
-      dataIndex: 'location',
-      key: 'location',
+      title: 'STT',
+      dataIndex: 'stt',
+      key: 'stt',
+      align: 'center',
+    },
+    {
+      title: 'Số lượng (ml)',
+      dataIndex: 'volume',
+      key: 'volume',
       align: 'center',
     },
     {

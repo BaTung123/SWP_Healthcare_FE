@@ -39,7 +39,7 @@ const SideBar = () => {
         {
             key: "/staff/send-blood",
             icon: <BarChartOutlined />,
-            label: <Link to="/staff/send-blood">Send Blood</Link>,
+            label: <Link to="/staff/send-blood">Blood Request</Link>,
         },
         {
             key: "/staff/donor",
@@ -52,19 +52,9 @@ const SideBar = () => {
             label: <Link to="/staff/receiver">Blood Receiver</Link>,
         },
         {
-            key: "/staff/emergency-handling",
-            icon: <AuditOutlined />,
-            label: <Link to="/staff/emergency-handling">Emergency Requester</Link>,
-        },
-        {
             key: "/staff/blood-drop",
             icon: <BarChartOutlined />,
             label: <Link to="/staff/blood-drop">Blood Drop</Link>,
-        },
-        {
-            key: "/staff/blood-request",
-            icon: <BarChartOutlined />,
-            label: <Link to="/staff/blood-request">Blood Request</Link>,
         },
         {
             key: "logout",

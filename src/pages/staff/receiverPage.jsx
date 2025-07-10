@@ -1,57 +1,53 @@
 import React, { useState } from 'react';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { FileTextOutlined } from '@ant-design/icons';
 
-const receiverList = [
+const initialReceiverList = [
   {
     name: "Nguyễn Văn A",
     bloodType: "A+",
-    quantity: 2,
+    amount: 500,
     type: "Toàn phần",
-    hospital: "Bệnh viện Chợ Rẫy",
-    time: "2024-07-01 ~ 2024-07-05",
+    time: "2024-07-01",
     phone: "0901234567",
-    status: 'pending',
+    status: 'Đang chờ',
   },
   {
     name: "Trần Thị B",
     bloodType: "O-",
-    quantity: 1,
+    amount: 350,
     type: "Tiểu cầu",
-    hospital: "Bệnh viện Bình Dân",
-    time: "2024-07-01 ~ 2024-07-05",
+    time: "2024-07-01",
     phone: "0912345678",
-    status: 'resolved',
+    status: 'Đã duyệt',
   },
   {
     name: "Lê Văn C",
     bloodType: "B+",
-    quantity: 3,
+    amount: 450,
     type: "Huyết tương",
-    hospital: "Bệnh viện Nhân dân 115",
-    time: "2024-08-10 ~ 2024-08-15",
+    time: "2024-08-10",
     phone: "0987654321",
-    status: 'pending',
+    status: 'Đang chờ',
   },
   {
     name: "Phạm Thị D",
     bloodType: "AB-",
-    quantity: 2,
+    amount: 500,
     type: "Toàn phần",
-    hospital: "Bệnh viện Hùng Vương",
-    time: "2024-07-01 ~ 2024-07-05",
+    time: "2024-07-01",
     phone: "0934567890",
-    status: 'reject',
+    status: 'Từ chối',
   },
   {
     name: "Hoàng Văn E",
     bloodType: "O+",
-    quantity: 1,
+    amount: 350,
     type: "Tiểu cầu",
-    hospital: "Bệnh viện Quận 7",
-    time: "2024-09-01 ~ 2024-09-03",
+    time: "2024-09-01",
     phone: "0978123456",
-    status: 'pending',
+    status: 'Đang chờ',
   },
 ];
 
@@ -59,56 +55,68 @@ const bloodTypes = [
   '', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
 ];
 
+const statusOptions = [
+  { value: 'Đang chờ', label: 'Đang chờ' },
+  { value: 'Đã duyệt', label: 'Đã duyệt' },
+  { value: 'Từ chối', label: 'Từ chối' },
+];
+
 const ReceiverPage = () => {
-  const [originalList] = useState(receiverList);
-  const [filtered, setFiltered] = useState(receiverList);
+  const [data, setData] = useState(initialReceiverList);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [newStatus, setNewStatus] = useState('pending');
+  const [newStatus, setNewStatus] = useState('Đang chờ');
+  const [rejectReason, setRejectReason] = useState('');
+  const [detailModal, setDetailModal] = useState({ open: false, reason: '' });
 
-  const handleSearch = (value, status = filterStatus, bloodType = filterBloodType) => {
-    let filteredList = originalList;
-    if (value) {
-      filteredList = filteredList.filter(r =>
-        r.name.toLowerCase().includes(value.toLowerCase())
-      );
-    }
-    if (status) {
-      filteredList = filteredList.filter(r => r.status === status);
-    }
-    if (bloodType) {
-      filteredList = filteredList.filter(r => r.bloodType === bloodType);
-    }
-    setFiltered(filteredList);
+  // Filtered data for display only
+  const filteredData = data.filter(r => {
+    const matchName = search ? r.name.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchStatus = filterStatus ? r.status === filterStatus : true;
+    const matchBloodType = filterBloodType ? r.bloodType === filterBloodType : true;
+    return matchName && matchStatus && matchBloodType;
+  });
+
+  const handleSearch = (value) => {
+    setSearch(value);
   };
 
   const handleStatusFilter = (status) => {
     setFilterStatus(status);
-    handleSearch(search, status);
   };
 
   const handleBloodTypeFilter = (bloodType) => {
     setFilterBloodType(bloodType);
-    handleSearch(search, filterStatus, bloodType);
   };
 
   const handleEdit = (record) => {
     setEditingRecord(record);
     setNewStatus(record.status);
+    setRejectReason(record.rejectReason || '');
     setIsModalOpen(true);
   };
 
   const handleModalOk = () => {
     if (editingRecord) {
-      setFiltered(prev => prev.map(item =>
-        item === editingRecord ? { ...item, status: newStatus } : item
+      setData(prev => prev.map(item =>
+        item === editingRecord
+          ? { ...item, status: newStatus, rejectReason: newStatus === 'Từ chối' ? rejectReason : undefined }
+          : item
       ));
+      // Save to localStorage if rejected
+      const uniqueKey = `blood_request_${editingRecord.phone}_${editingRecord.time}`;
+      if (newStatus === 'Từ chối') {
+        localStorage.setItem(uniqueKey, JSON.stringify({ status: 'Từ chối', rejectReason }));
+      } else {
+        localStorage.removeItem(uniqueKey);
+      }
     }
     setIsModalOpen(false);
     setEditingRecord(null);
+    setRejectReason('');
   };
 
   const handleModalCancel = () => {
@@ -117,7 +125,7 @@ const ReceiverPage = () => {
   };
 
   const handleDelete = (record) => {
-    setFiltered(prev => prev.filter(item => item !== record));
+    setData(prev => prev.filter(item => item !== record));
   };
 
   const columns = [
@@ -144,13 +152,6 @@ const ReceiverPage = () => {
       render: (bloodType) => <span className="font-bold">{bloodType}</span>
     },
     {
-      title: 'Số đơn vị',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      align: 'center',
-      width: 90,
-    },
-    {
       title: 'Loại',
       dataIndex: 'type',
       key: 'type',
@@ -158,12 +159,13 @@ const ReceiverPage = () => {
       width: 110,
     },
     {
-      title: 'Bệnh viện',
-      dataIndex: 'hospital',
-      key: 'hospital',
+      title: 'Số lượng (ml)',
+      dataIndex: 'amount',
+      key: 'amount',
       align: 'center',
-      width: 180,
+      width: 120,
     },
+    // Bỏ cột Bệnh viện
     {
       title: 'Thời gian',
       dataIndex: 'time',
@@ -186,12 +188,12 @@ const ReceiverPage = () => {
       width: 110,
       render: (status) => {
         let color;
-        let text;
+        let text = status;
         switch (status) {
-          case 'pending': color = 'text-orange-500'; text = 'Đang chờ'; break;
-          case 'resolved': color = 'text-green-500'; text = 'Đã duyệt'; break;
-          case 'reject': color = 'text-red-500'; text = 'Từ chối'; break;
-          default: color = 'text-gray-500'; text = status;
+          case 'Đang chờ': color = 'text-orange-500'; break;
+          case 'Đã duyệt': color = 'text-blue-500'; break;
+          case 'Từ chối': color = 'text-red-500'; break;
+          default: color = 'text-gray-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`}>
@@ -204,7 +206,7 @@ const ReceiverPage = () => {
       title: 'Thao tác',
       key: 'actions',
       align: 'center',
-      width: 150,
+      width: 180,
       render: (_, record) => (
         <span className="flex items-center justify-center gap-2">
           <Tooltip title="Sửa">
@@ -212,15 +214,24 @@ const ReceiverPage = () => {
               <EditOutlined />
             </Button>
           </Tooltip>
-          <Tooltip title="Xoá">
-            <Button danger onClick={() => handleDelete(record)}>
-              <DeleteOutlined />
-            </Button>
-          </Tooltip>
         </span>
       ),
     },
   ];
+
+  function getRejectReasonFromLocal(record) {
+    const uniqueKey = `blood_request_${record.phone}_${record.time}`;
+    const local = localStorage.getItem(uniqueKey);
+    if (local) {
+      try {
+        const { rejectReason } = JSON.parse(local);
+        return rejectReason || '';
+      } catch {
+        return '';
+      }
+    }
+    return '';
+  }
 
   return (
     <div className="flex flex-col">
@@ -232,7 +243,7 @@ const ReceiverPage = () => {
             placeholder="Tìm kiếm"
             className="w-[250px] pl-4 pr-10 py-2 bg-white rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 text-sm shadow-sm"
             value={search}
-            onChange={e => { setSearch(e.target.value); handleSearch(e.target.value); }}
+            onChange={e => handleSearch(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleSearch(e.target.value); }}
           />
           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -246,9 +257,9 @@ const ReceiverPage = () => {
             onChange={e => handleStatusFilter(e.target.value)}
           >
             <option value="">Tất cả trạng thái</option>
-            <option value="pending">Đang chờ</option>
-            <option value="resolved">Đã duyệt</option>
-            <option value="reject">Từ chối</option>
+            <option value="Đang chờ">Đang chờ</option>
+            <option value="Đã duyệt">Đã duyệt</option>
+            <option value="Từ chối">Từ chối</option>
           </select>
         </div>
         <div className="ml-2">
@@ -266,15 +277,14 @@ const ReceiverPage = () => {
       </div>
       <Table
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
-        dataSource={filtered}
+        dataSource={filteredData}
         columns={columns}
-        rowKey={(record, idx) => idx}
+        rowKey={(record, idx) => record.phone + record.time}
         pagination={{
           pageSize: 5,
           position: ['bottomCenter'],
         }}
         locale={{ emptyText: 'Không có dữ liệu' }}
-        scroll={{ x: 'max-content' }}
       />
       <Modal
         title="Chỉnh sửa trạng thái"
@@ -288,13 +298,28 @@ const ReceiverPage = () => {
         <Select
           className="w-full"
           value={newStatus}
-          onChange={setNewStatus}
-          options={[
-            { value: 'pending', label: 'Đang chờ' },
-            { value: 'resolved', label: 'Đã duyệt' },
-            { value: 'reject', label: 'Từ chối' },
-          ]}
+          onChange={value => setNewStatus(value)}
+          options={statusOptions}
         />
+        {newStatus === 'Từ chối' && (
+          <div className="mt-4">
+            <label className="block font-semibold mb-1">Lý do từ chối:</label>
+            <Input.TextArea
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              placeholder="Nhập lý do từ chối..."
+              rows={3}
+            />
+          </div>
+        )}
+      </Modal>
+      <Modal
+        title="Lý do từ chối"
+        open={detailModal.open}
+        footer={null}
+        onCancel={() => setDetailModal({ open: false, reason: '' })}
+      >
+        <div>{detailModal.reason || 'Không có lý do.'}</div>
       </Modal>
     </div>
   );

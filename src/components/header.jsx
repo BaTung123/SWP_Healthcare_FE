@@ -5,7 +5,7 @@ import img from "../assets/react.svg";
 
 const Header = () => {
   const currentPath = window.location.pathname;
-  const [user, setUser] = useState(true);
+  const [user, setUser] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const dropdownRef = useRef(null);

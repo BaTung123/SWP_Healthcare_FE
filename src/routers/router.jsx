@@ -28,7 +28,6 @@ const RecoveryReminderPage = lazy(() => import("../pages/member/recoveryReminder
 const RequesterDonorPage = lazy(() => import("../pages/staff/requesterDonorPage"));
 const ReceiverPage = lazy(() => import("../pages/staff/receiverPage"));
 const BloodStockManagementPage = lazy(() => import("../pages/staff/bloodStockManagementPage"));
-const EmergencyHandlingPage = lazy(() => import("../pages/staff/emergencyHandlingPage"));
 const DonationProcessPage = lazy(() => import("../pages/staff/donationProcessPage"));
 const BloodRequestPage = lazy(() => import("../pages/staff/bloodRequestPage"));
 const EventManagementPage = lazy(() => import("../pages/staff/eventManagementPage"));
@@ -150,10 +149,6 @@ export const router = createBrowserRouter([
       { 
         path: "blood-stock", 
         element: <ProtectedRoute roles={["staff"]}><BloodStockManagementPage /></ProtectedRoute>
-      },
-      { 
-        path: "emergency-handling", 
-        element: <ProtectedRoute roles={["staff"]}><EmergencyHandlingPage /></ProtectedRoute>
       },
       { 
         path: "donation-process", 

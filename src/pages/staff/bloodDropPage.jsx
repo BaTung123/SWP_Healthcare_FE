@@ -2,17 +2,23 @@ import { useState } from "react";
 
 const BloodDropPage = () => {
 
+  // Lấy ngày hiện tại theo định dạng yyyy-mm-dd
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
   const [formData, setFormData] = useState({
     fullName: "",
     birthDate: "",
     gender: "",
     bloodType: "",
     quantity: 0,
-    reason: "",
     hospital: "",
     phone: "",
     type: "",
-    needDate: "",
+    needDate: todayStr,
     note: "",
   });
 
@@ -112,7 +118,7 @@ const BloodDropPage = () => {
               </select>
             </div>
             <div className="flex-1">
-              <label className="block font-semibold mb-1">Số đơn vị cần</label>
+              <label className="block font-semibold mb-1">Số ml cần</label>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -123,24 +129,27 @@ const BloodDropPage = () => {
                   onChange={handleChange}
                   className="w-full text-center border border-gray-300 rounded-md px-2 py-2"
                 />
-                <span>ml</span>
               </div>
             </div>
           </div>
-
-          {/* Lý do và bệnh viện */}
+          {/* Ngày bỏ máu vào kho */}
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block font-semibold mb-1">Lý do cần máu</label>
+              <label className="block font-semibold mb-1">Ngày bỏ máu vào kho <span className="text-red-500">*</span></label>
               <input
-                type="text"
-                name="reason"
-                value={formData.reason}
+                type="date"
+                name="needDate"
+                value={formData.needDate}
                 onChange={handleChange}
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
-                placeholder="VD: Phẫu thuật, thiếu máu..."
+                required
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                min={todayStr}
               />
             </div>
+          </div>
+
+          {/* Loại và số điện thoại trên cùng một dòng */}
+          <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
                 Loại <span className="text-red-500">*</span>
@@ -158,22 +167,20 @@ const BloodDropPage = () => {
                 <option value="Huyết tương">Huyết tương</option>
               </select>
             </div>
-          </div>
-
-          {/* số điện thoại */}
-          <div>
-            <label className="block font-semibold mb-1">
-              Số điện thoại <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              placeholder="VD: 0901234567"
-            />
+            <div className="flex-1">
+              <label className="block font-semibold mb-1">
+                Số điện thoại <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                placeholder="VD: 0901234567"
+              />
+            </div>
           </div>
 
           {/* Nút gửi */}

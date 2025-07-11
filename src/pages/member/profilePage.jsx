@@ -11,7 +11,38 @@ const ProfilePage = () => {
   const fileInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('profile');
-  const [registrationList, setRegistrationList] = useState([]);
+  const [registrationList, setRegistrationList] = useState([
+    {
+      registrationId: 1,
+      fullNameRegister: 'Nguyễn Văn An',
+      birthDate: '1995-04-12',
+      gender: 'Nam',
+      bloodGroup: 'A+',
+      type: 'Toàn Phần',
+      availableDate: '2024-06-01',
+      status: 'đang chờ',
+    },
+    {
+      registrationId: 2,
+      fullNameRegister: 'Trần Thị Bình',
+      birthDate: '1992-09-23',
+      gender: 'Nữ',
+      bloodGroup: 'O-',
+      type: 'Tiểu Cầu',
+      availableDate: '2024-07-10',
+      status: 'đã duyệt',
+    },
+    {
+      registrationId: 3,
+      fullNameRegister: 'Lê Văn Cường',
+      birthDate: '1988-12-05',
+      gender: 'Nam',
+      bloodGroup: 'B+',
+      type: 'Huyết Tương',
+      availableDate: '2024-08-15',
+      status: 'từ chối',
+    },
+  ]);
   const [registration, setRegistration] = useState(null);
   const [appointmentList, setAppointmentList] = useState([]);
   const [appointment, setAppointment] = useState(null);
@@ -44,83 +75,85 @@ const ProfilePage = () => {
     {
       title: 'Họ và Tên',
       dataIndex: 'fullNameRegister',
-      key: 'id',
-      width: 250,
+      key: 'fullNameRegister',
+      width: 200,
       align: 'center',
+    },
+    {
+      title: 'Ngày sinh',
+      dataIndex: 'birthDate',
+      key: 'birthDate',
+      width: 130,
+      align: 'center',
+      render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
+    },
+    {
+      title: 'Giới tính',
+      dataIndex: 'gender',
+      key: 'gender',
+      width: 100,
+      align: 'center',
+      render: (gender) => {
+        if (!gender) return '';
+        if (gender.toLowerCase() === 'male' || gender === 'Nam') return 'Nam';
+        if (gender.toLowerCase() === 'female' || gender === 'Nữ') return 'Nữ';
+        return 'Khác';
+      },
     },
     {
       title: 'Nhóm Máu',
       dataIndex: 'bloodGroup',
-      key: 'id',
-      width: 200,
+      key: 'bloodGroup',
+      width: 100,
       align: 'center',
     },
     {
-      title: 'Thời Gian',
-      key: 'id',
-      width: 200,
+      title: 'Loại',
+      dataIndex: 'type',
+      key: 'type',
+      width: 120,
       align: 'center',
-      render: (record) => {
-        if (record.availableFromDate === record.availableToDate) {
-          return dayjs(record.availableFromDate).format('DD/MM/YYYY')
-        } else {
-          return `${dayjs(record.availableFromDate).format('DD')} - ${dayjs(record.availableToDate).format('DD/MM/YYYY')}`;
-        }
-      }
     },
     {
-      title: 'Địa Chỉ',
-      dataIndex: 'location',
-      key: 'id',
+      title: 'Ngày đã chọn',
+      key: 'selectedDate',
       width: 200,
       align: 'center',
+      render: (record) => record.availableDate ? dayjs(record.availableDate).format('DD/MM/YYYY') : '',
     },
     {
       title: 'Trạng Thái',
       dataIndex: 'status',
-      key: 'id',
-      width: 250,
+      key: 'status',
+      width: 150,
       align: 'center',
       render: (status) => {
         let color;
+        let statusText;
         switch (status) {
-          case 'Done': color = 'text-green-500'; break;
-          default: color = 'text-orange-500';
+          case 'đã duyệt':
+            color = 'text-blue-500';
+            statusText = 'Đã duyệt';
+            break;
+          case 'đang chờ':
+            color = 'text-orange-500';
+            statusText = 'Đang chờ';
+            break;
+          case 'từ chối':
+            color = 'text-red-500';
+            statusText = 'Từ chối';
+            break;
+          default:
+            color = 'text-gray-500';
+            statusText = 'Khác';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`} >
-            {status.toUpperCase()}  
+            {statusText}
           </span>
         );
       },
     },
-    // {
-    //   title: "Actions",
-    //   key: "actions",
-    //   width: 200,
-    //   align: 'center',
-    //   render: (_, record) => (
-    //     <Space size="middle">
-    //       <Tooltip title={record.status === 'Active' ? 'Set Inactive' : 'Set Active'}>
-    //         <Switch
-    //           checked={record.status === 'Active'}
-    //           onChange={() => handleToggleStatus(record)}
-    //         />
-    //       </Tooltip>
-    //       <Tooltip title="Edit">
-    //         <Button
-    //           type='dashed'
-    //           variant='dashed'
-    //           color='cyan'
-    //           style={{ border: "none", color: "#073AAA" }}
-    //           onClick={() => showRoleModal(record)}
-    //         >
-    //           <EditOutlined />
-    //         </Button>
-    //       </Tooltip>
-    //     </Space>
-    //   ),
-    // },
   ]
 
   // Thêm columns cho bảng lịch sử hiến máu

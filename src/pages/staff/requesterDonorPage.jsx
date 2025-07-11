@@ -1,22 +1,107 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Tooltip, Modal, Select } from 'antd';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { GetAllDonorRegistration } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 
-
-const bloodTypes = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
-const donationTypes = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
-const statusOptions = [
+// Constants
+const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+const DONATION_TYPES = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
+const STATUS_OPTIONS = [
     { value: '', label: 'Tất cả trạng thái' },
     { value: 'pending', label: 'Đang chờ' },
     { value: 'resolved', label: 'Đã duyệt' },
     { value: 'reject', label: 'Từ chối' },
 ];
 
+// Mock data
+const MOCK_DATA = [
+    {
+        registrationId: 1,
+        fullNameRegister: "Nguyễn Văn An",
+        birthDate: "1995-04-12",
+        bloodGroup: "A+",
+        type: "Toàn Phần",
+        availableDate: "2024-01-15",
+        phone: "0987654321",
+        status: "pending"
+    },
+    {
+        registrationId: 2,
+        fullNameRegister: "Trần Thị Bình",
+        birthDate: "1992-09-23",
+        bloodGroup: "O+",
+        type: "Tiểu Cầu",
+        availableDate: "2024-01-20",
+        phone: "0123456789",
+        status: "resolved"
+    },
+    {
+        registrationId: 3,
+        fullNameRegister: "Lê Văn Cường",
+        birthDate: "1988-12-05",
+        bloodGroup: "B+",
+        type: "Huyết Tương",
+        availableDate: "2024-01-18",
+        phone: "0369852147",
+        status: "pending"
+    },
+    {
+        registrationId: 4,
+        fullNameRegister: "Phạm Thị Dung",
+        birthDate: "1990-07-30",
+        bloodGroup: "AB+",
+        type: "Toàn Phần",
+        availableDate: "2024-01-22",
+        phone: "0587412369",
+        status: "reject"
+    },
+    {
+        registrationId: 5,
+        fullNameRegister: "Hoàng Văn Em",
+        birthDate: "1993-11-11",
+        bloodGroup: "A-",
+        type: "Tiểu Cầu",
+        availableDate: "2024-01-25",
+        phone: "0741258963",
+        status: "resolved"
+    },
+    {
+        registrationId: 6,
+        fullNameRegister: "Vũ Thị Phương",
+        birthDate: "1997-03-18",
+        bloodGroup: "O-",
+        type: "Huyết Tương",
+        availableDate: "2024-01-28",
+        phone: "0963258741",
+        status: "pending"
+    },
+    {
+        registrationId: 7,
+        fullNameRegister: "Đỗ Văn Giang",
+        birthDate: "1985-09-09",
+        bloodGroup: "B-",
+        type: "Toàn Phần",
+        availableDate: "2024-01-30",
+        phone: "0321654987",
+        status: "resolved"
+    },
+    {
+        registrationId: 8,
+        fullNameRegister: "Ngô Thị Hoa",
+        birthDate: "1991-05-22",
+        bloodGroup: "AB-",
+        type: "Tiểu Cầu",
+        availableDate: "2024-02-01",
+        phone: "0789456123",
+        status: "pending"
+    }
+];
+
 const RequesterDonorPage = () => {
     const [originalList, setOriginalList] = useState([]);
     const [filteredList, setFilteredList] = useState([]);
+    const [loading, setLoading] = useState(false);
     const [filters, setFilters] = useState({
         search: '',
         status: '',
@@ -27,151 +112,44 @@ const RequesterDonorPage = () => {
     const [editingRecord, setEditingRecord] = useState(null);
     const [newStatus, setNewStatus] = useState('pending');
 
-    useEffect(() => {
-        fetchRegistrationList();
-    }, [])
-
-    const fetchRegistrationList = async () => {
+    // Fetch registration list
+    const fetchRegistrationList = useCallback(async () => {
         try {
-            const res = await GetAllDonorRegistration()
+            setLoading(true);
+            const res = await GetAllDonorRegistration();
+            
             if (res && res.length > 0) {
-                setOriginalList(res)
-                setFilteredList(res)
-                console.log("list registration:", res)
+                setOriginalList(res);
+                setFilteredList(res);
+                console.log("list registration:", res);
             } else {
-                // Mock data khi API không trả về dữ liệu
-                const mockData = [
-                    {
-                        registrationId: 1,
-                        fullNameRegister: "Nguyễn Văn An",
-                        bloodGroup: "A+",
-                        type: "Toàn Phần",
-                        availableFromDate: "2024-01-15",
-                        availableToDate: "2024-01-15",
-                        phone: "0987654321",
-                        status: "pending"
-                    },
-                    {
-                        registrationId: 2,
-                        fullNameRegister: "Trần Thị Bình",
-                        bloodGroup: "O+",
-                        type: "Tiểu Cầu",
-                        availableFromDate: "2024-01-20",
-                        availableToDate: "2024-01-25",
-                        phone: "0123456789",
-                        status: "resolved"
-                    },
-                    {
-                        registrationId: 3,
-                        fullNameRegister: "Lê Văn Cường",
-                        bloodGroup: "B+",
-                        type: "Huyết Tương",
-                        availableFromDate: "2024-01-18",
-                        availableToDate: "2024-01-18",
-                        phone: "0369852147",
-                        status: "pending"
-                    },
-                    {
-                        registrationId: 4,
-                        fullNameRegister: "Phạm Thị Dung",
-                        bloodGroup: "AB+",
-                        type: "Toàn Phần",
-                        availableFromDate: "2024-01-22",
-                        availableToDate: "2024-01-22",
-                        phone: "0587412369",
-                        status: "reject"
-                    },
-                    {
-                        registrationId: 5,
-                        fullNameRegister: "Hoàng Văn Em",
-                        bloodGroup: "A-",
-                        type: "Tiểu Cầu",
-                        availableFromDate: "2024-01-25",
-                        availableToDate: "2024-01-30",
-                        phone: "0741258963",
-                        status: "resolved"
-                    },
-                    {
-                        registrationId: 6,
-                        fullNameRegister: "Vũ Thị Phương",
-                        bloodGroup: "O-",
-                        type: "Huyết Tương",
-                        availableFromDate: "2024-01-28",
-                        availableToDate: "2024-01-28",
-                        phone: "0963258741",
-                        status: "pending"
-                    },
-                    {
-                        registrationId: 7,
-                        fullNameRegister: "Đỗ Văn Giang",
-                        bloodGroup: "B-",
-                        type: "Toàn Phần",
-                        availableFromDate: "2024-01-30",
-                        availableToDate: "2024-02-05",
-                        phone: "0321654987",
-                        status: "resolved"
-                    },
-                    {
-                        registrationId: 8,
-                        fullNameRegister: "Ngô Thị Hoa",
-                        bloodGroup: "AB-",
-                        type: "Tiểu Cầu",
-                        availableFromDate: "2024-02-01",
-                        availableToDate: "2024-02-01",
-                        phone: "0789456123",
-                        status: "pending"
-                    }
-                ];
-                setOriginalList(mockData)
-                setFilteredList(mockData)
-                console.log("Using mock data:", mockData)
+                setOriginalList(MOCK_DATA);
+                setFilteredList(MOCK_DATA);
+                console.log("Using mock data:", MOCK_DATA);
             }
         } catch (error) {
-            console.error("Error fetching registration list:", error)
+            console.error("Error fetching registration list:", error);
             // Fallback to mock data if API fails
-            const mockData = [
-                {
-                    registrationId: 1,
-                    fullNameRegister: "Nguyễn Văn An",
-                    bloodGroup: "A+",
-                    type: "Toàn Phần",
-                    availableFromDate: "2024-01-15",
-                    availableToDate: "2024-01-15",
-                    phone: "0987654321",
-                    status: "pending"
-                },
-                {
-                    registrationId: 2,
-                    fullNameRegister: "Trần Thị Bình",
-                    bloodGroup: "O+",
-                    type: "Tiểu Cầu",
-                    availableFromDate: "2024-01-20",
-                    availableToDate: "2024-01-25",
-                    phone: "0123456789",
-                    status: "resolved"
-                },
-                {
-                    registrationId: 3,
-                    fullNameRegister: "Lê Văn Cường",
-                    bloodGroup: "B+",
-                    type: "Huyết Tương",
-                    availableFromDate: "2024-01-18",
-                    availableToDate: "2024-01-18",
-                    phone: "0369852147",
-                    status: "pending"
-                }
-            ];
-            setOriginalList(mockData)
-            setFilteredList(mockData)
-            console.log("Using fallback mock data:", mockData)
+            setOriginalList(MOCK_DATA.slice(0, 3));
+            setFilteredList(MOCK_DATA.slice(0, 3));
+            console.log("Using fallback mock data");
+        } finally {
+            setLoading(false);
         }
-    }
+    }, []);
 
-    // Tối ưu filter: gom tất cả filter vào 1 hàm
-    const applyFilters = (nextFilters = filters) => {
+    useEffect(() => {
+        fetchRegistrationList();
+    }, [fetchRegistrationList]);
+
+    // Optimized filter function
+    const applyFilters = useCallback((nextFilters = filters) => {
         let result = originalList;
+        
         if (nextFilters.search) {
-            result = result.filter(r => r.fullNameRegister.toLowerCase().includes(nextFilters.search.toLowerCase()));
+            result = result.filter(r => 
+                r.fullNameRegister.toLowerCase().includes(nextFilters.search.toLowerCase())
+            );
         }
         if (nextFilters.status) {
             result = result.filter(r => r.status === nextFilters.status);
@@ -182,41 +160,49 @@ const RequesterDonorPage = () => {
         if (nextFilters.type) {
             result = result.filter(r => r.type === nextFilters.type);
         }
+        
         setFilteredList(result);
-    };
+    }, [originalList, filters]);
 
-    // Cập nhật filter và lọc lại
-    const handleFilterChange = (key, value) => {
+    // Handle filter changes
+    const handleFilterChange = useCallback((key, value) => {
         const nextFilters = { ...filters, [key]: value };
         setFilters(nextFilters);
         applyFilters(nextFilters);
-    };
+    }, [filters, applyFilters]);
 
-    // Modal & thao tác
-    const handleEdit = (record) => {
+    // Modal handlers
+    const handleEdit = useCallback((record) => {
         setEditingRecord(record);
         setNewStatus(record.status);
         setIsModalOpen(true);
-    };
-    const handleModalOk = () => {
+    }, []);
+
+    const handleModalOk = useCallback(() => {
         if (editingRecord) {
             setFilteredList(prev => prev.map(item =>
+                item === editingRecord ? { ...item, status: newStatus } : item
+            ));
+            setOriginalList(prev => prev.map(item =>
                 item === editingRecord ? { ...item, status: newStatus } : item
             ));
         }
         setIsModalOpen(false);
         setEditingRecord(null);
-    };
-    const handleModalCancel = () => {
+    }, [editingRecord, newStatus]);
+
+    const handleModalCancel = useCallback(() => {
         setIsModalOpen(false);
         setEditingRecord(null);
-    };
-    const handleDelete = (record) => {
-        setFilteredList(prev => prev.filter(item => item !== record));
-    };
+    }, []);
 
-    // Table columns
-    const columns = [
+    const handleDelete = useCallback((record) => {
+        setFilteredList(prev => prev.filter(item => item !== record));
+        setOriginalList(prev => prev.filter(item => item !== record));
+    }, []);
+
+    // Memoized table columns
+    const columns = useMemo(() => [
         {
             title: 'STT',
             key: 'stt',
@@ -229,6 +215,13 @@ const RequesterDonorPage = () => {
             dataIndex: 'fullNameRegister',
             key: 'fullNameRegister',
             align: 'center',
+        },
+        {
+            title: 'Ngày sinh',
+            dataIndex: 'birthDate',
+            key: 'birthDate',
+            align: 'center',
+            render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
         },
         {
             title: 'Nhóm máu',
@@ -247,13 +240,7 @@ const RequesterDonorPage = () => {
             title: 'Thời gian',
             key: 'availableTime',
             align: 'center',
-            render: (record) => {
-                if (record.availableFromDate === record.availableToDate) {
-                    return dayjs(record.availableFromDate).format('DD/MM/YYYY')
-                } else {
-                    return `${dayjs(record.availableFromDate).format('DD/MM/YYYY')} - ${dayjs(record.availableToDate).format('DD/MM/YYYY')}`;
-                }
-            }
+            render: (_, record) => record.availableDate ? dayjs(record.availableDate).format('DD/MM/YYYY') : '',
         },
         {
             title: 'Số điện thoại',
@@ -290,23 +277,26 @@ const RequesterDonorPage = () => {
             render: (_, record) => (
                 <span className="flex items-center justify-center gap-2">
                     <Tooltip title="Sửa">
-                        <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
+                        <Button 
+                            type="dashed" 
+                            variant="dashed" 
+                            color="cyan" 
+                            onClick={() => handleEdit(record)}
+                            disabled={loading}
+                        >
                             <EditOutlined />
-                        </Button>
-                    </Tooltip>
-                    <Tooltip title="Xoá">
-                        <Button danger onClick={() => handleDelete(record)}>
-                            <DeleteOutlined />
                         </Button>
                     </Tooltip>
                 </span>
             ),
         },
-    ];
+    ], [handleEdit, handleDelete, loading]);
 
     return (
         <div className="flex flex-col">
             <h1 className="text-2xl font-bold mb-10 text-center text-red-600">Thông tin hiến máu</h1>
+            
+            {/* Filters */}
             <div className="flex flex-shrink-0 mb-4">
                 <div className="relative">
                     <input
@@ -316,6 +306,7 @@ const RequesterDonorPage = () => {
                         value={filters.search}
                         onChange={e => handleFilterChange('search', e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter') applyFilters(); }}
+                        disabled={loading}
                     />
                     <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                         <SearchOutlined />
@@ -323,51 +314,67 @@ const RequesterDonorPage = () => {
                 </div>
                 <div className="ml-2">
                     <select
-                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
+                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm disabled:bg-gray-100"
                         value={filters.status}
                         onChange={e => handleFilterChange('status', e.target.value)}
+                        disabled={loading}
                     >
-                        {statusOptions.map(opt => (
+                        {STATUS_OPTIONS.map(opt => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                         ))}
                     </select>
                 </div>
                 <div className="ml-2">
                     <select
-                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
+                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm disabled:bg-gray-100"
                         value={filters.bloodType}
                         onChange={e => handleFilterChange('bloodType', e.target.value)}
+                        disabled={loading}
                     >
                         <option value="">Tất cả nhóm máu</option>
-                        {bloodTypes.filter(type => type).map(type => (
+                        {BLOOD_TYPES.filter(type => type).map(type => (
                             <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
                 </div>
                 <div className="ml-2">
                     <select
-                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
+                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm disabled:bg-gray-100"
                         value={filters.type}
                         onChange={e => handleFilterChange('type', e.target.value)}
+                        disabled={loading}
                     >
                         <option value="">Tất cả loại</option>
-                        {donationTypes.filter(type => type).map(type => (
+                        {DONATION_TYPES.filter(type => type).map(type => (
                             <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
                 </div>
             </div>
-            <Table
-                className="rounded-2xl shadow-lg bg-white custom-ant-table"
-                dataSource={filteredList}
-                columns={columns}
-                rowKey={(record, idx) => idx}
-                pagination={{
-                    pageSize: 5,
-                    position: ['bottomCenter'],
-                }}
-                locale={{ emptyText: 'Không có dữ liệu' }}
-            />
+
+            {/* Table */}
+            <div className="relative">
+                {loading && (
+                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
+                        <Spin size="large" />
+                    </div>
+                )}
+                <Table
+                    className="rounded-2xl shadow-lg bg-white custom-ant-table"
+                    dataSource={filteredList}
+                    columns={columns}
+                    rowKey={(record) => record.registrationId}
+                    pagination={{
+                        pageSize: 5,
+                        position: ['bottomCenter'],
+                        showSizeChanger: false,
+                    }}
+                    locale={{ emptyText: 'Không có dữ liệu' }}
+                    loading={loading}
+                />
+            </div>
+
+            {/* Modal */}
             <Modal
                 title="Chỉnh sửa trạng thái"
                 open={isModalOpen}
@@ -375,13 +382,15 @@ const RequesterDonorPage = () => {
                 onCancel={handleModalCancel}
                 okText="Lưu"
                 cancelText="Huỷ"
+                confirmLoading={loading}
             >
                 <div className="mb-2">Chọn trạng thái mới:</div>
                 <Select
                     className="w-full"
                     value={newStatus}
                     onChange={setNewStatus}
-                    options={statusOptions.filter(opt => opt.value)}
+                    options={STATUS_OPTIONS.filter(opt => opt.value)}
+                    disabled={loading}
                 />
             </Modal>
         </div>

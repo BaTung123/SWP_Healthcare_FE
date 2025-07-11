@@ -38,11 +38,20 @@ const DonationRegisterPage = () => {
   const [formData, setFormData] = useState({
     userId: "",
     fullName: "",
+    birthDate: "",
+    gender: "",
     bloodType: "",
     type: "",
-    toDate: "",
+    toDate: dayjs(), // Mặc định là ngày hiện tại
     phone: "",
   });
+
+  // Mock: các ngày đã đăng ký trước đó (giả lập, thực tế lấy từ API)
+  const registeredDates = [
+    '2024-06-01',
+    '2024-07-10',
+    '2024-08-15',
+  ];
 
   // Fetch user profile and event data
   const fetchInitialData = useCallback(async () => {
@@ -59,6 +68,8 @@ const DonationRegisterPage = () => {
         userId: userProfileData.userId,
         fullName: `${userProfileData.firstName} ${userProfileData.lastName}`,
         phone: userProfileData.phoneNumber,
+        birthDate: userProfileData.birthDate || "",
+        gender: userProfileData.gender || "",
       }));
 
       // Fetch event data if eventId exists
@@ -80,13 +91,9 @@ const DonationRegisterPage = () => {
 
   // Date validation
   const disabledDate = useCallback((current) => {
-    if (!donateEvent) return false;
-    
-    return current && (
-      current < dayjs(donateEvent.eventDate, "YYYY-MM-DD") ||
-      current > dayjs(donateEvent.endDate, "YYYY-MM-DD")
-    );
-  }, [donateEvent]);
+    // Không cho chọn ngày trước hôm nay
+    return current && current < dayjs().startOf('day');
+  }, []);
 
   const validateDate = useCallback((selectedDate) => {
     if (!selectedDate) {
@@ -95,7 +102,7 @@ const DonationRegisterPage = () => {
     }
 
     const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
-    const today = dayjs().format("YYYY-MM-DD");
+    const today = dayjs().format("YYYY-MM-MM-DD");
 
     // Check if date is in the past
     if (selectedDateStr < today) {
@@ -134,20 +141,48 @@ const DonationRegisterPage = () => {
   }, []);
 
   const validateForm = useCallback(() => {
+    // Validate nhóm máu
     if (!formData.bloodType) {
       toast.error("Vui lòng chọn nhóm máu.");
       return false;
     }
-    
+    // Validate loại hiến máu
     if (!formData.type) {
       toast.error("Vui lòng chọn loại hiến máu.");
       return false;
     }
-    
+    // Validate ngày sinh
+    if (!formData.birthDate) {
+      toast.error("Vui lòng nhập ngày sinh.");
+      return false;
+    }
+    // Validate tuổi (18-60)
+    const age = dayjs().diff(dayjs(formData.birthDate), 'year');
+    if (age < 18 || age > 60) {
+      toast.error("Tuổi phải từ 18 đến 60 để đủ điều kiện hiến máu.");
+      return false;
+    }
+    // Validate giới tính
+    if (!formData.gender) {
+      toast.error("Vui lòng chọn giới tính.");
+      return false;
+    }
+    // Validate số điện thoại
+    const phone = formData.phone || '';
+    if (!/^\d{10}$/.test(phone)) {
+      toast.error("Số điện thoại phải đủ 10 số và chỉ chứa số.");
+      return false;
+    }
+    // Validate ngày đăng ký hiến
     if (!validateDate(formData.toDate)) {
       return false;
     }
-
+    // Không cho phép đăng ký trùng ngày (giả lập)
+    const selectedDateStr = dayjs(formData.toDate).format('YYYY-MM-DD');
+    if (registeredDates.includes(selectedDateStr)) {
+      toast.error("Bạn đã đăng ký hiến máu vào ngày này rồi. Vui lòng chọn ngày khác.");
+      return false;
+    }
     return true;
   }, [formData, validateDate]);
 
@@ -165,6 +200,8 @@ const DonationRegisterPage = () => {
         registrationId: 0,
         userId: formData.userId,
         fullNameRegister: formData.fullName,
+        birthDate: formData.birthDate,
+        gender: formData.gender,
         bloodGroup: formData.bloodType,
         type: formData.type,
         availableToDate: dayjs(formData.toDate).format("YYYY-MM-DD"),
@@ -222,6 +259,36 @@ const DonationRegisterPage = () => {
             />
           </div>
 
+          {/* Ngày sinh và giới tính */}
+          <div className="flex flex-row gap-14">
+            <div className="flex flex-col flex-1">
+              <label className="mb-2 font-semibold text-gray-700">Ngày sinh:</label>
+              <input
+                type="date"
+                name="birthDate"
+                required
+                value={formData.birthDate}
+                onChange={handleChange}
+                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+              />
+            </div>
+            <div className="flex flex-col flex-1">
+              <label className="mb-2 font-semibold text-gray-700">Giới tính:</label>
+              <select
+                name="gender"
+                required
+                value={formData.gender}
+                onChange={handleChange}
+                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+              >
+                <option value="">-- Chọn giới tính --</option>
+                <option value="Nam">Nam</option>
+                <option value="Nữ">Nữ</option>
+                <option value="Khác">Khác</option>
+              </select>
+            </div>
+          </div>
+
           <div className="flex flex-row gap-14">
             <div className="flex flex-col flex-1">
               <label className="mb-2 font-semibold text-gray-700">Nhóm máu:</label>
@@ -271,8 +338,9 @@ const DonationRegisterPage = () => {
                   maxWidth: "200px"
                 }}
                 format="DD/MM/YYYY"
+                value={formData.toDate}
                 onChange={handleToDateChange}
-                disabledDate={eventId ? disabledDate : false}
+                disabledDate={disabledDate}
                 placeholder="Chọn ngày"
                 disabled={loading}
               />

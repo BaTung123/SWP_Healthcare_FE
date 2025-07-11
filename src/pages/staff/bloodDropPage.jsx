@@ -7,7 +7,7 @@ const BloodDropPage = () => {
     birthDate: "",
     gender: "",
     bloodType: "",
-    quantity: "",
+    quantity: 0,
     reason: "",
     hospital: "",
     phone: "",
@@ -19,6 +19,16 @@ const BloodDropPage = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Thay đổi số lượng máu (ml)
+  const handleQuantityChange = (delta) => {
+    setFormData((prev) => {
+      let newQuantity = (parseInt(prev.quantity) || 0) + delta;
+      if (newQuantity < 0) newQuantity = 0;
+      if (newQuantity > 5000) newQuantity = 5000;
+      return { ...prev, quantity: newQuantity };
+    });
   };
 
   const handleSubmit = (e) => {
@@ -103,15 +113,18 @@ const BloodDropPage = () => {
             </div>
             <div className="flex-1">
               <label className="block font-semibold mb-1">Số đơn vị cần</label>
-              <input
-                type="number"
-                name="quantity"
-                min="1"
-                value={formData.quantity}
-                onChange={handleChange}
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
-                placeholder="Ví dụ: 2"
-              />
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  name="quantity"
+                  min={0}
+                  step={50}
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className="w-full text-center border border-gray-300 rounded-md px-2 py-2"
+                />
+                <span>ml</span>
+              </div>
             </div>
           </div>
 

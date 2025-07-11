@@ -62,7 +62,7 @@ const SendBloodPage = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestForm, setRequestForm] = useState({
-    fullName: '',
+    fullName: '', 
     birthday: '',
     gender: '',
     bloodType: '',
@@ -152,6 +152,37 @@ const SendBloodPage = () => {
 
   const handleRequestFormSubmit = (e) => {
     e.preventDefault();
+    // Validate họ tên
+    if (!requestForm.fullName.trim()) {
+      alert('Vui lòng nhập họ và tên.');
+      return;
+    }
+    // Validate nhóm máu
+    if (!requestForm.bloodType) {
+      alert('Vui lòng chọn nhóm máu.');
+      return;
+    }
+    // Validate loại
+    if (!requestForm.type) {
+      alert('Vui lòng chọn loại máu.');
+      return;
+    }
+    // Validate số điện thoại
+    if (!/^\d{10}$/.test(requestForm.phone)) {
+      alert('Số điện thoại phải đủ 10 số và chỉ chứa số.');
+      return;
+    }
+    // Validate số lượng
+    const quantity = Number(requestForm.quantity);
+    if (!quantity || quantity <= 0 || quantity % 50 !== 0) {
+      alert('Số lượng phải lớn hơn 0 và là bội số của 50 (ml).');
+      return;
+    }
+    // Validate ngày nếu chọn loại ngày
+    if (neededTimeType === 'date' && !requestForm.neededTime) {
+      alert('Vui lòng chọn ngày cần máu.');
+      return;
+    }
     setRequests(prev => [
       ...prev,
       {
@@ -453,15 +484,19 @@ const SendBloodPage = () => {
               </div>
               <div className="flex-1">
                 <label className="block font-semibold mb-1">Số đơn vị cần</label>
-                <input
-                  type="number"
-                  name="quantity"
-                  min="1"
-                  value={requestForm.quantity}
-                  onChange={handleRequestFormChange}
-                  className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
-                  placeholder="Ví dụ: 2"
-                />
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    name="quantity"
+                    min={0}
+                    step={50}
+                    value={requestForm.quantity}
+                    onChange={handleRequestFormChange}
+                    className="w-full text-center border border-gray-300 rounded-md px-3 py-2"
+                    placeholder="Ví dụ: 500"
+                  />
+                  <span>ml</span>
+                </div>
               </div>
             </div>
             {/* Lý do và loại */}
@@ -528,6 +563,7 @@ const SendBloodPage = () => {
                   onChange={handleRequestFormChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
+                  min={new Date().toISOString().split('T')[0]}
                 />
               )}
             </div>

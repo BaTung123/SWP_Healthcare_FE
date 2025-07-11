@@ -44,6 +44,7 @@ const DonationRegisterPage = () => {
     type: "",
     toDate: dayjs(), // Mặc định là ngày hiện tại
     phone: "",
+    quantity: "",
   });
 
   // Mock: các ngày đã đăng ký trước đó (giả lập, thực tế lấy từ API)
@@ -173,6 +174,20 @@ const DonationRegisterPage = () => {
       toast.error("Số điện thoại phải đủ 10 số và chỉ chứa số.");
       return false;
     }
+    // Validate số lượng ml máu
+    const quantity = Number(formData.quantity);
+    if (!quantity || isNaN(quantity) || quantity < 50) {
+      toast.error("Vui lòng nhập số lượng máu muốn hiến (ml) tối thiểu 50ml.");
+      return false;
+    }
+    if (quantity > 500) {
+      toast.error("Số lượng máu hiến tối đa là 500ml cho một lần hiến.");
+      return false;
+    }
+    if (quantity % 50 !== 0) {
+      toast.error("Số lượng máu phải là bội số của 50ml.");
+      return false;
+    }
     // Validate ngày đăng ký hiến
     if (!validateDate(formData.toDate)) {
       return false;
@@ -206,6 +221,7 @@ const DonationRegisterPage = () => {
         type: formData.type,
         availableToDate: dayjs(formData.toDate).format("YYYY-MM-DD"),
         phone: formData.phone,
+        quantity: Number(formData.quantity),
       };
 
       const response = await createDonorRegistration(dataToSend);
@@ -218,6 +234,7 @@ const DonationRegisterPage = () => {
         bloodType: "",
         type: "",
         toDate: "",
+        quantity: "",
       }));
 
     } catch (error) {
@@ -240,13 +257,13 @@ const DonationRegisterPage = () => {
   }
 
   return (
-    <div className="p-8 max-w-xl mx-auto bg-[#eaf3fb]">
-      <div className="rounded-lg shadow-md bg-[#fffafa] p-6">
-        <h1 className="!text-[30px] text-[#b30000] text-center mb-6">Đăng ký Hiến Máu</h1>
+    <div className="p-8 max-w-2xl mx-auto bg-[#eaf3fb] min-h-screen flex items-center justify-center">
+      <div className="rounded-2xl shadow-2xl bg-white p-10 w-full max-w-2xl transition-shadow hover:shadow-3xl">
+        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm">Đăng ký Hiến Máu</h1>
 
-        <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           <div className="flex flex-col">
-            <label className="mb-1 font-semibold">Họ và tên</label>
+            <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Họ và tên</label>
             <input
               type="text"
               name="fullName"
@@ -255,31 +272,34 @@ const DonationRegisterPage = () => {
               onChange={handleChange}
               placeholder="Nhập họ và tên"
               disabled
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-base bg-gray-50"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+              style={{ width: '100%' }}
             />
           </div>
 
           {/* Ngày sinh và giới tính */}
-          <div className="flex flex-row gap-14">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8">
             <div className="flex flex-col flex-1">
-              <label className="mb-2 font-semibold text-gray-700">Ngày sinh:</label>
+              <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Ngày sinh</label>
               <input
                 type="date"
                 name="birthDate"
                 required
                 value={formData.birthDate}
                 onChange={handleChange}
-                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               />
             </div>
             <div className="flex flex-col flex-1">
-              <label className="mb-2 font-semibold text-gray-700">Giới tính:</label>
+              <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Giới tính</label>
               <select
                 name="gender"
                 required
                 value={formData.gender}
                 onChange={handleChange}
-                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               >
                 <option value="">-- Chọn giới tính --</option>
                 <option value="Nam">Nam</option>
@@ -289,15 +309,16 @@ const DonationRegisterPage = () => {
             </div>
           </div>
 
-          <div className="flex flex-row gap-14">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8">
             <div className="flex flex-col flex-1">
-              <label className="mb-2 font-semibold text-gray-700">Nhóm máu:</label>
+              <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Nhóm máu</label>
               <select
                 name="bloodType"
                 required
                 value={formData.bloodType}
                 onChange={handleChange}
-                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               >
                 <option value="">-- Chọn nhóm máu --</option>
                 {BLOOD_TYPES.map(type => (
@@ -308,34 +329,35 @@ const DonationRegisterPage = () => {
               </select>
             </div>
             <div className="flex flex-col flex-1">
-              <label className="mb-2 font-semibold text-gray-700">Loại:</label>
-              <select
-                name="type"
+              <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Số lượng (ml)</label>
+              <input
+                type="number"
+                name="quantity"
+                min={50}
+                max={500}
+                step={50}
                 required
-                value={formData.type}
+                value={formData.quantity}
                 onChange={handleChange}
-                className="p-3 border border-gray-300 rounded-md text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400"
-              >
-                <option value="">-- Chọn loại --</option>
-                {DONATION_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
-              </select>
+                placeholder="Nhập số ml (tối đa 500ml)"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
+              />
             </div>
           </div>
 
           <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700">Thời gian sẵn sàng hiến:</label>
-            <div className="flex justify-center">
+            <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Thời gian sẵn sàng hiến</label>
+            <div className="flex justify-center md:justify-start">
               <DatePicker
                 style={{ 
                   marginTop: 10, 
                   backgroundColor: "#fffafa", 
                   padding: 12,
                   width: "100%",
-                  maxWidth: "200px"
+                  maxWidth: "100%",
+                  borderRadius: "0.75rem",
+                  border: "1px solid #e5e7eb"
                 }}
                 format="DD/MM/YYYY"
                 value={formData.toDate}
@@ -348,7 +370,7 @@ const DonationRegisterPage = () => {
           </div>
 
           <div className="flex flex-col">
-            <label className="mb-2 font-semibold text-gray-700">Số điện thoại:</label>
+            <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Số điện thoại</label>
             <input
               type="tel"
               name="phone"
@@ -357,18 +379,19 @@ const DonationRegisterPage = () => {
               onChange={handleChange}
               placeholder="VD: 0987654321"
               disabled
-              className="p-3 border border-gray-300 rounded-md text-base bg-gray-50"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+              style={{ width: '100%' }}
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className={`p-3 text-white rounded-md font-bold transition-colors duration-300 ease-in-out ${
-              loading 
+            className={`w-full p-3 text-white rounded-lg font-bold shadow-md transition-all duration-300 ease-in-out mt-2
+              ${loading 
                 ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-[#b30000] hover:bg-[#990000]'
-            }`}
+                : 'bg-gradient-to-r from-[#b30000] to-[#ff4d4d] hover:scale-105 hover:shadow-lg'}
+            `}
           >
             {loading ? "Đang xử lý..." : "Gửi đăng ký"}
           </button>

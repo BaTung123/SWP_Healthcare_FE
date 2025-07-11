@@ -9,9 +9,9 @@ const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const DONATION_TYPES = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
 const STATUS_OPTIONS = [
     { value: '', label: 'Tất cả trạng thái' },
-    { value: 'pending', label: 'Đang chờ' },
-    { value: 'resolved', label: 'Đã duyệt' },
-    { value: 'reject', label: 'Từ chối' },
+    { value: 'Đang chờ', label: 'Đang chờ' },
+    { value: 'Đã duyệt', label: 'Đã duyệt' },
+    { value: 'Từ chối', label: 'Từ chối' },
 ];
 
 // Mock data
@@ -24,7 +24,8 @@ const MOCK_DATA = [
         type: "Toàn Phần",
         availableDate: "2024-01-15",
         phone: "0987654321",
-        status: "pending"
+        status: "Đang chờ",
+        quantity: 250
     },
     {
         registrationId: 2,
@@ -34,7 +35,8 @@ const MOCK_DATA = [
         type: "Tiểu Cầu",
         availableDate: "2024-01-20",
         phone: "0123456789",
-        status: "resolved"
+        status: "Đã duyệt",
+        quantity: 300
     },
     {
         registrationId: 3,
@@ -44,7 +46,8 @@ const MOCK_DATA = [
         type: "Huyết Tương",
         availableDate: "2024-01-18",
         phone: "0369852147",
-        status: "pending"
+        status: "Đang chờ",
+        quantity: 350
     },
     {
         registrationId: 4,
@@ -54,7 +57,8 @@ const MOCK_DATA = [
         type: "Toàn Phần",
         availableDate: "2024-01-22",
         phone: "0587412369",
-        status: "reject"
+        status: "Từ chối",
+        quantity: 400
     },
     {
         registrationId: 5,
@@ -64,7 +68,8 @@ const MOCK_DATA = [
         type: "Tiểu Cầu",
         availableDate: "2024-01-25",
         phone: "0741258963",
-        status: "resolved"
+        status: "Đã duyệt",
+        quantity: 200
     },
     {
         registrationId: 6,
@@ -74,7 +79,8 @@ const MOCK_DATA = [
         type: "Huyết Tương",
         availableDate: "2024-01-28",
         phone: "0963258741",
-        status: "pending"
+        status: "Đang chờ",
+        quantity: 450
     },
     {
         registrationId: 7,
@@ -84,7 +90,8 @@ const MOCK_DATA = [
         type: "Toàn Phần",
         availableDate: "2024-01-30",
         phone: "0321654987",
-        status: "resolved"
+        status: "Đã duyệt",
+        quantity: 300
     },
     {
         registrationId: 8,
@@ -94,7 +101,8 @@ const MOCK_DATA = [
         type: "Tiểu Cầu",
         availableDate: "2024-02-01",
         phone: "0789456123",
-        status: "pending"
+        status: "Đang chờ",
+        quantity: 350
     }
 ];
 
@@ -111,6 +119,10 @@ const RequesterDonorPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
     const [newStatus, setNewStatus] = useState('pending');
+    const [editBloodModalOpen, setEditBloodModalOpen] = useState(false);
+    const [editingBloodRecord, setEditingBloodRecord] = useState(null);
+    const [editBloodType, setEditBloodType] = useState('');
+    const [editQuantity, setEditQuantity] = useState('');
 
     // Fetch registration list
     const fetchRegistrationList = useCallback(async () => {
@@ -201,6 +213,32 @@ const RequesterDonorPage = () => {
         setOriginalList(prev => prev.filter(item => item !== record));
     }, []);
 
+    // Modal handlers for blood info
+    const handleEditBlood = useCallback((record) => {
+        setEditingBloodRecord(record);
+        setEditBloodType(record.bloodGroup || '');
+        setEditQuantity(record.quantity || '');
+        setEditBloodModalOpen(true);
+    }, []);
+
+    const handleBloodModalOk = useCallback(() => {
+        if (editingBloodRecord) {
+            setFilteredList(prev => prev.map(item =>
+                item === editingBloodRecord ? { ...item, bloodGroup: editBloodType, quantity: editQuantity } : item
+            ));
+            setOriginalList(prev => prev.map(item =>
+                item === editingBloodRecord ? { ...item, bloodGroup: editBloodType, quantity: editQuantity } : item
+            ));
+        }
+        setEditBloodModalOpen(false);
+        setEditingBloodRecord(null);
+    }, [editingBloodRecord, editBloodType, editQuantity]);
+
+    const handleBloodModalCancel = useCallback(() => {
+        setEditBloodModalOpen(false);
+        setEditingBloodRecord(null);
+    }, []);
+
     // Memoized table columns
     const columns = useMemo(() => [
         {
@@ -237,6 +275,13 @@ const RequesterDonorPage = () => {
             align: 'center',
         },
         {
+            title: 'Số lượng (ml)',
+            dataIndex: 'quantity',
+            key: 'quantity',
+            align: 'center',
+            render: (quantity) => quantity ? quantity : '',
+        },
+        {
             title: 'Thời gian',
             key: 'availableTime',
             align: 'center',
@@ -256,15 +301,14 @@ const RequesterDonorPage = () => {
             align: 'center',
             render: (status) => {
                 let color;
-                let text;
                 switch (status) {
-                    case 'pending': color = 'text-orange-500'; text = 'Đang chờ'; break;
-                    case 'resolved': color = 'text-green-500'; text = 'Đã duyệt'; break;
-                    default: color = 'text-red-500'; text = 'Từ chối';
+                    case 'Đang chờ': color = 'text-orange-500'; break;
+                    case 'Đã duyệt': color = 'text-green-500'; break;
+                    default: color = 'text-red-500';
                 }
                 return (
                     <span className={`font-bold ${color} border-2 rounded-md p-1`}>
-                        {text}
+                        {status}
                     </span>
                 );
             },
@@ -276,7 +320,7 @@ const RequesterDonorPage = () => {
             width: 150,
             render: (_, record) => (
                 <span className="flex items-center justify-center gap-2">
-                    <Tooltip title="Sửa">
+                    <Tooltip title="Sửa trạng thái">
                         <Button 
                             type="dashed" 
                             variant="dashed" 
@@ -287,10 +331,21 @@ const RequesterDonorPage = () => {
                             <EditOutlined />
                         </Button>
                     </Tooltip>
+                    <Tooltip title="Sửa nhóm máu & số lượng">
+                        <Button
+                            type="dashed"
+                            variant="dashed"
+                            color="orange"
+                            onClick={() => handleEditBlood(record)}
+                            disabled={loading}
+                        >
+                            <EditOutlined rotate={90} />
+                        </Button>
+                    </Tooltip>
                 </span>
             ),
         },
-    ], [handleEdit, handleDelete, loading]);
+    ], [handleEdit, handleEditBlood, handleDelete, loading]);
 
     return (
         <div className="flex flex-col">
@@ -390,6 +445,38 @@ const RequesterDonorPage = () => {
                     value={newStatus}
                     onChange={setNewStatus}
                     options={STATUS_OPTIONS.filter(opt => opt.value)}
+                    disabled={loading}
+                />
+            </Modal>
+
+            {/* Modal chỉnh sửa nhóm máu & số lượng */}
+            <Modal
+                title="Chỉnh sửa nhóm máu & số lượng"
+                open={editBloodModalOpen}
+                onOk={handleBloodModalOk}
+                onCancel={handleBloodModalCancel}
+                okText="Lưu"
+                cancelText="Huỷ"
+                confirmLoading={loading}
+            >
+                <div className="mb-2">Chọn nhóm máu mới:</div>
+                <Select
+                    className="w-full mb-4"
+                    value={editBloodType}
+                    onChange={setEditBloodType}
+                    options={BLOOD_TYPES.filter(type => type).map(type => ({ value: type, label: type }))}
+                    disabled={loading}
+                />
+                <div className="mb-2">Nhập số lượng máu hiến (ml):</div>
+                <input
+                    type="number"
+                    min={50}
+                    max={500}
+                    step={50}
+                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
+                    value={editQuantity}
+                    onChange={e => setEditQuantity(e.target.value)}
+                    placeholder="Nhập số ml (tối đa 500ml)"
                     disabled={loading}
                 />
             </Modal>

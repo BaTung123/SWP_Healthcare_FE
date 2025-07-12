@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
+import { Login } from "../../services/authentication";
 
 // Login page for user accounts.
 function LoginPage() {
@@ -13,6 +14,7 @@ function LoginPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -28,16 +30,20 @@ function LoginPage() {
         return;
       }
       // Giả lập API: email: test@gmail.com, password: 123456
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (form.email === 'test@gmail.com' && form.password === '123456') {
-        // Lưu thông tin đăng nhập (token giả lập)
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token: 'fake-jwt-token' }));
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      console.log("error:", error)
+      if (!error) {
+        console.log("form:", form)
+        const loginResponse = await Login(form)
+        console.log("loginResponse:", loginResponse)
+        localStorage.setItem('user', JSON.stringify({ email: form.email, token: loginResponse.data.token }));
         navigate('/');
       } else {
         setError('Email hoặc mật khẩu không đúng!');
       }
     } catch (err) {
-      setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      console.log("err", err)
+      setError(err.response.data.message);
     } finally {
       setLoading(false);
     }

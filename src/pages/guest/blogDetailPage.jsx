@@ -1,51 +1,74 @@
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Button } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
-import '../../styles/blogDetailPage.css';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
 
 const BlogDetailPage = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const [blog, setBlog] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Giả lập dữ liệu blog (sau này sẽ lấy từ API)
-  const blogData = {
-    id: parseInt(id),
-    title: "Lợi ích sức khỏe của việc hiến máu tình nguyện",
-    image: "https://img.freepik.com/free-photo/young-woman-donating-blood-clinic_1303-17869.jpg",
-    date: "10/05/2025",
-    content: `
-      <p>Hiến máu không chỉ là một hành động nhân ái mà còn là đóng góp quan trọng cho hệ thống y tế. Khi bạn hiến máu, bạn đang góp phần cứu sống nhiều người và thậm chí còn có thể cải thiện sức khỏe của chính mình.</p>
-    `
+  // Function to format date to dd/MM/yyyy
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString; // Return original if invalid date
+      
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+      
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      return dateString; // Return original if parsing fails
+    }
   };
 
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        const response = await axios.get(`https://localhost:7293/api/Blog/${id}`);                        
+        const data = response.data.data;
+        setBlog(data);
+        setError(null);
+      } catch (err) {
+        setError("Không thể tải bài viết.");
+        setBlog(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPosts();
+  }, [id]);
+  
+  if (loading) {
+    return <div className="flex justify-center items-center min-h-[60vh] text-lg font-semibold">Đang tải...</div>;
+  }
+
+  if (error) {
+    return <div className="flex justify-center items-center min-h-[60vh] text-lg text-red-600 font-semibold">{error}</div>;
+  }
+
+  if (!blog) {
+    return <div className="flex justify-center items-center min-h-[60vh] text-lg text-gray-500 font-semibold">Không tìm thấy bài viết.</div>;
+  }
+
   return (
-    <div className="blog-detail-container">
-      {/* <div className="blog-detail-header">
-        <Button 
-          icon={<ArrowLeftOutlined />} 
-          onClick={() => navigate('/news')}
-          className="back-button"
-        >
-          Quay lại
-        </Button>
-      </div> */}
-
-      <div className="blog-detail-wrapper">
-        <div className="blog-detail-image">
-          <img src={blogData.image} alt={blogData.title} />
-        </div>
-
-        <article className="blog-detail-content">
-          <h1 className="blog-detail-title">{blogData.title}</h1>
-          <div className="blog-detail-meta">
-            <span>{blogData.date}</span>
-          </div>
-
-          <div 
-            className="blog-detail-body"
-            dangerouslySetInnerHTML={{ __html: blogData.content }}
+    <div className="w-full min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-2 md:px-0 flex flex-col items-center">
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-10 flex flex-col md:flex-row gap-6">
+        <div className="w-full md:w-2/5 flex justify-center items-start">
+          <img 
+            src={blog.imageUrl} 
+            alt={blog.title} 
+            className="w-full max-h-96 object-cover rounded-lg shadow-md border border-gray-100"
           />
+        </div>
+        <article className="w-full md:w-3/5 flex flex-col gap-4 justify-center">
+          <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">{blog.title}</h1>
+          <div className="text-sm text-gray-500 mb-2">{formatDate(blog.createdAt)}</div>
+          <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">{blog.description}</p>
         </article>
       </div>
     </div>

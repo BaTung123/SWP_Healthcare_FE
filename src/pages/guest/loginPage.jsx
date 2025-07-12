@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
+import { authenticationService } from "../../services/authentication";
 
 // Login page for user accounts.
 function LoginPage() {
@@ -19,7 +20,7 @@ function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // Giả lập gọi API đăng nhập
+    
     try {
       // Kiểm tra định dạng
       if (!form.email || !form.password) {
@@ -27,17 +28,26 @@ function LoginPage() {
         setLoading(false);
         return;
       }
-      // Giả lập API: email: test@gmail.com, password: 123456
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      if (form.email === 'test@gmail.com' && form.password === '123456') {
-        // Lưu thông tin đăng nhập (token giả lập)
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token: 'fake-jwt-token' }));
-        navigate('/');
-      } else {
-        setError('Email hoặc mật khẩu không đúng!');
-      }
+      
+      // Gọi API đăng nhập
+      const response = await authenticationService.login(form.email, form.password);
+      
+      // Lưu thông tin đăng nhập
+      localStorage.setItem('user', JSON.stringify({ 
+        email: form.email, 
+        token: response.token || response.accessToken 
+      }));
+      
+      navigate('/');
     } catch (err) {
-      setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      console.error('Login error:', err);
+      if (err.response?.status === 401) {
+        setError('Email hoặc mật khẩu không đúng!');
+      } else if (err.response?.status === 400) {
+        setError('Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.');
+      } else {
+        setError('Đã xảy ra lỗi. Vui lòng thử lại.');
+      }
     } finally {
       setLoading(false);
     }

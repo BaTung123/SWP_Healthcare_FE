@@ -2,13 +2,29 @@ import { useState, useEffect, useRef } from "react";
 import { Dropdown, Space } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import img from "../assets/react.svg";
+import { GetAuthenByUserId } from "../services/authentication";
 
 const Header = () => {
   const currentPath = window.location.pathname;
-  const [user, setUser] = useState(false);
+  const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
+      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+      const userResponse = await GetAuthenByUserId(userId)
+      console.log("userResponse:", userResponse)
+      setUser(userResponse.data);
+    };
+
+    fetchUser();
+  }, [])
+
+  console.log("user:", user)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -91,47 +107,51 @@ const Header = () => {
 
         {/* Right side buttons */}
         <div className="flex items-center gap-10">
-          <a
-            href="/member/register-donation"
-            className="bg-gradient-to-r from-[#D32F2F] to-[#F44336] !text-white p-2.5 rounded-md hover:from-[#a32121] hover:to-[#f24040] transition-colors duration-300 ease-in-out"
-          >
-            🩸Donate Now
-          </a>
           {user ? (
-            <div ref={dropdownRef} className="relative">
-              <button
-                className="cursor-pointer px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 font-semibold text-sm shadow-md flex items-center transition-colors duration-300 ease-in-out"
-                onClick={() => setShowUserMenu(!showUserMenu)}
+            <>
+              <a
+                href="/member/register-donation"
+                className="bg-gradient-to-r from-[#D32F2F] to-[#F44336] !text-white p-2.5 rounded-md hover:from-[#a32121] hover:to-[#f24040] transition-colors duration-300 ease-in-out"
               >
-                <img
-                  src={img}
-                  alt="User Avatar"
-                  className="w-7 h-7 rounded-full object-cover"
-                />
-                <span className="ml-2 text-white">TTH</span>
-              </button>
+                🩸Donate Now
+              </a>
+              <div ref={dropdownRef} className="relative">
+                <button
+                  className="cursor-pointer px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 font-semibold text-sm shadow-md flex items-center transition-colors duration-300 ease-in-out"
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                >
+                  <img
+                    src={img}
+                    alt="User Avatar"
+                    className="w-7 h-7 rounded-full object-cover"
+                  />
+                  <span className="ml-2 text-white">{user.name}</span>
+                </button>
 
-              {showUserMenu && (
-                <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg py-2 z-50 transition-all duration-300 border border-gray-200">
-                  <a
-                    href="/member/profile"
-                    className="flex items-center gap-2 px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
-                  >
-                    <i className="fa-solid fa-user"></i>
-                    Thông tin cá nhân
-                  </a>
-                  <button
-                    onClick={() => {
-                      setUser(false);
-                    }}
-                    className="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    <i className="fa-solid fa-right-from-bracket"></i>
-                    Đăng xuất
-                  </button>
-                </div>
-              )}
-            </div>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg py-2 z-50 transition-all duration-300 border border-gray-200">
+                    <a
+                      href="/member/profile"
+                      className="flex items-center gap-2 px-4 py-2 text-gray-800 hover:bg-gray-100 transition-colors"
+                    >
+                      <i className="fa-solid fa-user"></i>
+                      Thông tin cá nhân
+                    </a>
+                    <button
+                      onClick={() => {
+                        localStorage.removeItem("user");
+                        setUser(null);
+                        window.location.href = "/";
+                      }}
+                      className="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <i className="fa-solid fa-right-from-bracket"></i>
+                      Đăng xuất
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <a
               href="/login"

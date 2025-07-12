@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
+import { Register } from "../../services/authentication";
 
 // User account registration page.
-function RegisterPage() {
+const RegisterPage = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({
-    fullName: '',
+    name: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -18,10 +19,13 @@ function RegisterPage() {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Lưu thông tin đăng ký vào localStorage (hoặc có thể gửi API ở đây)
-    localStorage.setItem('registerInfo', JSON.stringify(form));
+
+    console.log("form", form)
+    const registerResponse = await Register(form);
+    console.log("registerResponse", registerResponse)
+
     // Chuyển hướng sang trang nhập OTP
     navigate('/verify-otp');
   };
@@ -47,7 +51,7 @@ function RegisterPage() {
           <div className="login-form-box">
             <h2 style={{ marginBottom: 24, color: '#1976d2' }}>Register</h2>
             <form className="login-form" onSubmit={handleSubmit}>
-              <input type="text" name="fullName" placeholder="Full Name" value={form.fullName} onChange={handleChange} required />
+              <input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />
               <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
               <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required />
               <input type="password" name="confirmPassword" placeholder="Confirm Password" value={form.confirmPassword} onChange={handleChange} required />

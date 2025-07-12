@@ -1,28 +1,31 @@
 //Tạo, chỉnh sửa, xóa các bài viết blog.
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '../../styles/blogManagementPage.css';
 import { Button, Space, Table, Tooltip, Modal, Input, Form } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import { CreateBlog, DeleteBlog, GetAllBlog, UpdateBlog } from '../../services/blog';
+import dayjs from 'dayjs';
 
 const BlogManagementPage = () => {
-  const [blogs, setBlogs] = useState([
-    {
-      id: 1,
-      title: 'Tại sao nên hiến máu định kỳ?',
-      description: 'Nên hiến máu định kỳ để giúp cộng đồng và sức khoẻ bản thân.',
-      date: '2025-05-15',
-      status: 'Đã đăng',
-      image: 'https://img.freepik.com/free-photo/young-woman-donating-blood-clinic_1303-17869.jpg',
-    },
-    {
-      id: 2,
-      title: 'Câu chuyện người hiến máu cứu sống 3 người',
-      description: 'Một câu chuyện truyền cảm hứng về người hiến máu.',
-      date: '2025-05-10',
-      status: 'Bản nháp',
-      image: 'https://img.freepik.com/free-photo/first-time-blood-donor-smiling-chair_1303-17875.jpg',
-    },
-  ]);
+  // const [blogs, setBlogs] = useState([
+  //   {
+  //     id: 1,
+  //     title: 'Tại sao nên hiến máu định kỳ?',
+  //     description: 'Nên hiến máu định kỳ để giúp cộng đồng và sức khoẻ bản thân.',
+  //     date: '2025-05-15',
+  //     status: 'Đã đăng',
+  //     image: 'https://img.freepik.com/free-photo/young-woman-donating-blood-clinic_1303-17869.jpg',
+  //   },
+  //   {
+  //     id: 2,
+  //     title: 'Câu chuyện người hiến máu cứu sống 3 người',
+  //     description: 'Một câu chuyện truyền cảm hứng về người hiến máu.',
+  //     date: '2025-05-10',
+  //     status: 'Bản nháp',
+  //     image: 'https://img.freepik.com/free-photo/first-time-blood-donor-smiling-chair_1303-17875.jpg',
+  //   },
+  // ]);
+  const [blogs, setBlogs] = useState([]);
   
   // State cho modal thêm blog
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -40,6 +43,16 @@ const BlogManagementPage = () => {
   const addImageInputRef = useRef(null);
   const editImageInputRef = useRef(null);
 
+  const getAllBlog = async () => {
+    const blogListRes = await GetAllBlog();
+    console.log("blogListResb", blogListRes)
+    setBlogs(blogListRes.data.blogs);
+  }
+  
+  useEffect(() => {
+    getAllBlog();
+  }, [])
+
   const showAddModal = () => {
     setAddTitle("");
     setAddDescription("");
@@ -52,32 +65,34 @@ const BlogManagementPage = () => {
     setAddDescription("");
     setAddImage("");
   };
-  const handleAddModalOk = () => {
+  const handleAddModalOk = async () => {
     if (!addTitle.trim()) return;
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10);
-    setBlogs(prev => [
-      ...prev,
-      {
-        id: prev.length ? Math.max(...prev.map(b => b.id)) + 1 : 1,
-        title: addTitle,
-        description: addDescription,
-        date: dateStr,
-        status: 'Đã đăng',
-        image: addImage || 'https://i.imgur.com/1Q9Z1Zm.png',
-      }
-    ]);
-    setIsAddModalOpen(false);
-    setAddTitle("");
-    setAddDescription("");
-    setAddImage("");
+    
+    const newBlog = {
+      title: addTitle,
+      description: addDescription,
+      imageUrl: addImage || 'https://i.imgur.com/1Q9Z1Zm.png',
+    };
+
+    try {
+      console.log("newBlog", newBlog)
+      const createBlogRes = await CreateBlog(newBlog);
+      console.log("createBlogRes", createBlogRes)
+      getAllBlog();
+      setIsAddModalOpen(false);
+      setAddTitle("");
+      setAddDescription("");
+      setAddImage("");
+    } catch (err) {
+      console.error("Lỗi khi tạo blog:", err);
+    }
   };
 
   const showEditModal = (record) => {
     setEditingBlogId(record.id);
     setEditTitle(record.title);
     setEditDescription(record.description || "");
-    setEditImage(record.image || "");
+    setEditImage(record.imageUrl || "");
     setIsEditModalOpen(true);
   };
   const handleEditModalCancel = () => {
@@ -87,20 +102,43 @@ const BlogManagementPage = () => {
     setEditingBlogId(null);
     setEditImage("");
   };
-  const handleEditModalOk = () => {
+  const handleEditModalOk = async () => {
     if (!editTitle.trim() || editingBlogId === null) return;
-    setBlogs(prev => prev.map(blog =>
-      blog.id === editingBlogId ? { ...blog, title: editTitle, description: editDescription, image: editImage || 'https://i.imgur.com/1Q9Z1Zm.png' } : blog
-    ));
-    setIsEditModalOpen(false);
-    setEditTitle("");
-    setEditDescription("");
-    setEditingBlogId(null);
-    setEditImage("");
+
+    const updateBlog = {
+      id: editingBlogId,
+      imageUrl: editImage,
+      title: editTitle,
+      description: editDescription
+    }
+
+    try {
+      console.log("updateBlog", updateBlog)
+      const updateBlogRes = await UpdateBlog(updateBlog);
+      console.log("updateBlogRes", updateBlogRes)
+      getAllBlog();
+      setIsEditModalOpen(false);
+      setEditTitle("");
+      setEditDescription("");
+      setEditingBlogId(null);
+      setEditImage("");
+    } catch (err) {
+      console.error("Lỗi khi tạo blog:", err);
+    }
   };
 
-  const handleDelete = (id) => {
-    setBlogs(prev => prev.filter(blog => blog.id !== id));
+  const handleDelete = async (id) => {
+    try 
+    {
+      console.log("blogId:", id)
+      const deleteBlogRes = await DeleteBlog(id);
+      console.log("deleteBlogRes:", deleteBlogRes)
+      getAllBlog();
+    }
+    catch (err)
+    {
+      console.log("err:", err)
+    }
   };
 
   const columns = [
@@ -113,7 +151,7 @@ const BlogManagementPage = () => {
     },
     {
       title: 'Hình ảnh',
-      dataIndex: 'image',
+      dataIndex: 'imageUrl',
       key: 'image',
       align: 'center',
       width: 100,
@@ -142,10 +180,11 @@ const BlogManagementPage = () => {
     },
     {
       title: 'Ngày đăng',
-      dataIndex: 'date',
+      dataIndex: 'createdAt',
       key: 'id',
       width: 200,
       align: 'center',
+      render: (date) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
       title: "Hành động",

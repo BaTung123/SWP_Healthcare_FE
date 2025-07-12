@@ -2,17 +2,23 @@ import { useState } from "react";
 
 const BloodDropPage = () => {
 
+  // Lấy ngày hiện tại theo định dạng yyyy-mm-dd
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
   const [formData, setFormData] = useState({
     fullName: "",
     birthDate: "",
     gender: "",
     bloodType: "",
     quantity: 0,
-    reason: "",
     hospital: "",
     phone: "",
     type: "",
-    needDate: "",
+    needDate: todayStr,
     note: "",
   });
 
@@ -38,11 +44,11 @@ const BloodDropPage = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="rounded-lg shadow-md bg-white p-6">
-        <h1 className="!text-[30px] text-[#b30000] text-center mb-6">Thông tin Gửi Máu vào Kho</h1>
+    <div className="p-8 max-w-2xl mx-auto bg-[#eaf3fb] min-h-screen flex items-center justify-center">
+      <div className="rounded-2xl shadow-2xl bg-white p-10 w-full max-w-2xl transition-shadow hover:shadow-3xl">
+        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm">Thông tin Gửi Máu vào Kho</h1>
 
-        <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
+        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           {/* họ và tên */}
           <div className="flex flex-col">
             <label className="font-semibold mb-1">
@@ -54,30 +60,33 @@ const BloodDropPage = () => {
               required
               value={formData.fullName}
               onChange={handleChange}
-              className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
               placeholder="Nhập họ và tên"
+              style={{ width: '100%' }}
             />
           </div>
 
           {/* ngày sinh */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">Ngày sinh</label>
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Ngày sinh</label>
               <input
                 type="date"
                 name="birthDate"
                 value={formData.birthDate}
                 onChange={handleChange}
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               />
             </div>
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">Giới tính</label>
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Giới tính</label>
               <select
                 name="gender"
                 value={formData.gender}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               >
                 <option value="">-- Chọn giới tính --</option>
                 <option value="Nam">Nam</option>
@@ -88,17 +97,16 @@ const BloodDropPage = () => {
           </div>
 
           {/* Nhóm máu và số lượng */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">
-                Nhóm máu <span className="text-red-500">*</span>
-              </label>
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Nhóm máu <span className="text-red-500">*</span></label>
               <select
                 name="bloodType"
                 value={formData.bloodType}
                 onChange={handleChange}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               >
                 <option value="">-- Chọn nhóm máu --</option>
                 <option value="A+">A+</option>
@@ -111,46 +119,47 @@ const BloodDropPage = () => {
                 <option value="O-">O-</option>
               </select>
             </div>
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">Số đơn vị cần</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  name="quantity"
-                  min={0}
-                  step={50}
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  className="w-full text-center border border-gray-300 rounded-md px-2 py-2"
-                />
-                <span>ml</span>
-              </div>
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Số ml cần</label>
+              <input
+                type="number"
+                name="quantity"
+                min={0}
+                step={50}
+                value={formData.quantity}
+                onChange={handleChange}
+                className="w-full text-center border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
+              />
             </div>
           </div>
 
-          {/* Lý do và bệnh viện */}
-          <div className="flex gap-4">
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">Lý do cần máu</label>
-              <input
-                type="text"
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
-                placeholder="VD: Phẫu thuật, thiếu máu..."
-              />
-            </div>
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">
-                Loại <span className="text-red-500">*</span>
-              </label>
+          {/* Ngày bỏ máu vào kho */}
+          <div className="flex flex-col">
+            <label className="font-semibold mb-1">Ngày bỏ máu vào kho <span className="text-red-500">*</span></label>
+            <input
+              type="date"
+              name="needDate"
+              value={formData.needDate}
+              onChange={handleChange}
+              required
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+              min={todayStr}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          {/* Loại và số điện thoại trên cùng một dòng */}
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Loại <span className="text-red-500">*</span></label>
               <select
                 name="type"
                 required
                 value={formData.type}
                 onChange={handleChange}
-                className="w-full border border-gray-300 rounded-md px-3 py-2"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
               >
                 <option value="">-- Chọn loại --</option>
                 <option value="Toàn phần">Toàn phần</option>
@@ -158,28 +167,26 @@ const BloodDropPage = () => {
                 <option value="Huyết tương">Huyết tương</option>
               </select>
             </div>
-          </div>
-
-          {/* số điện thoại */}
-          <div>
-            <label className="block font-semibold mb-1">
-              Số điện thoại <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              required
-              className="w-full border border-gray-300 rounded-md px-3 py-2"
-              placeholder="VD: 0901234567"
-            />
+            <div className="flex-1 flex flex-col">
+              <label className="font-semibold mb-1">Số điện thoại <span className="text-red-500">*</span></label>
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                required
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                placeholder="VD: 0901234567"
+                style={{ width: '100%' }}
+              />
+            </div>
           </div>
 
           {/* Nút gửi */}
           <button
             type="submit"
-            className="p-3 !text-white !bg-[#b30000] rounded-md font-bold hover:!bg-[#990000] transition-colors duration-300 ease-in-out"
+            className={`w-full p-3 text-white rounded-lg font-bold shadow-md transition-all duration-300 ease-in-out mt-2
+              bg-gradient-to-r from-[#b30000] to-[#ff4d4d] hover:scale-105 hover:shadow-lg`}
           >
             Gửi yêu cầu
           </button>

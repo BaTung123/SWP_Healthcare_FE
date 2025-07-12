@@ -21,7 +21,7 @@ function LoginPage() {
     e.preventDefault();
     setError('');
     setLoading(true);
-    // Giả lập gọi API đăng nhập
+    
     try {
       // Kiểm tra định dạng
       if (!form.email || !form.password) {

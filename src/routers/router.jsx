@@ -26,18 +26,21 @@ const RecoveryReminderPage = lazy(() => import("../pages/member/recoveryReminder
 
 // Staff routes
 const RequesterDonorPage = lazy(() => import("../pages/staff/requesterDonorPage"));
-const ReceiverPage = lazy(() => import("../pages/staff/receiverPage"));
-const BloodStockManagementPage = lazy(() => import("../pages/staff/bloodStockManagementPage"));
 const DonationProcessPage = lazy(() => import("../pages/staff/donationProcessPage"));
 const BloodRequestPage = lazy(() => import("../pages/staff/bloodRequestPage"));
 const EventManagementPage = lazy(() => import("../pages/staff/eventManagementPage"));
 const BloodDropPage = lazy(() => import("../pages/staff/bloodDropPage"));
 const SendBloodPage = lazy(() => import("../pages/staff/sendBloodPage"));
+const BlogManagementPage = lazy(() => import("../pages/staff/blogManagementPage"));
 
 // Admin routes
 const AdminDashboardPage = lazy(() => import("../pages/admin/adminDashboardPage"));
 const UserManagementPage = lazy(() => import("../pages/admin/userManagementPage"));
-const BlogManagementPage = lazy(() => import("../pages/admin/blogManagementPage"));
+
+// Stock routes
+const BloodStockManagementPage = lazy(() => import("../pages/stock/bloodStockManagementPage"));
+const AcceptBloodDropPage = lazy(() => import("../pages/stock/acceptBloodDropPage"));
+const ReceiverPage = lazy(() => import("../pages/stock/receiverPage"));
 
 // Loading component
 const Loading = () => <div>Loading...</div>;
@@ -143,14 +146,6 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute roles={["staff"]}><RequesterDonorPage /></ProtectedRoute>
       },
       { 
-        path: "receiver", 
-        element: <ProtectedRoute roles={["staff"]}><ReceiverPage /></ProtectedRoute>
-      },
-      { 
-        path: "blood-stock", 
-        element: <ProtectedRoute roles={["staff"]}><BloodStockManagementPage /></ProtectedRoute>
-      },
-      { 
         path: "donation-process", 
         element: <ProtectedRoute roles={["staff"]}><DonationProcessPage /></ProtectedRoute>
       },
@@ -170,7 +165,11 @@ export const router = createBrowserRouter([
         path: "send-blood", 
         element: <ProtectedRoute roles={["staff"]}><SendBloodPage /></ProtectedRoute>
       },
-    ],
+      { 
+        path: "blog", 
+        element: <ProtectedRoute roles={["staff"]}><BlogManagementPage /></ProtectedRoute>
+      },
+    ],  
   },
 
   // Admin routes
@@ -186,9 +185,25 @@ export const router = createBrowserRouter([
         path: "user", 
         element: <ProtectedRoute roles={["admin"]}><UserManagementPage /></ProtectedRoute>
       },
+    ],
+  },
+
+  // Stock routes
+  {
+    path: "/stock",
+    element: <AdminPage />,
+    children: [
       { 
-        path: "blog", 
-        element: <ProtectedRoute roles={["admin"]}><BlogManagementPage /></ProtectedRoute>
+        path: "blood-stock", 
+        element: <ProtectedRoute roles={["stock"]}><BloodStockManagementPage /></ProtectedRoute>
+      },
+      { 
+        path: "accept-blood-drop", 
+        element: <ProtectedRoute roles={["stock"]}><AcceptBloodDropPage /></ProtectedRoute>
+      },
+      { 
+        path: "receiver", 
+        element: <ProtectedRoute roles={["stock"]}><ReceiverPage /></ProtectedRoute>
       },
     ],
   },

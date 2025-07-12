@@ -11,6 +11,7 @@ const SideBar = () => {
 
     // Danh sách tất cả các menu item
     const allMenuItems = [
+        // --- ADMIN ---
         {
             key: "/admin",
             icon: <DashboardOutlined />,
@@ -21,20 +22,32 @@ const SideBar = () => {
             icon: <UserOutlined />,
             label: <Link to="/admin/user">User Management</Link>,
         },
+        // --- STOCK ---
         {
-            key: "/admin/blog",
-            icon: <BookOutlined />,
-            label: <Link to="/admin/blog">Blog Management</Link>,
+            key: "/stock/blood-stock",
+            icon: <ProductOutlined />,
+            label: <Link to="/stock/blood-stock">Blood Warehouse</Link>,
         },
+        {
+            key: "/stock/accept-blood-drop",
+            icon: <BarChartOutlined />,
+            label: <Link to="/stock/accept-blood-drop">Accept Blood Drop</Link>,
+        },
+        {
+            key: "/stock/receiver",
+            icon: <AuditOutlined />,
+            label: <Link to="/stock/receiver">Blood Receiver</Link>,
+        },
+        // --- STAFF ---
         {
             key: "/staff/event",
             icon: <BookOutlined />,
             label: <Link to="/staff/event">Event Management</Link>,
         },
         {
-            key: "/staff/blood-stock",
-            icon: <ProductOutlined />,
-            label: <Link to="/staff/blood-stock">Blood Warehouse</Link>,
+            key: "/staff/blog",
+            icon: <BookOutlined />,
+            label: <Link to="/staff/blog">Blog Management</Link>,
         },
         {
             key: "/staff/send-blood",
@@ -42,20 +55,16 @@ const SideBar = () => {
             label: <Link to="/staff/send-blood">Blood Request</Link>,
         },
         {
-            key: "/staff/donor",
-            icon: <AuditOutlined />,
-            label: <Link to="/staff/donor">Blood Donor</Link>,
-        },
-        {
-            key: "/staff/receiver",
-            icon: <AuditOutlined />,
-            label: <Link to="/staff/receiver">Blood Receiver</Link>,
-        },
-        {
             key: "/staff/blood-drop",
             icon: <BarChartOutlined />,
             label: <Link to="/staff/blood-drop">Blood Drop</Link>,
         },
+        {
+            key: "/staff/donor",
+            icon: <AuditOutlined />,
+            label: <Link to="/staff/donor">Blood Donor</Link>,
+        },
+        // --- LOGOUT ---
         {
             key: "logout",
             icon: <LogoutOutlined />,

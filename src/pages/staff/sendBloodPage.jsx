@@ -43,6 +43,19 @@ const statusOptions = [
   { value: 'Từ chối', label: 'Từ chối' },
 ];
 
+// Định nghĩa form mặc định
+const initialRequestForm = {
+  fullName: '',
+  birthday: '',
+  gender: '',
+  bloodType: '',
+  quantity: '',
+  reason: '',
+  type: '',
+  neededTime: '',
+  phone: '',
+};
+
 const SendBloodPage = () => {
   const [requests, setRequests] = useState(initialRequests.map(r => ({
     ...r,
@@ -61,17 +74,7 @@ const SendBloodPage = () => {
   const [newStatus, setNewStatus] = useState('Đang chờ');
   const [rejectReason, setRejectReason] = useState('');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [requestForm, setRequestForm] = useState({
-    fullName: '', 
-    birthday: '',
-    gender: '',
-    bloodType: '',
-    quantity: '',
-    reason: '',
-    type: '',
-    neededTime: '',
-    phone: '',
-  });
+  const [requestForm, setRequestForm] = useState(initialRequestForm);
   const [neededTimeType, setNeededTimeType] = useState('gap'); // 'gap' hoặc 'date'
   const [detailModal, setDetailModal] = useState({ open: false, reason: '' });
 
@@ -135,10 +138,16 @@ const SendBloodPage = () => {
     setRequests(prev => prev.filter(item => item !== record));
   };
 
-  const handleRequestFormChange = (e) => {
+  // Validate số lượng máu
+  const validateQuantity = useCallback((quantity) => {
+    const q = Number(quantity);
+    return q && q >= 50 && q <= 500 && q % 50 === 0;
+  }, []);
+
+  const handleRequestFormChange = useCallback((e) => {
     const { name, value } = e.target;
-    setRequestForm((prev) => ({ ...prev, [name]: value }));
-  };
+    setRequestForm(prev => ({ ...prev, [name]: value }));
+  }, []);
 
   // Thay đổi radio chọn loại thời gian
   const handleNeededTimeTypeChange = (e) => {
@@ -167,15 +176,24 @@ const SendBloodPage = () => {
       alert('Vui lòng chọn loại máu.');
       return;
     }
+    // Validate ngày sinh >= 18 tuổi
+    if (requestForm.birthday) {
+      const birth = new Date(requestForm.birthday);
+      const today = new Date();
+      const age = today.getFullYear() - birth.getFullYear() - (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
+      if (age < 18) {
+        alert('Người nhận máu phải đủ 18 tuổi trở lên.');
+        return;
+      }
+    }
     // Validate số điện thoại
     if (!/^\d{10}$/.test(requestForm.phone)) {
       alert('Số điện thoại phải đủ 10 số và chỉ chứa số.');
       return;
     }
     // Validate số lượng
-    const quantity = Number(requestForm.quantity);
-    if (!quantity || quantity <= 0 || quantity % 50 !== 0) {
-      alert('Số lượng phải lớn hơn 0 và là bội số của 50 (ml).');
+    if (!validateQuantity(requestForm.quantity)) {
+      alert('Số lượng phải từ 50 đến 500 và là bội số của 50 (ml).');
       return;
     }
     // Validate ngày nếu chọn loại ngày
@@ -191,21 +209,56 @@ const SendBloodPage = () => {
       },
     ]);
     setIsRequestModalOpen(false);
-    setRequestForm({
-      fullName: '',
-      birthday: '',
-      gender: '',
-      bloodType: '',
-      quantity: '',
-      reason: '',
-      type: '',
-      neededTime: '',
-      phone: '',
-    });
+    setRequestForm(initialRequestForm);
     setNeededTimeType('gap');
   };
 
-  const columns = [
+  // Các hàm render cho columns
+  const renderBloodType = (bloodType) => <span className="font-bold">{bloodType}</span>;
+  const renderQuantity = (quantity) => <span>{quantity}</span>;
+  const renderNeededTime = (neededTime) => {
+    if (!neededTime) return '';
+    if (neededTime === 'Gấp') return <span className="text-red-600 font-bold">Gấp</span>;
+    const date = neededTime.split('T')[0] || neededTime.split(' ')[0] || neededTime;
+    return <span>{date}</span>;
+  };
+  const renderStatus = (status) => {
+    let color;
+    let text = status;
+    switch (status) {
+      case 'Đang chờ': color = 'text-orange-500'; break;
+      case 'Đã duyệt': color = 'text-blue-500'; break;
+      case 'Đã nhận': color = 'text-green-600'; break;
+      case 'Từ chối': color = 'text-red-500'; break;
+      default: color = 'text-gray-500';
+    }
+    return (
+      <span
+        className={`font-bold ${color} border-2 rounded-md p-1`}
+        style={{ display: 'inline-block', whiteSpace: 'nowrap' }}
+      >
+        {text}
+      </span>
+    );
+  };
+  const renderActions = (_, record) => (
+    <span className="flex items-center justify-center gap-2">
+      <Tooltip title="Sửa">
+        <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
+          <EditOutlined />
+        </Button>
+      </Tooltip>
+      {record.status === 'Từ chối' && (
+        <Tooltip title="Xem lý do từ chối">
+          <Button type="dashed" variant="dashed" color="orange" onClick={() => setDetailModal({ open: true, reason: record.rejectReason || getRejectReasonFromLocal(record) })}>
+            <FileTextOutlined style={{ fontSize: 20, color: '#fa8c16' }} />
+          </Button>
+        </Tooltip>
+      )}
+    </span>
+  );
+
+  const columns = useMemo(() => [
     {
       title: 'STT',
       key: 'stt',
@@ -226,7 +279,7 @@ const SendBloodPage = () => {
       key: 'bloodType',
       align: 'center',
       width: 90,
-      render: (bloodType) => <span className="font-bold">{bloodType}</span>
+      render: renderBloodType,
     },
     {
       title: 'Loại',
@@ -241,7 +294,7 @@ const SendBloodPage = () => {
       key: 'quantity',
       align: 'center',
       width: 110,
-      render: (quantity) => <span>{quantity}</span>
+      render: renderQuantity,
     },
     {
       title: 'Thời gian',
@@ -249,12 +302,7 @@ const SendBloodPage = () => {
       key: 'neededTime',
       align: 'center',
       width: 150,
-      render: (neededTime) => {
-        if (!neededTime) return '';
-        if (neededTime === 'Gấp') return <span className="text-red-600 font-bold">Gấp</span>;
-        const date = neededTime.split('T')[0] || neededTime.split(' ')[0] || neededTime;
-        return <span>{date}</span>;
-      }
+      render: renderNeededTime,
     },
     {
       title: 'Số điện thoại',
@@ -276,49 +324,16 @@ const SendBloodPage = () => {
       key: 'status',
       align: 'center',
       width: 110,
-      render: (status) => {
-        let color;
-        let text = status;
-        switch (status) {
-          case 'Đang chờ': color = 'text-orange-500'; break;
-          case 'Đã duyệt': color = 'text-blue-500'; break;
-          case 'Đã nhận': color = 'text-green-600'; break;
-          case 'Từ chối': color = 'text-red-500'; break;
-          default: color = 'text-gray-500';
-        }
-        return (
-          <span
-            className={`font-bold ${color} border-2 rounded-md p-1`}
-            style={{ display: 'inline-block', whiteSpace: 'nowrap' }}
-          >
-            {text}
-          </span>
-        );
-      },
+      render: renderStatus,
     },
     {
       title: 'Thao tác',
       key: 'actions',
       align: 'center',
       width: 150,
-      render: (_, record) => (
-        <span className="flex items-center justify-center gap-2">
-          <Tooltip title="Sửa">
-            <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
-              <EditOutlined />
-            </Button>
-          </Tooltip>
-          {record.status === 'Từ chối' && (
-            <Tooltip title="Xem lý do từ chối">
-              <Button type="dashed" variant="dashed" color="orange" onClick={() => setDetailModal({ open: true, reason: record.rejectReason || getRejectReasonFromLocal(record) })}>
-                <FileTextOutlined style={{ fontSize: 20, color: '#fa8c16' }} />
-              </Button>
-            </Tooltip>
-          )}
-        </span>
-      ),
+      render: renderActions,
     },
-  ];
+  ], [handleEdit, setDetailModal]);
 
   return (
     <div className="flex flex-col">
@@ -415,36 +430,32 @@ const SendBloodPage = () => {
         width={700}
       >
         <div className="max-w-2xl mx-auto p-6">
-          <form className="flex flex-col space-y-4" onSubmit={handleRequestFormSubmit}>
-            {/* họ và tên */}
-            <div className="flex flex-col">
-              <label className="font-semibold mb-1">
-                Họ và tên <span className="text-red-500">*</span>
-              </label>
+          <form className="flex flex-col gap-4" onSubmit={handleRequestFormSubmit}>
+            <div>
+              <label className="font-semibold mb-1 block">Họ và tên <span className="text-red-500">*</span></label>
               <input
                 type="text"
                 name="fullName"
                 required
                 value={requestForm.fullName}
                 onChange={handleRequestFormChange}
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
+                className="w-full border border-gray-300 rounded-md px-3 py-2 text-base"
                 placeholder="Nhập họ và tên"
               />
             </div>
-            {/* ngày sinh và giới tính */}
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block font-semibold mb-1">Ngày sinh</label>
+                <label className="font-semibold mb-1 block">Ngày sinh</label>
                 <input
                   type="date"
                   name="birthday"
                   value={requestForm.birthday}
                   onChange={handleRequestFormChange}
-                  className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
               </div>
               <div className="flex-1">
-                <label className="block font-semibold mb-1">Giới tính</label>
+                <label className="font-semibold mb-1 block">Giới tính</label>
                 <select
                   name="gender"
                   value={requestForm.gender}
@@ -458,12 +469,9 @@ const SendBloodPage = () => {
                 </select>
               </div>
             </div>
-            {/* Nhóm máu và số lượng */}
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block font-semibold mb-1">
-                  Nhóm máu <span className="text-red-500">*</span>
-                </label>
+                <label className="font-semibold mb-1 block">Nhóm máu <span className="text-red-500">*</span></label>
                 <select
                   name="bloodType"
                   value={requestForm.bloodType}
@@ -483,39 +491,34 @@ const SendBloodPage = () => {
                 </select>
               </div>
               <div className="flex-1">
-                <label className="block font-semibold mb-1">Số đơn vị cần</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    name="quantity"
-                    min={0}
-                    step={50}
-                    value={requestForm.quantity}
-                    onChange={handleRequestFormChange}
-                    className="w-full text-center border border-gray-300 rounded-md px-3 py-2"
-                    placeholder="Ví dụ: 500"
-                  />
-                  <span>ml</span>
-                </div>
+                <label className="font-semibold mb-1 block">Số lượng (ml)</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  min={50}
+                  max={500}
+                  step={50}
+                  value={requestForm.quantity}
+                  onChange={handleRequestFormChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 text-center"
+                  placeholder="Ví dụ: 500"
+                />
               </div>
             </div>
-            {/* Lý do và loại */}
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block font-semibold mb-1">Lý do cần máu</label>
+                <label className="font-semibold mb-1 block">Lý do cần máu</label>
                 <input
                   type="text"
                   name="reason"
                   value={requestForm.reason}
                   onChange={handleRequestFormChange}
-                  className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
+                  className="w-full border border-gray-300 rounded-md px-3 py-2"
                   placeholder="VD: Phẫu thuật, thiếu máu..."
                 />
               </div>
               <div className="flex-1">
-                <label className="block font-semibold mb-1">
-                  Loại <span className="text-red-500">*</span>
-                </label>
+                <label className="font-semibold mb-1 block">Loại <span className="text-red-500">*</span></label>
                 <select
                   name="type"
                   required
@@ -530,9 +533,8 @@ const SendBloodPage = () => {
                 </select>
               </div>
             </div>
-            {/* Thời gian cần máu */}
             <div>
-              <label className="block font-semibold mb-1">Thời gian cần máu:</label>
+              <label className="font-semibold mb-1 block">Thời gian cần máu:</label>
               <div className="flex gap-8 mb-2">
                 <label className="flex items-center gap-1">
                   <input
@@ -567,11 +569,8 @@ const SendBloodPage = () => {
                 />
               )}
             </div>
-            {/* Số điện thoại */}
             <div>
-              <label className="block font-semibold mb-1">
-                Số điện thoại <span className="text-red-500">*</span>
-              </label>
+              <label className="font-semibold mb-1 block">Số điện thoại <span className="text-red-500">*</span></label>
               <input
                 type="tel"
                 name="phone"
@@ -582,10 +581,9 @@ const SendBloodPage = () => {
                 placeholder="VD: 0901234567"
               />
             </div>
-            {/* Nút gửi */}
             <button
               type="submit"
-              className="p-3 !text-white !bg-[#b30000] rounded-md font-bold hover:!bg-[#990000] transition-colors duration-300 ease-in-out"
+              className="p-3 text-white bg-[#b30000] rounded-md font-bold hover:bg-[#990000] transition-colors duration-300 ease-in-out"
             >
               Gửi yêu cầu
             </button>

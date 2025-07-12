@@ -10,6 +10,7 @@ function LoginPage() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // Thêm state này
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,6 +27,19 @@ function LoginPage() {
       // Kiểm tra định dạng
       if (!form.email || !form.password) {
         setError('Vui lòng nhập đầy đủ email và mật khẩu.');
+        setLoading(false);
+        return;
+      }
+      // Kiểm tra email phải là Gmail
+      const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      if (!gmailRegex.test(form.email)) {
+        setError('Vui lòng nhập địa chỉ Gmail hợp lệ (kết thúc bằng @gmail.com).');
+        setLoading(false);
+        return;
+      }
+      // Kiểm tra password >= 8 ký tự
+      if (form.password.length < 8) {
+        setError('Mật khẩu phải có ít nhất 8 ký tự.');
         setLoading(false);
         return;
       }
@@ -71,7 +85,33 @@ function LoginPage() {
             <h2 style={{ marginBottom: 24, color: '#1976d2' }}>Login</h2>
             <form className="login-form" onSubmit={handleSubmit}>
               <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-              <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  placeholder="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  style={{ width: '100%', paddingRight: 36 }}
+                />
+                <span
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: 10,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    cursor: 'pointer',
+                    color: '#888',
+                    fontSize: 18
+                  }}
+                  tabIndex={0}
+                  aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                >
+                  <i className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}></i>
+                </span>
+              </div>
               {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
               <button className="login-btn" type="submit" disabled={loading}>
                 {loading ? 'Đang đăng nhập...' : 'Login'}

@@ -1,8 +1,15 @@
 import React, { useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { instance } from '../../services/instance';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const email = location.state?.email || '';
+  const purposeType = location.state?.purposeType || 'register';
 
   const handleOtpChange = (index, value) => {
     if (value.length <= 1 && /^\d*$/.test(value)) {
@@ -36,20 +43,22 @@ const VerifyOTP = () => {
     }
 
     setIsLoading(true);
-    
+    setError('');
     try {
-      // Xử lý xác thực OTP ở đây
-      console.log('OTP submitted:', otpString);
-      
-      // Giả lập API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Xử lý thành công
+      // Gọi API xác thực OTP
+      const response = await instance.put('/Authentication/verify', {
+        email,
+        otpCode: otpString,
+        purposeType
+      });
+      // Thành công
       alert('Xác thực OTP thành công!');
-      
+      navigate('/login');
     } catch (error) {
       console.error('OTP verification failed:', error);
-      alert('Xác thực OTP thất bại. Vui lòng thử lại.');
+      setError(
+        error?.response?.data?.message || 'Xác thực OTP thất bại. Vui lòng thử lại.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -100,6 +109,7 @@ const VerifyOTP = () => {
                 ))}
               </div>
             </div>
+            {error && <div style={{ color: 'red', textAlign: 'center', marginTop: 8 }}>{error}</div>}
 
             {/* Submit Button */}
             <button

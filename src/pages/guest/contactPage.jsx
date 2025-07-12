@@ -1,9 +1,59 @@
 //Liên hệ, phản hồi, form gửi câu hỏi.
-import React from "react";
+import React, { useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/contactPage.css";
+import { SendEmailToAdmin } from "../../services/authentication";
 
 function ContactPage() {
+  const [formData, setFormData] = useState({
+    subject: "",
+    body: ""
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.subject.trim() || !formData.body.trim()) {
+      setMessage({ type: "error", text: "Vui lòng điền đầy đủ thông tin!" });
+      return;
+    }
+
+    setIsLoading(true);
+    setMessage({ type: "", text: "" });
+
+    try {
+      const emailData = {
+        userId: 0, // Default value as per API spec
+        subject: formData.subject,
+        body: formData.body,
+        isHtml: true
+      };
+
+      await SendEmailToAdmin(emailData);
+      
+      setMessage({ type: "success", text: "Tin nhắn đã được gửi thành công! Chúng tôi sẽ phản hồi trong vòng 24 giờ." });
+      setFormData({ subject: "", body: "" });
+    } catch (error) {
+      setMessage({ 
+        type: "error", 
+        text: "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau!" 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="contact-bg">
       <div className="contact-header">Liên hệ với chúng tôi</div>
@@ -61,10 +111,35 @@ function ContactPage() {
           </div>
         </div>
         <div className="contact-form-row">
-          <form className="contact-form">
-            <input type="text" placeholder="Tiêu đề..." />
-            <textarea placeholder="Nội dung liên hệ..." rows={6}></textarea>
-            <button className="contact-send-btn" type="submit">GỬI TIN NHẮN</button>
+          <form className="contact-form" onSubmit={handleSubmit}>
+            {message.text && (
+              <div className={`message ${message.type}`}>
+                {message.text}
+              </div>
+            )}
+            <input 
+              type="text" 
+              name="subject"
+              placeholder="Tiêu đề..." 
+              value={formData.subject}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            />
+            <textarea 
+              name="body"
+              placeholder="Nội dung liên hệ..." 
+              rows={6}
+              value={formData.body}
+              onChange={handleInputChange}
+              disabled={isLoading}
+            ></textarea>
+            <button 
+              className="contact-send-btn" 
+              type="submit"
+              disabled={isLoading}
+            >
+              {isLoading ? "ĐANG GỬI..." : "GỬI TIN NHẮN"}
+            </button>
           </form>
           <div className="contact-doctor-img-wrap">
             <img

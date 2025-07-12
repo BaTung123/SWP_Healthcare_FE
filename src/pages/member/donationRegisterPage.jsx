@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import { GetUserProfileByUserId } from "../../services/userProfile";
 import { GetBloodDonationEventById } from "../../services/bloodDonationEvent";
-import { createDonorRegistration, DeleteDonorRegistration } from "../../services/donorRegistration";
+import { createDonorRegistration, DeleteDonorRegistration, postBloodDonationApplication } from "../../services/donorRegistration";
 import { DatePicker } from "antd";
 
 // Constants
@@ -25,6 +25,14 @@ const DONATION_TYPES = [
   { value: "Tiểu Cầu", label: "Tiểu Cầu" },
   { value: "Huyết Tương", label: "Huyết Tương" },
 ];
+
+// Mapping blood type string to number
+const BLOOD_TYPE_MAP = {
+  "A+": 0, "A-": 1, "B+": 2, "B-": 3, "AB+": 4, "AB-": 5, "O+": 6, "O-": 7
+};
+const DONATION_TYPE_MAP = {
+  "Toàn Phần": 0, "Tiểu Cầu": 1, "Huyết Tương": 2
+};
 
 const DonationRegisterPage = () => {
   const [donateEvent, setDonateEvent] = useState(null);
@@ -212,19 +220,32 @@ const DonationRegisterPage = () => {
       setLoading(true);
 
       const dataToSend = {
-        registrationId: 0,
+        bloodStorageId: 0,
         userId: formData.userId,
-        fullNameRegister: formData.fullName,
-        birthDate: formData.birthDate,
+        eventId: eventId ? Number(eventId) : 0,
+        fullName: formData.fullName,
+        dob: formData.birthDate,
         gender: formData.gender,
-        bloodGroup: formData.bloodType,
-        type: formData.type,
-        availableToDate: dayjs(formData.toDate).format("YYYY-MM-DD"),
-        phone: formData.phone,
+        bloodType: BLOOD_TYPE_MAP[formData.bloodType],
+        bloodTransferType: DONATION_TYPE_MAP[formData.type],
         quantity: Number(formData.quantity),
+        note: "",
+        phoneNumber: formData.phone,
+        donationStartDate: {
+          year: dayjs(formData.toDate).year(),
+          month: dayjs(formData.toDate).month() + 1,
+          day: dayjs(formData.toDate).date(),
+          dayOfWeek: dayjs(formData.toDate).day()
+        },
+        donationEndDate: {
+          year: dayjs(formData.toDate).year(),
+          month: dayjs(formData.toDate).month() + 1,
+          day: dayjs(formData.toDate).date(),
+          dayOfWeek: dayjs(formData.toDate).day()
+        }
       };
 
-      const response = await createDonorRegistration(dataToSend);
+      const response = await postBloodDonationApplication(dataToSend);
       console.log("Registration response:", response);
       toast.success("Đăng ký thành công!");
       
@@ -271,7 +292,6 @@ const DonationRegisterPage = () => {
               value={formData.fullName}
               onChange={handleChange}
               placeholder="Nhập họ và tên"
-              disabled
               className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
               style={{ width: '100%' }}
             />

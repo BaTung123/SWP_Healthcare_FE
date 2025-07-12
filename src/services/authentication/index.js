@@ -29,3 +29,17 @@ export const GetAuthenByUserId = async (userId) => {
     throw error;
   }
 }
+
+export const updateUserInfo = async (data) => {
+  return instance.put('/Authentication/information', data);
+};
+
+export const SendEmailToAdmin = async (emailData) => {
+  try {
+    const response = await instance.post("/Authentication/SendEmailToAdmin", emailData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi gửi email:", error.response?.data || error.message);
+    throw error;
+  }
+};

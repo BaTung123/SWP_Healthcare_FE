@@ -6,6 +6,7 @@ import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId,
 import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
+import { updateUserInfo } from '../../services/authentication';
 
 const ProfilePage = () => {
   const fileInputRef = useRef(null);
@@ -207,9 +208,25 @@ const ProfilePage = () => {
     setForm({ ...form, [name]: value });
   };
 
-  const handleSave = () => {
-    setUser(form);
-    alert('Cập nhật thông tin thành công!');
+  const handleSave = async () => {
+    try {
+      // Giả lập id, thực tế nên lấy từ user context hoặc localStorage
+      const id = 1;
+      const dataToSend = {
+        id,
+        name: form.fullName,
+        gender: form.gender,
+        dob: form.birthDate,
+        phoneNumber: form.phone
+      };
+      console.log('Dữ liệu gửi lên:', dataToSend);
+      await updateUserInfo(dataToSend);
+      setUser(form);
+      alert('Cập nhật thông tin thành công!');
+    } catch (error) {
+      console.log('Lỗi cập nhật:', error.response?.data || error.message);
+      alert('Cập nhật thông tin thất bại!');
+    }
   };
 
   const handleAvatarClick = () => {

@@ -1,62 +1,13 @@
 //Quản lý tài khoản người dùng (Member, Staff).
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { SearchOutlined, EditOutlined } from '@ant-design/icons';
 import { Space, Table, Tooltip, Switch, Modal, Button } from 'antd';
+import { instance } from '../../services/instance';
 // import axios from 'axios';
 
 const UserManagementPage = () => {
-  const [originalList] = useState([
-    {
-      id: 1,
-      name: 'Dương Thái Hoàng Nghĩa',
-      email: 'n@gmail.com',
-      role: 'Member',
-      status: 'Active',
-    },
-    {
-      id: 2,
-      name: 'Nguyễn Văn A',
-      email: 'a@gmail.com',
-      role: 'Stock',
-      status: 'Active',
-    },
-    {
-      id: 3,
-      name: 'Trần Thị B',
-      email: 'b@gmail.com',
-      role: 'Staff',
-      status: 'Inactive',
-    },
-    {
-      id: 4,
-      name: 'Lê Văn C',
-      email: 'c@gmail.com',
-      role: 'Member',
-      status: 'Active',
-    },
-    {
-      id: 5,
-      name: 'Lê Văn C',
-      email: 'c@gmail.com',
-      role: 'Member',
-      status: 'Active',
-    },
-    {
-      id: 6,
-      name: 'Lê Văn C',
-      email: 'c@gmail.com',
-      role: 'Member',
-      status: 'Active',
-    },
-    {
-      id: 7,
-      name: 'Lê Văn C',
-      email: 'c@gmail.com',
-      role: 'Member',
-      status: 'Active',
-    },
-  ]);
-  const [userList, setUserList] = useState(originalList);
+  const [originalList, setOriginalList] = useState([]);
+  const [userList, setUserList] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [filterRole, setFilterRole] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
@@ -64,58 +15,52 @@ const UserManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState('');
 
-  // Tối ưu search/filter
-  const handleSearch = (value) => {
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const res = await instance.get('/Authentication');
+        let users = res.data?.data?.users || [];
+        users = users.filter(user => user.role !== 'Admin'); // Ẩn admin
+        setOriginalList(users);
+        setUserList(users);
+      } catch (err) {
+        console.error('Không thể lấy danh sách người dùng:', err);
+      }
+    };
+    fetchUsers();
+  }, []);
+
+  // Tối ưu filter/search
+  const filterUsers = (search = searchText, role = filterRole, status = filterStatus) => {
     let result = originalList;
-    if (value) {
+    if (search) {
       result = result.filter(user =>
-        user.name.toLowerCase().includes(value.toLowerCase()) ||
-        user.email.toLowerCase().includes(value.toLowerCase())
+        user.name.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase())
       );
     }
-    if (filterRole) {
-      result = result.filter(user => user.role === filterRole);
+    if (role) {
+      result = result.filter(user => user.role === role);
     }
-    if (filterStatus) {
-      result = result.filter(user => user.status === filterStatus);
+    if (status) {
+      result = result.filter(user => user.status === status);
     }
     setUserList(result);
+  };
+
+  const handleSearch = (value) => {
+    setSearchText(value);
+    filterUsers(value, filterRole, filterStatus);
   };
 
   const handleRoleFilter = (value) => {
     setFilterRole(value);
-    let result = originalList;
-    if (searchText) {
-      result = result.filter(user =>
-        user.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-    if (value) {
-      result = result.filter(user => user.role === value);
-    }
-    if (filterStatus) {
-      result = result.filter(user => user.status === filterStatus);
-    }
-    setUserList(result);
+    filterUsers(searchText, value, filterStatus);
   };
 
   const handleStatusFilter = (value) => {
     setFilterStatus(value);
-    let result = originalList;
-    if (searchText) {
-      result = result.filter(user =>
-        user.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchText.toLowerCase())
-      );
-    }
-    if (filterRole) {
-      result = result.filter(user => user.role === filterRole);
-    }
-    if (value) {
-      result = result.filter(user => user.status === value);
-    }
-    setUserList(result);
+    filterUsers(searchText, filterRole, value);
   };
 
 //   useEffect(()=>{
@@ -139,6 +84,16 @@ const UserManagementPage = () => {
     setUserList(userList.map(user => 
       user.id === record.id ? { ...user, status: newStatus } : user
     ));
+  };
+
+  // Ánh xạ role string sang số cho API
+  const roleStringToNumber = (role) => {
+    switch (role) {
+      case 'Customer': return 1;
+      case 'Staff': return 2;
+      case 'StorageManager': return 3;
+      default: return 0;
+    }
   };
 
   const columns = [
@@ -171,9 +126,10 @@ const UserManagementPage = () => {
       align: 'center',
       render: (role) => {
         switch (role) {
-          case 'Member': return 'Thành viên';
+          case 'Admin': return 'Quản trị viên';
           case 'Staff': return 'Nhân viên';
-          case 'Stock': return 'Thủ kho';
+          case 'StorageManager': return 'Thủ kho';
+          case 'Customer': return 'Khách hàng';
           default: return role;
         }
       },
@@ -236,21 +192,30 @@ const UserManagementPage = () => {
     setNewRole(e.target.value);
   };
 
-  // const handleUpdateRole = async () => {
-  //   if (!selectedUser) return;
-  //   try {
-  //     // Gọi API cập nhật role
-  //     await axios.put(`/api/users/${selectedUser.id}/role`, { role: newRole });
-  //     // Sau khi thành công, cập nhật lại userList (hoặc reload)
-  //     setUserList(userList.map(user =>
-  //       user.id === selectedUser.id ? { ...user, role: newRole } : user
-  //     ));
-  //     setIsModalOpen(false);
-  //     message.success('Cập nhật role thành công!');
-  //   } catch (error) {
-  //     message.error('Cập nhật role thất bại!');
-  //   }
-  // };
+  const handleUpdateRole = async () => {
+    if (!selectedUser) return;
+    try {
+      console.log({
+        id: selectedUser.id,
+        role: roleStringToNumber(newRole),
+        newRole
+      });
+      await instance.put('/Authentication/role', {
+        id: selectedUser.id,
+        role: roleStringToNumber(newRole)
+      });
+      // Sau khi thành công, cập nhật lại userList (hoặc reload)
+      const updatedOriginalList = originalList.map(user =>
+        user.id === selectedUser.id ? { ...user, role: newRole } : user
+      );
+      setOriginalList(updatedOriginalList);
+      filterUsers(searchText, filterRole, filterStatus);
+      setIsModalOpen(false);
+    } catch (error) {
+      console.log(error.response?.data);
+      alert('Cập nhật role thất bại!');
+    }
+  };
 
   return (
     <div className="p-6">
@@ -309,7 +274,7 @@ const UserManagementPage = () => {
       <Modal
         title="Cập nhật vai trò"
         open={isModalOpen}
-        // onOk={handleUpdateRole}
+        onOk={handleUpdateRole}
         onCancel={() => setIsModalOpen(false)}
         okText="Cập nhật"
         cancelText="Huỷ"
@@ -322,9 +287,9 @@ const UserManagementPage = () => {
             value={newRole}
             onChange={handleRoleChange}
           >
-            <option value="Member">Thành viên</option>
+            <option value="Customer">Khách hàng</option>
             <option value="Staff">Nhân viên</option>
-            <option value="Stock">Thủ kho</option>
+            <option value="StorageManager">Thủ kho</option>
           </select>
         </div>
       </Modal>

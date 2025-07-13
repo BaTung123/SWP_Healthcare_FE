@@ -1,7 +1,7 @@
 //Quản lý tài khoản người dùng (Member, Staff).
 import { useState, useEffect } from 'react';
 import { SearchOutlined, EditOutlined } from '@ant-design/icons';
-import { Space, Table, Tooltip, Switch, Modal, Button } from 'antd';
+import { Space, Table, Tooltip, Switch, Modal, Button, message } from 'antd';
 import { instance } from '../../services/instance';
 // import axios from 'axios';
 
@@ -15,18 +15,20 @@ const UserManagementPage = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newRole, setNewRole] = useState('');
 
+  // Refactor fetchUsers to be callable from anywhere
+  const fetchUsers = async () => {
+    try {
+      const res = await instance.get('/Authentication');
+      let users = res.data?.data?.users || [];
+      users = users.filter(user => user.role !== 'Admin'); // Ẩn admin
+      setOriginalList(users);
+      setUserList(users);
+    } catch (err) {
+      console.error('Không thể lấy danh sách người dùng:', err);
+    }
+  };
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const res = await instance.get('/Authentication');
-        let users = res.data?.data?.users || [];
-        users = users.filter(user => user.role !== 'Admin'); // Ẩn admin
-        setOriginalList(users);
-        setUserList(users);
-      } catch (err) {
-        console.error('Không thể lấy danh sách người dùng:', err);
-      }
-    };
     fetchUsers();
   }, []);
 
@@ -195,25 +197,16 @@ const UserManagementPage = () => {
   const handleUpdateRole = async () => {
     if (!selectedUser) return;
     try {
-      console.log({
-        id: selectedUser.id,
-        role: roleStringToNumber(newRole),
-        newRole
-      });
       await instance.put('/Authentication/role', {
         id: selectedUser.id,
         role: roleStringToNumber(newRole)
       });
-      // Sau khi thành công, cập nhật lại userList (hoặc reload)
-      const updatedOriginalList = originalList.map(user =>
-        user.id === selectedUser.id ? { ...user, role: newRole } : user
-      );
-      setOriginalList(updatedOriginalList);
-      filterUsers(searchText, filterRole, filterStatus);
+      message.success('Cập nhật vai trò thành công!');
       setIsModalOpen(false);
+      // Reload lại danh sách user
+      fetchUsers();
     } catch (error) {
-      console.log(error.response?.data);
-      alert('Cập nhật role thất bại!');
+      message.error('Cập nhật vai trò thất bại!');
     }
   };
 

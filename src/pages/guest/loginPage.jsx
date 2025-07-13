@@ -29,15 +29,36 @@ function LoginPage() {
         setLoading(false);
         return;
       }
-      // Giả lập API: email: test@gmail.com, password: 123456
-      // await new Promise(resolve => setTimeout(resolve, 1000));
+ 
       console.log("error:", error)
       if (!error) {
         console.log("form:", form)
         const loginResponse = await Login(form)
         console.log("loginResponse:", loginResponse)
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token: loginResponse.data.token }));
-        navigate('/');
+        const token = loginResponse.data.token;
+        console.log("token:", token)
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log("payload:", payload)
+        const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
+        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role }));
+
+        switch (role) {
+          case "Admin":
+            navigate('/admin');
+            break;
+          
+          case "Staff":
+            navigate('/staff/event');
+            break;
+
+          case "StorageManager":
+            navigate('/stock/blood-stock');
+            break;
+
+          default:
+            navigate("/");
+            break;
+        }
       } else {
         setError('Email hoặc mật khẩu không đúng!');
       }

@@ -1,5 +1,5 @@
 //Trang chủ: giới thiệu cơ sở y tế, tài liệu nhóm máu, blog chia sẻ.
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import '../../styles/homePage.css';
 import axios from "axios";
@@ -11,6 +11,22 @@ function HomePage() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentBlog, setCurrentBlog] = useState(0);
+  const visibleCount = 3;
+  const handlePrevBlog = () => {
+    setCurrentBlog((prev) => (prev - 1 + posts.length) % posts.length);
+  };
+  const handleNextBlog = () => {
+    setCurrentBlog((prev) => (prev + 1) % posts.length);
+  };
+  const getVisibleBlogs = () => {
+    if (!Array.isArray(posts) || posts.length === 0) return [];
+    const result = [];
+    for (let i = 0; i < visibleCount; i++) {
+      result.push(posts[(currentBlog + i) % posts.length]);
+    }
+    return result;
+  };
 
   // Format date giống newsPage
   const formatDate = (dateString) => {
@@ -92,26 +108,46 @@ function HomePage() {
         <div className="home-section-badge">BLOG MỚI NHẤT</div>
         <div className="home-section-title">Tin tức & <span>Trải nghiệm mới</span></div>
         <div className="home-section-desc">Cập nhật các bài viết mới nhất về hiến máu, hướng dẫn hữu ích và câu chuyện truyền cảm hứng.</div>
-        <div className="home-department-list">
-          {loading ? (
-            <div>Đang tải bài viết...</div>
-          ) : error ? (
-            <div style={{ color: 'red' }}>{error}</div>
-          ) : (
-            Array.isArray(posts) && posts.map((post) => (
-              <div 
-                className="home-department-card" 
-                key={post.id || post.title}
-                onClick={() => handleBlogClick(post.id)}
-                style={{ cursor: 'pointer' }}
-              >
-                <img src={post.imageUrl || post.image} alt={post.title} className="home-department-img" />
-                <div className="home-department-title">{post.title}</div>
-                <div className="home-department-desc">Đọc về những cập nhật mới nhất trong lĩnh vực hiến máu và chăm sóc sức khỏe.</div>
-                <div className="home-department-meta">{formatDate(post.createdAt)}</div>
-              </div>
-            ))
-          )}
+        <div style={{ position: 'relative' }}>
+          <button
+            className="blog-scroll-btn left"
+            style={{ position: 'absolute', left: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: '#fff', border: 'none', borderRadius: '50%', boxShadow: '0 2px 8px #ccc', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handlePrevBlog}
+            aria-label="Prev blog"
+            disabled={posts.length === 0}
+          >
+            <i className="fa-solid fa-chevron-left"></i>
+          </button>
+          <div className="home-department-list" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 360, gap: 24 }}>
+            {loading ? (
+              <div>Đang tải bài viết...</div>
+            ) : error ? (
+              <div style={{ color: 'red' }}>{error}</div>
+            ) : (
+              getVisibleBlogs().map((post, idx) => (
+                <div
+                  className="home-department-card"
+                  key={post?.id || post?.title || idx}
+                  onClick={() => handleBlogClick(post.id)}
+                  style={{ cursor: 'pointer', minWidth: 280, maxWidth: 320, flex: '0 0 320px' }}
+                >
+                  <img src={post?.imageUrl || post?.image} alt={post?.title} className="home-department-img" />
+                  <div className="home-department-title">{post?.title}</div>
+                  <div className="home-department-desc">Đọc về những cập nhật mới nhất trong lĩnh vực hiến máu và chăm sóc sức khỏe.</div>
+                  <div className="home-department-meta">{formatDate(post?.createdAt)}</div>
+                </div>
+              ))
+            )}
+          </div>
+          <button
+            className="blog-scroll-btn right"
+            style={{ position: 'absolute', right: 0, top: '50%', transform: 'translateY(-50%)', zIndex: 2, background: '#fff', border: 'none', borderRadius: '50%', boxShadow: '0 2px 8px #ccc', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={handleNextBlog}
+            aria-label="Next blog"
+            disabled={posts.length === 0}
+          >
+            <i className="fa-solid fa-chevron-right"></i>
+          </button>
         </div>
       </div>
 

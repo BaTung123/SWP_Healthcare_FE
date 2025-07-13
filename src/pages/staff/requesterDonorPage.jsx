@@ -155,9 +155,8 @@ const RequesterDonorPage = () => {
     }, [fetchRegistrationList]);
 
     // Optimized filter function
-    const applyFilters = useCallback((nextFilters = filters) => {
+    const applyFilters = useCallback((nextFilters) => {
         let result = originalList;
-        
         if (nextFilters.search) {
             result = result.filter(r => 
                 r.fullNameRegister.toLowerCase().includes(nextFilters.search.toLowerCase())
@@ -172,16 +171,17 @@ const RequesterDonorPage = () => {
         if (nextFilters.type) {
             result = result.filter(r => r.type === nextFilters.type);
         }
-        
         setFilteredList(result);
-    }, [originalList, filters]);
+    }, [originalList]);
+
+    useEffect(() => {
+        applyFilters(filters);
+    }, [originalList, filters, applyFilters]);
 
     // Handle filter changes
     const handleFilterChange = useCallback((key, value) => {
-        const nextFilters = { ...filters, [key]: value };
-        setFilters(nextFilters);
-        applyFilters(nextFilters);
-    }, [filters, applyFilters]);
+        setFilters(prev => ({ ...prev, [key]: value }));
+    }, []);
 
     // Modal handlers
     const handleEdit = useCallback((record) => {
@@ -192,9 +192,6 @@ const RequesterDonorPage = () => {
 
     const handleModalOk = useCallback(() => {
         if (editingRecord) {
-            setFilteredList(prev => prev.map(item =>
-                item === editingRecord ? { ...item, status: newStatus } : item
-            ));
             setOriginalList(prev => prev.map(item =>
                 item === editingRecord ? { ...item, status: newStatus } : item
             ));
@@ -209,7 +206,6 @@ const RequesterDonorPage = () => {
     }, []);
 
     const handleDelete = useCallback((record) => {
-        setFilteredList(prev => prev.filter(item => item !== record));
         setOriginalList(prev => prev.filter(item => item !== record));
     }, []);
 
@@ -223,9 +219,6 @@ const RequesterDonorPage = () => {
 
     const handleBloodModalOk = useCallback(() => {
         if (editingBloodRecord) {
-            setFilteredList(prev => prev.map(item =>
-                item === editingBloodRecord ? { ...item, bloodGroup: editBloodType, quantity: editQuantity } : item
-            ));
             setOriginalList(prev => prev.map(item =>
                 item === editingBloodRecord ? { ...item, bloodGroup: editBloodType, quantity: editQuantity } : item
             ));

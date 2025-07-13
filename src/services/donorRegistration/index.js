@@ -69,3 +69,7 @@ export const DeleteDonorRegistration = async (appointmentId) => {
     throw error;
   }
 }
+
+export const postBloodDonationApplication = async (data) => {
+  return instance.post('/BloodDonationApplication', data);
+};

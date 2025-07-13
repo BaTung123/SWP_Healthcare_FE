@@ -1,56 +1,57 @@
 //	Quản lý số lượng đơn vị máu còn lại tại cơ sở y tế.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../../styles/bloodStockManagementPage.css';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { GetAllBlood } from '../../services/bloodStorage';
 
 const bloodTypeList = [
-  'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
 ];
 
-const initialBloodTypes = [
-  {
-    bloodType: 'A+',
-    volume: 450,
-    // status sẽ được tính tự động
-  },
-  {
-    bloodType: 'A-',
-    volume: 350,
-  },
-  {
-    bloodType: 'B+',
-    volume: 250,
-  },
-  {
-    bloodType: 'B-',
-    volume: 200,
-  },
-  {
-    bloodType: 'AB+',
-    volume: 500,
-  },
-  {
-    bloodType: 'AB-',
-    volume: 0,
-  },
-  {
-    bloodType: 'O+',
-    volume: 600,
-  },
-  {
-    bloodType: 'O-',
-    volume: 100,
-  },
-];
+// const initialBloodTypes = [
+//   {
+//     bloodType: 'A+',
+//     volume: 450,
+//     // status sẽ được tính tự động
+//   },
+//   {
+//     bloodType: 'A-',
+//     volume: 350,
+//   },
+//   {
+//     bloodType: 'B+',
+//     volume: 250,
+//   },
+//   {
+//     bloodType: 'B-',
+//     volume: 200,
+//   },
+//   {
+//     bloodType: 'AB+',
+//     volume: 500,
+//   },
+//   {
+//     bloodType: 'AB-',
+//     volume: 0,
+//   },
+//   {
+//     bloodType: 'O+',
+//     volume: 600,
+//   },
+//   {
+//     bloodType: 'O-',
+//     volume: 100,
+//   },
+// ];
 
 // Hàm tính trạng thái dựa trên volume
 const getStatus = (volume) => (volume > 0 ? 'Enough' : 'Not Enough');
 
 const BloodStockManagementPage = () => {
   // Khởi tạo dữ liệu với status tự động
-  const [originalList] = useState(initialBloodTypes.map(item => ({ ...item, status: getStatus(item.volume) })));
-  const [filtered, setFiltered] = useState(originalList);
+  const [originalList, setOriginalList] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
@@ -58,6 +59,20 @@ const BloodStockManagementPage = () => {
   const [editingRecord, setEditingRecord] = useState(null);
   const [newStatus, setNewStatus] = useState('Enough');
   const [newVolume, setNewVolume] = useState(0);
+
+
+  const fetchBloodStorage = async () => {
+    const bloodStorageRes = await GetAllBlood();
+    console.log("bloodStorageRes", bloodStorageRes)
+    setOriginalList(bloodStorageRes.data.bloodStorages.map(item => ({ ...item, status: getStatus(item.quantity) })))
+    setFiltered(bloodStorageRes.data.bloodStorages.map(item => ({ ...item, status: getStatus(item.quantity) })))
+  }
+  useEffect(() => {
+    fetchBloodStorage();
+  }, [])
+
+  console.log("originalList", originalList)
+  console.log("filtered", filtered)
 
   const handleSearch = (value, status = filterStatus, bloodType = filterBloodType) => {
     let filteredList = originalList;
@@ -70,7 +85,7 @@ const BloodStockManagementPage = () => {
       filteredList = filteredList.filter(r => r.status === status);
     }
     if (bloodType) {
-      filteredList = filteredList.filter(r => r.bloodType === bloodType);
+      filteredList = filteredList.filter(r => bloodTypeList[r.bloodType] === bloodType);
     }
     setFiltered(filteredList);
   };
@@ -129,12 +144,12 @@ const BloodStockManagementPage = () => {
       key: 'bloodType',
       align: 'center',
       width: 120,
-      render: (bloodType) => <span className="font-bold">{bloodType}</span>
+      render: (bloodType) => <span className="font-bold">{bloodTypeList[bloodType]}</span>
     },
     {
       title: 'Số lượng (ml)',
-      dataIndex: 'volume',
-      key: 'volume',
+      dataIndex: 'quantity',
+      key: 'quantity',
       align: 'center',
       width: 150,
     },

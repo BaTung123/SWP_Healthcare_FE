@@ -234,7 +234,7 @@ const AcceptBloodDropPage = () => {
 
   return (
     <div className="flex flex-col">
-      <h1 className="text-2xl font-bold mb-10 text-center text-red-600">Thông tin nhận máu vào kho</h1>
+      <h1 className="text-2xl font-bold mb-10 text-center text-red-600">Xuất Máu</h1>
       <div className="flex flex-shrink-0 mb-4">
         <div className="relative">
           <input

@@ -65,11 +65,6 @@ const SideBar = () => {
             label: <Link to="/staff/send-blood">Blood Request</Link>,
         },
         {
-            key: "/staff/blood-drop",
-            icon: <BarChartOutlined />,
-            label: <Link to="/staff/blood-drop">Blood Drop</Link>,
-        },
-        {
             key: "/staff/donor",
             icon: <AuditOutlined />,
             label: <Link to="/staff/donor">Blood Donor</Link>,

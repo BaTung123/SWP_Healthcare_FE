@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@ant-design/icons';
 import { GetAllDonorRegistration } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
+// Thêm import Modal, Input cho form
+import { Input, Form } from 'antd';
 
 // Constants
 const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
@@ -123,6 +125,40 @@ const RequesterDonorPage = () => {
     const [editingBloodRecord, setEditingBloodRecord] = useState(null);
     const [editBloodType, setEditBloodType] = useState('');
     const [editQuantity, setEditQuantity] = useState('');
+    // State cho modal gửi máu vào kho
+    const [isBloodDropModalOpen, setIsBloodDropModalOpen] = useState(false);
+    const [bloodDropFormData, setBloodDropFormData] = useState(null);
+
+    // Hàm mở modal gửi máu vào kho
+    const handleOpenBloodDropModal = (record) => {
+        setBloodDropFormData({
+            fullName: record.fullNameRegister || "",
+            birthDate: record.birthDate || "",
+            gender: "", // Nếu có thì truyền vào
+            bloodType: record.bloodGroup || "",
+            quantity: record.quantity || 0,
+            hospital: "",
+            phone: record.phone || "",
+            type: record.type || "",
+            needDate: dayjs().format("YYYY-MM-DD"),
+            note: "",
+        });
+        setIsBloodDropModalOpen(true);
+    };
+
+    // Hàm xử lý thay đổi form gửi máu vào kho
+    const handleBloodDropFormChange = (e) => {
+        const { name, value } = e.target;
+        setBloodDropFormData((prev) => ({ ...prev, [name]: value }));
+    };
+
+    // Hàm submit form gửi máu vào kho
+    const handleBloodDropFormSubmit = (e) => {
+        e.preventDefault();
+        // Xử lý gửi dữ liệu tại đây
+        console.log("Submitted blood drop form data:", bloodDropFormData);
+        setIsBloodDropModalOpen(false);
+    };
 
     // Fetch registration list
     const fetchRegistrationList = useCallback(async () => {
@@ -284,7 +320,6 @@ const RequesterDonorPage = () => {
             title: 'Số điện thoại',
             dataIndex: 'phone',
             key: 'phone',
-            width: 200,
             align: 'center',
         },
         {
@@ -310,9 +345,10 @@ const RequesterDonorPage = () => {
             title: 'Thao tác',
             key: 'actions',
             align: 'center',
-            width: 150,
+            width: 220,
             render: (_, record) => (
                 <span className="flex items-center justify-center gap-2">
+                    {/* Sửa trạng thái */}
                     <Tooltip title="Sửa trạng thái">
                         <Button 
                             type="dashed" 
@@ -324,6 +360,7 @@ const RequesterDonorPage = () => {
                             <EditOutlined />
                         </Button>
                     </Tooltip>
+                    {/* Sửa nhóm máu & số lượng */}
                     <Tooltip title="Sửa nhóm máu & số lượng">
                         <Button
                             type="dashed"
@@ -333,6 +370,18 @@ const RequesterDonorPage = () => {
                             disabled={loading}
                         >
                             <EditOutlined rotate={90} />
+                        </Button>
+                    </Tooltip>
+                    {/* Gửi máu vào kho */}
+                    <Tooltip title="Gửi máu vào kho">
+                        <Button
+                            type="dashed"
+                            variant="dashed"
+                            color="danger"
+                            onClick={() => handleOpenBloodDropModal(record)}
+                            disabled={loading}
+                        >
+                            <AuditOutlined />
                         </Button>
                     </Tooltip>
                 </span>
@@ -472,6 +521,167 @@ const RequesterDonorPage = () => {
                     placeholder="Nhập số ml (tối đa 500ml)"
                     disabled={loading}
                 />
+            </Modal>
+
+            {/* Modal gửi máu vào kho */}
+            <Modal
+                title="Thông tin Gửi Máu vào Kho"
+                open={isBloodDropModalOpen}
+                onCancel={() => setIsBloodDropModalOpen(false)}
+                footer={null}
+            >
+                {bloodDropFormData && (
+                    <form className="flex flex-col gap-6" onSubmit={handleBloodDropFormSubmit}>
+                        {/* họ và tên */}
+                        <div className="flex flex-col">
+                            <label className="font-semibold mb-1">
+                                Họ và tên <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                name="fullName"
+                                required
+                                value={bloodDropFormData.fullName}
+                                onChange={handleBloodDropFormChange}
+                                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                placeholder="Nhập họ và tên"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        {/* ngày sinh và giới tính */}
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Ngày sinh</label>
+                                <input
+                                    type="date"
+                                    name="birthDate"
+                                    value={bloodDropFormData.birthDate}
+                                    onChange={handleBloodDropFormChange}
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Giới tính</label>
+                                <select
+                                    name="gender"
+                                    value={bloodDropFormData.gender}
+                                    onChange={handleBloodDropFormChange}
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    style={{ width: '100%' }}
+                                >
+                                    <option value="">-- Chọn giới tính --</option>
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                    <option value="Khác">Khác</option>
+                                </select>
+                            </div>
+                        </div>
+                        {/* Nhóm máu và số lượng */}
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Nhóm máu <span className="text-red-500">*</span></label>
+                                <select
+                                    name="bloodType"
+                                    value={bloodDropFormData.bloodType}
+                                    onChange={handleBloodDropFormChange}
+                                    required
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    style={{ width: '100%' }}
+                                >
+                                    <option value="">-- Chọn nhóm máu --</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Số ml cần</label>
+                                <input
+                                    type="number"
+                                    name="quantity"
+                                    min={0}
+                                    step={50}
+                                    value={bloodDropFormData.quantity}
+                                    onChange={handleBloodDropFormChange}
+                                    className="w-full text-center border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        </div>
+                        {/* Ngày bỏ máu vào kho */}
+                        <div className="flex flex-col">
+                            <label className="font-semibold mb-1">Ngày bỏ máu vào kho <span className="text-red-500">*</span></label>
+                            <input
+                                type="date"
+                                name="needDate"
+                                value={bloodDropFormData.needDate}
+                                onChange={handleBloodDropFormChange}
+                                required
+                                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                min={dayjs().format("YYYY-MM-DD")}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        {/* Loại và số điện thoại trên cùng một dòng */}
+                        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Loại <span className="text-red-500">*</span></label>
+                                <select
+                                    name="type"
+                                    required
+                                    value={bloodDropFormData.type}
+                                    onChange={handleBloodDropFormChange}
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    style={{ width: '100%' }}
+                                >
+                                    <option value="">-- Chọn loại --</option>
+                                    <option value="Toàn phần">Toàn phần</option>
+                                    <option value="Tiểu cầu">Tiểu cầu</option>
+                                    <option value="Huyết tương">Huyết tương</option>
+                                </select>
+                            </div>
+                            <div className="flex-1 flex flex-col">
+                                <label className="font-semibold mb-1">Số điện thoại <span className="text-red-500">*</span></label>
+                                <input
+                                    type="tel"
+                                    name="phone"
+                                    value={bloodDropFormData.phone}
+                                    onChange={handleBloodDropFormChange}
+                                    required
+                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                    placeholder="VD: 0901234567"
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        </div>
+                        {/* Ghi chú */}
+                        <div className="flex flex-col">
+                            <label className="font-semibold mb-1">Ghi chú</label>
+                            <textarea
+                                name="note"
+                                value={bloodDropFormData.note}
+                                onChange={handleBloodDropFormChange}
+                                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                placeholder="Nhập ghi chú (nếu có)"
+                                style={{ width: '100%' }}
+                            />
+                        </div>
+                        {/* Nút gửi */}
+                        <button
+                            type="submit"
+                            className={`w-full p-3 text-white rounded-lg font-bold shadow-md transition-all duration-300 ease-in-out mt-2
+                              bg-gradient-to-r from-[#b30000] to-[#ff4d4d] hover:scale-105 hover:shadow-lg`}
+                        >
+                            Gửi yêu cầu
+                        </button>
+                    </form>
+                )}
             </Modal>
         </div>
     );

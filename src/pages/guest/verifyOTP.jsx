@@ -64,10 +64,24 @@ const VerifyOTP = () => {
     }
   };
 
-  const handleResendOTP = () => {
+  const handleResendOTP = async () => {
     // Xử lý gửi lại OTP qua email
-    console.log('Resending OTP to email...');
-    alert('Mã OTP mới đã được gửi đến email của bạn.');
+    console.log('email:', email);
+    console.log('purposeType:', purposeType);
+    try 
+    {
+     const resendOtp =  await instance.post('/Authentication/generate', {
+      email,
+      purposeType,
+      expiryTimeInMinutes: 5
+     })
+     console.log('Resending OTP to email...');
+     alert('Mã OTP mới đã được gửi đến email của bạn.');
+    }
+    catch (error) 
+    {
+      console.error('OTP resend failed:', error);
+    }
   };
 
   return (

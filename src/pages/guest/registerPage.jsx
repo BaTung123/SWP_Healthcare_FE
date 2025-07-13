@@ -53,7 +53,7 @@ const RegisterPage = () => {
     console.log("registerResponse", registerResponse)
 
     // Chuyển hướng sang trang nhập OTP
-    navigate('/verify-otp', { state: { email: form.email, purposeType: 'register' } });
+    navigate('/verify-otp', { state: { email: form.email, purposeType: 'VerifyEmail' } });
   };
 
   return (

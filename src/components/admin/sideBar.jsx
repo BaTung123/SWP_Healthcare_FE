@@ -9,9 +9,13 @@ const SideBar = () => {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const user = JSON.parse(localStorage.getItem("user"));
+    const role = user.role;
+    
     // Danh sách tất cả các menu item
-    const allMenuItems = [
+    
         // --- ADMIN ---
+    const adminMenu = [
         {
             key: "/admin",
             icon: <DashboardOutlined />,
@@ -22,7 +26,10 @@ const SideBar = () => {
             icon: <UserOutlined />,
             label: <Link to="/admin/user">User Management</Link>,
         },
+    ]
+
         // --- STOCK ---
+    const stockMenu = [
         {
             key: "/stock/blood-stock",
             icon: <ProductOutlined />,
@@ -38,7 +45,10 @@ const SideBar = () => {
             icon: <AuditOutlined />,
             label: <Link to="/stock/receiver">Blood Receiver</Link>,
         },
+    ]
+
         // --- STAFF ---
+    const staffMenu = [
         {
             key: "/staff/event",
             icon: <BookOutlined />,
@@ -64,17 +74,37 @@ const SideBar = () => {
             icon: <AuditOutlined />,
             label: <Link to="/staff/donor">Blood Donor</Link>,
         },
+    ]
+
         // --- LOGOUT ---
-        {
-            key: "logout",
-            icon: <LogoutOutlined />,
-            label: "Logout",
-            style: { color: "red" },
-            onClick: () => {
-                // localStorage.clear();
-                navigate("/login");
-            },
+    const logoutItem = {
+        key: "logout",
+        icon: <LogoutOutlined />,
+        label: "Logout",
+        style: { color: "red" },
+        onClick: () => {
+            localStorage.removeItem("user");
+            navigate("/login");
         },
+    }
+
+    let roleMenus = [];
+    if (role === "Admin") 
+    {
+        roleMenus = adminMenu;
+    }
+    else if (role === "Staff") 
+    {
+        roleMenus = staffMenu;
+    }
+    else if (role === "StorageManager") 
+    {
+        roleMenus = stockMenu;
+    }
+
+    const allMenuItems = [
+        ...roleMenus,
+        logoutItem
     ]
     
     return (

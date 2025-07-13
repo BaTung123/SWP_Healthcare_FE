@@ -15,6 +15,7 @@ const Header = () => {
     const fetchUser = async () => {
       const savedUser = JSON.parse(localStorage.getItem("user"));
       const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
+      console.log("payload:", payload)
       const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
       const userResponse = await GetAuthenByUserId(userId)
       console.log("userResponse:", userResponse)

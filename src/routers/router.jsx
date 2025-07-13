@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import RootLayout from "../layout/RootLayout";
 import AuthLayout from "../layout/AuthLayout";
@@ -46,8 +46,17 @@ const ReceiverPage = lazy(() => import("../pages/stock/receiverPage"));
 const Loading = () => <div>Loading...</div>;
 
 // Route protection wrapper
-const ProtectedRoute = ({ children, roles }) => {
-  // Add your authentication logic here
+const ProtectedRoute = ({ children, roleAccount }) => {
+  const user = JSON.parse(localStorage.getItem("user"));
+  const role = user?.role;
+
+  if (!user) return <Navigate to="/login" />;
+
+  console.log(roleAccount)
+  console.log(role)
+  if (!roleAccount.includes(role)) 
+    return <Navigate to="/unauthorized" />;
+
   return <Suspense fallback={<Loading />}>{children}</Suspense>;
 };
 
@@ -91,11 +100,11 @@ export const router = createBrowserRouter([
       },
       { 
         path: "/member/profile", 
-        element: <ProtectedRoute roles={["member"]}><ProfilePage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Customer"]}><ProfilePage /></ProtectedRoute>
       },
       { 
         path: "/member/register-donation", 
-        element: <ProtectedRoute roles={["member"]}><DonationRegisterPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Customer"]}><DonationRegisterPage /></ProtectedRoute>
       },
     ],
   },
@@ -131,7 +140,7 @@ export const router = createBrowserRouter([
       //},
       { 
         path: "recovery-reminder", 
-        element: <ProtectedRoute roles={["member"]}><RecoveryReminderPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Customer"]}><RecoveryReminderPage /></ProtectedRoute>
       },
     ],
   },
@@ -143,31 +152,31 @@ export const router = createBrowserRouter([
     children: [
       { 
         path: "donor", 
-        element: <ProtectedRoute roles={["staff"]}><RequesterDonorPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><RequesterDonorPage /></ProtectedRoute>
       },
       { 
         path: "donation-process", 
-        element: <ProtectedRoute roles={["staff"]}><DonationProcessPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><DonationProcessPage /></ProtectedRoute>
       },
         { 
           path: "blood-request", 
-          element: <ProtectedRoute roles={["staff"]}><BloodRequestPage /></ProtectedRoute>
+          element: <ProtectedRoute roleAccount={["Staff"]}><BloodRequestPage /></ProtectedRoute>
         },
       { 
         path: "event", 
-        element: <ProtectedRoute roles={["staff"]}><EventManagementPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><EventManagementPage /></ProtectedRoute>
       },
       { 
         path: "blood-drop", 
-        element: <ProtectedRoute roles={["staff"]}><BloodDropPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><BloodDropPage /></ProtectedRoute>
       },
       { 
         path: "send-blood", 
-        element: <ProtectedRoute roles={["staff"]}><SendBloodPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><SendBloodPage /></ProtectedRoute>
       },
       { 
         path: "blog", 
-        element: <ProtectedRoute roles={["staff"]}><BlogManagementPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Staff"]}><BlogManagementPage /></ProtectedRoute>
       },
     ],  
   },
@@ -179,11 +188,11 @@ export const router = createBrowserRouter([
     children: [
       { 
         path: "", 
-        element: <ProtectedRoute roles={["admin"]}><AdminDashboardPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Admin"]}><AdminDashboardPage /></ProtectedRoute>
       },
       { 
         path: "user", 
-        element: <ProtectedRoute roles={["admin"]}><UserManagementPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["Admin"]}><UserManagementPage /></ProtectedRoute>
       },
     ],
   },
@@ -195,15 +204,15 @@ export const router = createBrowserRouter([
     children: [
       { 
         path: "blood-stock", 
-        element: <ProtectedRoute roles={["stock"]}><BloodStockManagementPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["StorageManager"]}><BloodStockManagementPage /></ProtectedRoute>
       },
       { 
         path: "accept-blood-drop", 
-        element: <ProtectedRoute roles={["stock"]}><AcceptBloodDropPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["StorageManager"]}><AcceptBloodDropPage /></ProtectedRoute>
       },
       { 
         path: "receiver", 
-        element: <ProtectedRoute roles={["stock"]}><ReceiverPage /></ProtectedRoute>
+        element: <ProtectedRoute roleAccount={["StorageManager"]}><ReceiverPage /></ProtectedRoute>
       },
     ],
   },

@@ -6,7 +6,7 @@ import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId,
 import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
-import { updateUserInfo } from '../../services/authentication';
+import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
 
 const ProfilePage = () => {
   const fileInputRef = useRef(null);
@@ -53,22 +53,7 @@ const ProfilePage = () => {
   const [showAppointList, setShowAppointList] = useState(false);
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
-  const [user, setUser] = useState({
-    fullName: 'Nguyễn Văn A',
-    email: 'vana@example.com',
-    phone: '0901234567',
-    bloodType: 'O+',
-    birthDate: '1990-05-15',
-    donationCount: 5,
-    receptionCount: 2,
-    avatarUrl: '',
-    gender: 'male',
-    donationHistory: [
-      { stt: 1, volume: 350, type: 'Toàn phần', date: '2024-11-15' },
-      { stt: 2, volume: 350, type: 'Toàn phần', date: '2024-07-10' },
-      { stt: 3, volume: 350, type: 'Toàn phần', date: '2024-03-02' },
-    ]
-  });
+  const [user, setUser] = useState();
 
   const [form, setForm] = useState(user);
 
@@ -186,22 +171,18 @@ const ProfilePage = () => {
   ];
 
   useEffect(() => {
-    const fetchRegistration = async () => {
-      const listRegisterWithUserId = await GetAllDonorRegistrationWithUserId(1);
-      setRegistrationList(listRegisterWithUserId);
-      console.log("listRegisterWithUserId:", listRegisterWithUserId);
-      const res = await GetDonorRegistrationByUserId(1);
-      setRegistration(res);
-      console.log("registration:", res);
-      const appointmentRes = await GetAppointmentsByRegistrationId(res.registrationId);
-      setAppointment(appointmentRes);
-      console.log("appointmentRes:", appointmentRes);
-      const event = await GetEventByFacilityId(appointmentRes.facilityId);
-      setEvent(event);
-      console.log("event:", event);
+    const fetchUser = async () => {
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
+      console.log("payload:", payload)
+      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+      const userResponse = await GetAuthenByUserId(userId)
+      console.log("userResponse:", userResponse)
+      setUser(userResponse.data);
     };
-    fetchRegistration();
-  }, []);
+
+    fetchUser();
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -284,11 +265,11 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {activeTab === 'profile' && (
+        {activeTab === 'profile' && user && (
           <div className="flex items-start mb-8">
             <div className="flex flex-col items-center flex-[0_0_200px] ml-12">
               <img
-                src={form.avatarUrl || 'https://i.imgur.com/1Q9Z1Zm.png'}
+                src={user.avatarImageUrl || 'https://i.imgur.com/1Q9Z1Zm.png'}
                 alt="Avatar"
                 className="w-[250px] h-[250px] rounded-full object-cover border-4 border-indigo-100 mb-6 shadow-md transition-all hover:scale-105 hover:border-indigo-900"
               />
@@ -313,8 +294,8 @@ const ProfilePage = () => {
                   <div className="flex flex-col gap-1 w-full mb-3">
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
                     <input
-                      name="fullName"
-                      value={form.fullName}
+                      name="name"
+                      value={user.name}
                       readOnly
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                     />
@@ -323,7 +304,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
                     <input
                       name="phone"
-                      value={form.phone}
+                      value={user.phoneNumber}
                       onChange={handleChange}
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     />
@@ -332,7 +313,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
                     <select
                       name="bloodType"
-                      value={form.bloodType}
+                      // value={form.bloodType}
                       onChange={handleChange}
                       className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
@@ -353,7 +334,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">EMAIL</label>
                     <input
                       name="email"
-                      value={form.email}
+                      value={user.email}
                       readOnly
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                     />
@@ -362,7 +343,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">GENDER</label>
                     <select
                       name="gender"
-                      value={form.gender}
+                      value={user.gender}
                       onChange={handleChange}
                       className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
@@ -374,8 +355,8 @@ const ProfilePage = () => {
                   <div className="flex flex-col gap-1 w-full mb-3">
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BIRTH DATE</label>
                     <input
-                      name="birthDate"
-                      value={form.birthDate}
+                      name="dob"
+                      value={user.dob}
                       type="date"
                       onChange={handleChange}
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"

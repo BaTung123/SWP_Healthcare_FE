@@ -1,68 +1,28 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { FileTextOutlined } from '@ant-design/icons';
-
-const initialReceiverList = [
-  {
-    fullName: "Nguyễn Văn A",
-    bloodType: "A+",
-    quantity: 500,
-    type: "Toàn phần",
-    needDate: "2024-07-01",
-    phone: "0901234567",
-    status: 'Đang chờ',
-  },
-  {
-    fullName: "Trần Thị B",
-    bloodType: "O-",
-    quantity: 350,
-    type: "Tiểu cầu",
-    needDate: "2024-07-01",
-    phone: "0912345678",
-    status: 'Đã duyệt',
-  },
-  {
-    fullName: "Lê Văn C",
-    bloodType: "B+",
-    quantity: 450,
-    type: "Huyết tương",
-    needDate: "2024-08-10",
-    phone: "0987654321",
-    status: 'Đang chờ',
-  },
-  {
-    fullName: "Phạm Thị D",
-    bloodType: "AB-",
-    quantity: 500,
-    type: "Toàn phần",
-    needDate: "2024-07-01",
-    phone: "0934567890",
-    status: 'Từ chối',
-  },
-  {
-    fullName: "Hoàng Văn E",
-    bloodType: "O+",
-    quantity: 350,
-    type: "Tiểu cầu",
-    needDate: "2024-09-01",
-    phone: "0978123456",
-    status: 'Đang chờ',
-  },
-];
+import { GetAllBloodRequestApplication, UpdateBloodRequestStatus } from '../../services/bloodRequestApplication';
+import dayjs from 'dayjs';
 
 const bloodTypes = [
-  '', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+];
+
+const statusList = [
+  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
+];
+
+const bloodTransferTypes = [
+  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
 ];
 
 const statusOptions = [
-  { value: 'Đang chờ', label: 'Đang chờ' },
-  { value: 'Đã duyệt', label: 'Đã duyệt' },
-  { value: 'Từ chối', label: 'Từ chối' },
+  { value: 'Chấp Nhận', label: 'Chấp Nhận' },
+  { value: 'Từ Chối', label: 'Từ Chối' },
 ];
 
 const AcceptBloodDropPage = () => {
-  const [data, setData] = useState(initialReceiverList);
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
@@ -71,6 +31,27 @@ const AcceptBloodDropPage = () => {
   const [newStatus, setNewStatus] = useState('Đang chờ');
   const [rejectReason, setRejectReason] = useState('');
   const [detailModal, setDetailModal] = useState({ open: false, reason: '' });
+
+  
+  const fetchRequestList = async () => {
+      const requestListRes = await GetAllBloodRequestApplication();
+      console.log("requestListRes", requestListRes.data.bloodRequestApplications)
+      const requestList = requestListRes.data.bloodRequestApplications;
+      const requestObjList = requestList.map(request => {
+  
+        return {
+          ...request,
+          bloodTransferType: bloodTransferTypes[request.bloodTransferType],
+          bloodType: bloodTypes[request.bloodType],
+          status: statusList[request.status]
+        }
+      })
+  
+      setData(requestObjList)
+    }
+  useEffect(() => {
+    fetchRequestList()
+  }, [])
 
   // Filtered data for display only
   const filteredData = data.filter(r => {
@@ -99,24 +80,21 @@ const AcceptBloodDropPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalOk = () => {
+  const handleModalOk = async () => {
     if (editingRecord) {
-      setData(prev => prev.map(item =>
-        item === editingRecord
-          ? { ...item, status: newStatus, rejectReason: newStatus === 'Từ chối' ? rejectReason : undefined }
-          : item
-      ));
-      // Save to localStorage if rejected
-      const uniqueKey = `blood_request_${editingRecord.phone}_${editingRecord.time}`;
-      if (newStatus === 'Từ chối') {
-        localStorage.setItem(uniqueKey, JSON.stringify({ status: 'Từ chối', rejectReason }));
-      } else {
-        localStorage.removeItem(uniqueKey);
-      }
+      const updateRequestObj = {
+        id: editingRecord.id,
+        status: statusList.indexOf(newStatus),
+        note: rejectReason || ""
+      };
+      console.log("updateRequestObj", updateRequestObj)
+      const updateRequestRes = await UpdateBloodRequestStatus(updateRequestObj);
+      console.log("updateRequestRes", updateRequestRes)
     }
     setIsModalOpen(false);
     setEditingRecord(null);
     setRejectReason('');
+    fetchRequestList();
   };
 
   const handleModalCancel = () => {
@@ -189,10 +167,10 @@ const AcceptBloodDropPage = () => {
         let color;
         let text = status;
         switch (status) {
-          case 'Đang chờ': color = 'text-orange-500'; break;
-          case 'Đã duyệt': color = 'text-blue-500'; break;
-          case 'Từ chối': color = 'text-red-500'; break;
-          default: color = 'text-gray-500';
+          case 'Đang Chờ': color = 'text-orange-500'; break;
+          case 'Chấp Nhận': color = 'text-blue-500'; break;
+          case 'Từ Chối': color = 'text-red-500'; break;
+          default: color = 'text-green-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`}>
@@ -206,15 +184,20 @@ const AcceptBloodDropPage = () => {
       key: 'actions',
       align: 'center',
       width: 180,
-      render: (_, record) => (
-        <span className="flex items-center justify-center gap-2">
-          <Tooltip title="Sửa">
-            <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
-              <EditOutlined />
-            </Button>
-          </Tooltip>
-        </span>
-      ),
+      render: (_, record) => {
+        if (record.status === "Đã Xuất" || record.status === "Từ Chối")
+          return;
+
+        return (
+          <span className="flex items-center justify-center gap-2">
+            <Tooltip title="Sửa">
+              <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
+                <EditOutlined />
+              </Button>
+            </Tooltip>
+          </span>
+        )
+      },
     },
   ];
 
@@ -278,7 +261,7 @@ const AcceptBloodDropPage = () => {
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
         dataSource={filteredData}
         columns={columns}
-        rowKey={(record, idx) => record.phone + record.time}
+        rowKey={(record) => record.id}
         pagination={{
           pageSize: 5,
           position: ['bottomCenter'],
@@ -300,7 +283,7 @@ const AcceptBloodDropPage = () => {
           onChange={value => setNewStatus(value)}
           options={statusOptions}
         />
-        {newStatus === 'Từ chối' && (
+        {newStatus === 'Từ Chối' && (
           <div className="mt-4">
             <label className="block font-semibold mb-1">Lý do từ chối:</label>
             <Input.TextArea

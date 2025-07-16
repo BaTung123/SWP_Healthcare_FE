@@ -1,103 +1,93 @@
 //	Quản lý số lượng đơn vị máu còn lại tại cơ sở y tế.
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import '../../styles/bloodStockManagementPage.css';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
 import { FileTextOutlined } from '@ant-design/icons';
+import { CreateBloodRequestStatus, GetAllBloodRequestApplication, UpdateBloodRequestStatus } from '../../services/bloodRequestApplication';
+import dayjs from 'dayjs';
+import { CreateBloodExportApplication } from '../../services/bloodExport';
+import { toast } from 'react-toastify';
 
 const bloodTypes = [
-  '', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
 ];
 
-const initialRequests = [
-  {
-    fullName: 'Nguyễn Văn A',
-    birthday: '1990-01-01',
-    gender: 'Nam',
-    bloodType: 'A+',
-    quantity: 500,
-    reason: 'Phẫu thuật tim',
-    type: 'Toàn phần',
-    neededTime: '2024-06-10',
-    phone: '0901234567',
-    status: 'Đang chờ',
-  },
-  {
-    fullName: 'Trần Thị B',
-    birthday: '1985-05-12',
-    gender: 'Nữ',
-    bloodType: 'O-',
-    quantity: 350,
-    reason: 'Tai nạn giao thông',
-    type: 'Tiểu cầu',
-    neededTime: '2024-06-11',
-    phone: '0912345678',
-    status: 'Từ chối',
-  },
+const statusList = [
+  'Đang Chờ', 'Chấp Nhận', 'Đã Nhận', 'Từ Chối'
+];
+
+const bloodTransferTypes = [
+  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
 ];
 
 const statusOptions = [
-  { value: 'Đang chờ', label: 'Đang chờ' },
+  { value: 'Đang Chờ', label: 'Đang Chờ' },
+  { value: 'Đã Nhận', label: 'Đã Nhận' },
+  { value: 'Đã Duyệt', label: 'Đã Duyệt' },
+  { value: 'Từ Chối', label: 'Từ Chối' },
+];
+
+const statusOptionsWithPending = [
   { value: 'Đã nhận', label: 'Đã nhận' },
-  { value: 'Đã duyệt', label: 'Đã duyệt' },
-  { value: 'Từ chối', label: 'Từ chối' },
 ];
 
 // Định nghĩa form mặc định
 const initialRequestForm = {
   fullName: '',
-  birthday: '',
+  dob: '',
   gender: '',
+  requestReason: '',
   bloodType: '',
+  bloodTransferType: '',
   quantity: '',
-  reason: '',
-  type: '',
-  neededTime: '',
-  phone: '',
+  note: '',
+  isUrged: '',
+  phoneNumber: '',
+  bloodRequestDate: ''
 };
 
 const SendBloodPage = () => {
-  const [requests, setRequests] = useState(initialRequests.map(r => ({
-    ...r,
-    status:
-      r.status === 'Đang chờ' ? 'Đang chờ' :
-      r.status === 'Đã nhận' ? 'Đã nhận' :
-      r.status === 'Đã duyệt' ? 'Đã duyệt' :
-      r.status === 'Từ chối' ? 'Từ chối' :
-      'Đang chờ'
-  })));
+  const [requests, setRequests] = useState([])
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [newStatus, setNewStatus] = useState('Đang chờ');
+  const [newStatus, setNewStatus] = useState("");
   const [rejectReason, setRejectReason] = useState('');
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [requestForm, setRequestForm] = useState(initialRequestForm);
   const [neededTimeType, setNeededTimeType] = useState('gap'); // 'gap' hoặc 'date'
   const [detailModal, setDetailModal] = useState({ open: false, reason: '' });
+ 
+  const fetchRequestList = async () => {
+    const requestListRes = await GetAllBloodRequestApplication();
+    console.log("requestListRes", requestListRes.data.bloodRequestApplications)
+    const requestList = requestListRes.data.bloodRequestApplications;
 
-  useEffect(() => {
-    setRequests(prevRequests => prevRequests.map(req => {
-      const uniqueKey = `blood_request_${req.phone}_${req.neededTime}`;
-      const local = localStorage.getItem(uniqueKey);
-      if (local) {
-        const { status, rejectReason } = JSON.parse(local);
-        return { ...req, status, rejectReason };
+    const requestObjList = requestList.map(request => {
+      return {
+        ...request,
+        bloodTransferType: bloodTransferTypes[request.bloodTransferType],
+        bloodType: bloodTypes[request.bloodType],
+        status: statusList[request.status]
       }
-      return req;
-    }));
+    })
+
+    setRequests(requestObjList)
+  }
+  useEffect(() => {
+    fetchRequestList();
   }, []);
 
-  // Tính toán danh sách đã lọc
-  const filtered = useMemo(() => {
-    return requests.filter(r =>
-      (!search || r.fullName.toLowerCase().includes(search.toLowerCase())) &&
-      (!filterStatus || r.status === filterStatus) &&
-      (!filterBloodType || r.bloodType === filterBloodType)
-    );
-  }, [requests, search, filterStatus, filterBloodType]);
+  // Filtered data for display only
+  const filteredData = requests.filter(r => {
+    const matchName = search ? r.fullName.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchStatus = filterStatus ? r.status === filterStatus : true;
+    const matchBloodType = filterBloodType ? r.bloodType === filterBloodType : true;
+    return matchName && matchStatus && matchBloodType;
+  });
 
   // Các handler sử dụng useCallback để tránh tạo lại không cần thiết
   const handleSearch = useCallback((value) => setSearch(value), []);
@@ -107,35 +97,32 @@ const SendBloodPage = () => {
   const handleEdit = (record) => {
     setEditingRecord(record);
     setNewStatus(record.status);
-    setRejectReason(record.rejectReason || getRejectReasonFromLocal(record));
+    setRejectReason(record.note);
     setIsModalOpen(true);
   };
 
-  const handleModalOk = () => {
+  console.log("editingRecord", editingRecord)
+  console.log("newStatus", newStatus)
+  const handleModalOk = async () => {
     if (editingRecord) {
-      setRequests(prev => prev.map(item =>
-        item === editingRecord ? { ...item, status: newStatus, rejectReason: newStatus === 'Từ chối' ? rejectReason : undefined } : item
-      ));
-      // Save to localStorage if rejected
-      const uniqueKey = `blood_request_${editingRecord.phone}_${editingRecord.neededTime}`;
-      if (newStatus === 'Từ chối') {
-        localStorage.setItem(uniqueKey, JSON.stringify({ status: 'Từ chối', rejectReason }));
-      } else {
-        localStorage.removeItem(uniqueKey);
-      }
+      const updateRequestObj = {
+        id: editingRecord.id,
+        status: statusList.indexOf(newStatus),
+        note: rejectReason || ""
+      };
+      console.log("updateRequestObj", updateRequestObj)
+      const updateRequestRes = await UpdateBloodRequestStatus(updateRequestObj);
+      console.log("updateRequestRes", updateRequestRes)
     }
     setIsModalOpen(false);
     setEditingRecord(null);
     setRejectReason('');
+    fetchRequestList();
   };
 
   const handleModalCancel = () => {
     setIsModalOpen(false);
     setEditingRecord(null);
-  };
-
-  const handleDelete = (record) => {
-    setRequests(prev => prev.filter(item => item !== record));
   };
 
   // Validate số lượng máu
@@ -153,13 +140,9 @@ const SendBloodPage = () => {
   const handleNeededTimeTypeChange = (e) => {
     const value = e.target.value;
     setNeededTimeType(value);
-    setRequestForm((prev) => ({
-      ...prev,
-      neededTime: value === 'gap' ? 'Gấp' : '',
-    }));
   };
 
-  const handleRequestFormSubmit = (e) => {
+  const handleRequestFormSubmit = async (e) => {
     e.preventDefault();
     // Validate họ tên
     if (!requestForm.fullName.trim()) {
@@ -172,13 +155,13 @@ const SendBloodPage = () => {
       return;
     }
     // Validate loại
-    if (!requestForm.type) {
+    if (!requestForm.bloodTransferType) {
       alert('Vui lòng chọn loại máu.');
       return;
     }
     // Validate ngày sinh >= 18 tuổi
-    if (requestForm.birthday) {
-      const birth = new Date(requestForm.birthday);
+    if (requestForm.dob) {
+      const birth = new Date(requestForm.dob);
       const today = new Date();
       const age = today.getFullYear() - birth.getFullYear() - (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate()) ? 1 : 0);
       if (age < 18) {
@@ -187,7 +170,7 @@ const SendBloodPage = () => {
       }
     }
     // Validate số điện thoại
-    if (!/^\d{10}$/.test(requestForm.phone)) {
+    if (!/^\d{10}$/.test(requestForm.phoneNumber)) {
       alert('Số điện thoại phải đủ 10 số và chỉ chứa số.');
       return;
     }
@@ -197,68 +180,63 @@ const SendBloodPage = () => {
       return;
     }
     // Validate ngày nếu chọn loại ngày
-    if (neededTimeType === 'date' && !requestForm.neededTime) {
+    if (neededTimeType === 'date' && !requestForm.bloodRequestDate) {
       alert('Vui lòng chọn ngày cần máu.');
       return;
     }
-    setRequests(prev => [
-      ...prev,
-      {
-        ...requestForm,
-        status: 'Đang chờ',
-      },
-    ]);
+
+    const bloodRequestData = {
+      ...requestForm,
+      bloodType: bloodTypes.indexOf(requestForm.bloodType),
+      bloodTransferType: bloodTransferTypes.indexOf(requestForm.bloodTransferType),
+      isUrged: neededTimeType === 'gap',
+      bloodRequestDate: neededTimeType === 'gap' ? null : requestForm.bloodRequestDate
+    };
+
+    console.log("bloodRequestData:", bloodRequestData);
+    const createBloodRequestRes = await CreateBloodRequestStatus(bloodRequestData);
+    console.log("createBloodRequestRes:", createBloodRequestRes);
+
+    const createBloodExpObj = {
+      bloodRequestApplicationId: createBloodRequestRes.data.id,
+      note: createBloodRequestRes.data.note
+    }
+    console.log("createBloodExpObj:", createBloodExpObj)
+    const createBloodExpRes = await CreateBloodExportApplication(createBloodExpObj);
+    console.log("createBloodExpRes:", createBloodExpRes)
+
     setIsRequestModalOpen(false);
     setRequestForm(initialRequestForm);
     setNeededTimeType('gap');
+    toast.success("Tạo yêu cầu cần máu thành công.")
+    fetchRequestList();
   };
 
-  // Các hàm render cho columns
-  const renderBloodType = (bloodType) => <span className="font-bold">{bloodType}</span>;
-  const renderQuantity = (quantity) => <span>{quantity}</span>;
-  const renderNeededTime = (neededTime) => {
-    if (!neededTime) return '';
-    if (neededTime === 'Gấp') return <span className="text-red-600 font-bold">Gấp</span>;
-    const date = neededTime.split('T')[0] || neededTime.split(' ')[0] || neededTime;
-    return <span>{date}</span>;
-  };
-  const renderStatus = (status) => {
-    let color;
-    let text = status;
-    switch (status) {
-      case 'Đang chờ': color = 'text-orange-500'; break;
-      case 'Đã duyệt': color = 'text-blue-500'; break;
-      case 'Đã nhận': color = 'text-green-600'; break;
-      case 'Từ chối': color = 'text-red-500'; break;
-      default: color = 'text-gray-500';
-    }
+  const renderActions = (_, record) => {
+    if (record.status === "Đã Nhận")
+      return;
+
     return (
-      <span
-        className={`font-bold ${color} border-2 rounded-md p-1`}
-        style={{ display: 'inline-block', whiteSpace: 'nowrap' }}
-      >
-        {text}
+      <span className="flex items-center justify-center gap-2">
+        {record.status === "Chấp Nhận" && (
+          <Tooltip title="Sửa">
+            <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
+              <EditOutlined />
+            </Button>
+          </Tooltip>
+        )}
+        {record.status === 'Từ Chối' && (
+          <Tooltip title="Xem lý do từ chối">
+            <Button type="dashed" variant="dashed" color="orange" onClick={() => setDetailModal({ open: true, reason: record.note })}>
+              <FileTextOutlined style={{ fontSize: 20, color: '#fa8c16' }} />
+            </Button>
+          </Tooltip>
+        )}
       </span>
-    );
+    )
   };
-  const renderActions = (_, record) => (
-    <span className="flex items-center justify-center gap-2">
-      <Tooltip title="Sửa">
-        <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
-          <EditOutlined />
-        </Button>
-      </Tooltip>
-      {record.status === 'Từ chối' && (
-        <Tooltip title="Xem lý do từ chối">
-          <Button type="dashed" variant="dashed" color="orange" onClick={() => setDetailModal({ open: true, reason: record.rejectReason || getRejectReasonFromLocal(record) })}>
-            <FileTextOutlined style={{ fontSize: 20, color: '#fa8c16' }} />
-          </Button>
-        </Tooltip>
-      )}
-    </span>
-  );
 
-  const columns = useMemo(() => [
+  const columns = [
     {
       title: 'STT',
       key: 'stt',
@@ -279,12 +257,12 @@ const SendBloodPage = () => {
       key: 'bloodType',
       align: 'center',
       width: 90,
-      render: renderBloodType,
+      render: (bloodType) => <span className="font-bold">{bloodType}</span>
     },
     {
       title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'bloodTransferType',
+      key: 'bloodTransferType',
       align: 'center',
       width: 110,
     },
@@ -294,27 +272,26 @@ const SendBloodPage = () => {
       key: 'quantity',
       align: 'center',
       width: 110,
-      render: renderQuantity,
     },
     {
       title: 'Thời gian',
-      dataIndex: 'neededTime',
-      key: 'neededTime',
+      dataIndex: 'bloodRequestDate',
+      key: 'id',
       align: 'center',
       width: 150,
-      render: renderNeededTime,
+      render: (date => dayjs(date).format("DD-MM-YYYY")),
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'phone',
-      key: 'phone',
+      dataIndex: 'phoneNumber',
+      key: 'id',
       align: 'center',
       width: 130,
     },
     {
       title: 'Lý do cần máu',
-      dataIndex: 'reason',
-      key: 'reason',
+      dataIndex: 'requestReason',
+      key: 'id',
       align: 'center',
       width: 160,
     },
@@ -323,17 +300,29 @@ const SendBloodPage = () => {
       dataIndex: 'status',
       key: 'status',
       align: 'center',
-      width: 110,
-      render: renderStatus,
+      render: (status) => {
+        let color;
+        let text = status;
+        switch (status) {
+          case 'Đang Chờ': color = 'text-orange-500'; break;
+          case 'Chấp Nhận': color = 'text-blue-500'; break;
+          case 'Từ Chối': color = 'text-red-500'; break;
+          default: color = 'text-green-500';
+        }
+        return (
+          <span className={`font-bold ${color} border-2 rounded-md p-1`}>
+            {text}
+          </span>
+        );
+      },
     },
     {
       title: 'Thao tác',
       key: 'actions',
       align: 'center',
-      width: 150,
       render: renderActions,
     },
-  ], [handleEdit, setDetailModal]);
+  ];
 
   return (
     <div className="flex flex-col">
@@ -385,9 +374,9 @@ const SendBloodPage = () => {
       </div>
       <Table
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
-        dataSource={filtered}
+        dataSource={filteredData}
         columns={columns}
-        rowKey={record => record.phone + record.neededTime}
+        rowKey={(record) => record.id}
         pagination={{
           pageSize: 5,
           position: ['bottomCenter'],
@@ -407,9 +396,9 @@ const SendBloodPage = () => {
           className="w-full"
           value={newStatus}
           onChange={setNewStatus}
-          options={statusOptions}
+          options={statusOptionsWithPending}
         />
-        {newStatus === 'Từ chối' && (
+        {newStatus === 'Từ Chối' && (
           <div className="mt-4">
             <label className="block font-semibold mb-1">Lý do từ chối:</label>
             <Input.TextArea
@@ -426,7 +415,6 @@ const SendBloodPage = () => {
         open={isRequestModalOpen}
         onCancel={() => setIsRequestModalOpen(false)}
         footer={null}
-        bodyStyle={{ padding: 0 }}
         width={700}
       >
         <div className="max-w-2xl mx-auto p-6">
@@ -448,8 +436,8 @@ const SendBloodPage = () => {
                 <label className="font-semibold mb-1 block">Ngày sinh</label>
                 <input
                   type="date"
-                  name="birthday"
-                  value={requestForm.birthday}
+                  name="dob"
+                  value={requestForm.dob}
                   onChange={handleRequestFormChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 />
@@ -510,8 +498,8 @@ const SendBloodPage = () => {
                 <label className="font-semibold mb-1 block">Lý do cần máu</label>
                 <input
                   type="text"
-                  name="reason"
-                  value={requestForm.reason}
+                  name="requestReason"
+                  value={requestForm.requestReason}
                   onChange={handleRequestFormChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   placeholder="VD: Phẫu thuật, thiếu máu..."
@@ -520,16 +508,17 @@ const SendBloodPage = () => {
               <div className="flex-1">
                 <label className="font-semibold mb-1 block">Loại <span className="text-red-500">*</span></label>
                 <select
-                  name="type"
+                  name="bloodTransferType"
                   required
-                  value={requestForm.type}
+                  value={requestForm.bloodTransferType}
                   onChange={handleRequestFormChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
                   <option value="">-- Chọn loại --</option>
-                  <option value="Toàn phần">Toàn phần</option>
-                  <option value="Tiểu cầu">Tiểu cầu</option>
-                  <option value="Huyết tương">Huyết tương</option>
+                  <option value="Toàn Phần">Toàn Phần</option>
+                  <option value="Tiểu Cầu">Tiểu Cầu</option>
+                  <option value="Huyết Tương">Huyết Tương</option>
+                  <option value="Hồng Cầu">Hồng Cầu</option>
                 </select>
               </div>
             </div>
@@ -560,8 +549,8 @@ const SendBloodPage = () => {
               {neededTimeType === 'date' && (
                 <input
                   type="date"
-                  name="neededTime"
-                  value={requestForm.neededTime}
+                  name="bloodRequestDate"
+                  value={requestForm.bloodRequestDate}
                   onChange={handleRequestFormChange}
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                   required
@@ -573,8 +562,8 @@ const SendBloodPage = () => {
               <label className="font-semibold mb-1 block">Số điện thoại <span className="text-red-500">*</span></label>
               <input
                 type="tel"
-                name="phone"
-                value={requestForm.phone}
+                name="phoneNumber"
+                value={requestForm.phoneNumber}
                 onChange={handleRequestFormChange}
                 required
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
@@ -603,17 +592,3 @@ const SendBloodPage = () => {
 };
 
 export default SendBloodPage;
-
-function getRejectReasonFromLocal(record) {
-  const uniqueKey = `blood_request_${record.phone}_${record.neededTime}`;
-  const local = localStorage.getItem(uniqueKey);
-  if (local) {
-    try {
-      const { rejectReason } = JSON.parse(local);
-      return rejectReason || '';
-    } catch {
-      return '';
-    }
-  }
-  return '';
-}

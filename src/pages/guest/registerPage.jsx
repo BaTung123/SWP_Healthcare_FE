@@ -30,6 +30,11 @@ const RegisterPage = () => {
       setError('Vui lòng nhập đầy đủ thông tin.');
       return;
     }
+    // Full Name phải trên 5 ký tự
+    if (form.name.trim().length < 5) {
+      setError('Họ và tên phải có ít nhất 5 ký tự.');
+      return;
+    }
     // Email phải là Gmail
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     if (!gmailRegex.test(form.email)) {

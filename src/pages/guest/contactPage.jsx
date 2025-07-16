@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/contactPage.css";
 import { SendEmailToAdmin } from "../../services/authentication";
+import { toast } from 'react-toastify';
 
 function ContactPage() {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ function ContactPage() {
     
     // Validation
     if (!formData.subject.trim() || !formData.body.trim()) {
-      setMessage({ type: "error", text: "Vui lòng điền đầy đủ thông tin!" });
+      toast.error("Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
@@ -41,14 +42,10 @@ function ContactPage() {
       };
 
       await SendEmailToAdmin(emailData);
-      
-      setMessage({ type: "success", text: "Tin nhắn đã được gửi thành công! Chúng tôi sẽ phản hồi trong vòng 24 giờ." });
+      toast.success("Tin nhắn đã được gửi thành công! Chúng tôi sẽ phản hồi trong vòng 24 giờ.");
       setFormData({ subject: "", body: "" });
     } catch (error) {
-      setMessage({ 
-        type: "error", 
-        text: "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau!" 
-      });
+      toast.error("Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau!");
     } finally {
       setIsLoading(false);
     }
@@ -112,11 +109,6 @@ function ContactPage() {
         </div>
         <div className="contact-form-row">
           <form className="contact-form" onSubmit={handleSubmit}>
-            {message.text && (
-              <div className={`message ${message.type}`}>
-                {message.text}
-              </div>
-            )}
             <input 
               type="text" 
               name="subject"

@@ -4,6 +4,7 @@ import { SearchOutlined, EditOutlined } from '@ant-design/icons';
 import { Space, Table, Tooltip, Switch, Modal, Button, message } from 'antd';
 import { instance } from '../../services/instance';
 // import axios from 'axios';
+import { toast } from 'react-toastify';
 
 const UserManagementPage = () => {
   const [originalList, setOriginalList] = useState([]);
@@ -81,11 +82,24 @@ const UserManagementPage = () => {
 //     }
 //   };
 
-  const handleToggleStatus = (record) => {
+  const handleToggleStatus = async (record) => {
     const newStatus = record.status === 'Active' ? 'Inactive' : 'Active';
-    setUserList(userList.map(user => 
-      user.id === record.id ? { ...user, status: newStatus } : user
-    ));
+    try {
+      await instance.put('/Authentication/status', {
+        id: record.id,
+        isBanned: newStatus === 'Inactive'
+      });
+      setUserList(userList.map(user => 
+        user.id === record.id ? { ...user, status: newStatus } : user
+      ));
+      if (newStatus === 'Active') {
+        toast.success('Đã chuyển sang trạng thái hoạt động!');
+      } else {
+        toast.error('Đã chuyển sang trạng thái ngưng hoạt động!');
+      }
+    } catch (err) {
+      toast.error('Cập nhật trạng thái thất bại!');
+    }
   };
 
   // Ánh xạ role string sang số cho API
@@ -201,12 +215,14 @@ const UserManagementPage = () => {
         id: selectedUser.id,
         role: roleStringToNumber(newRole)
       });
-      message.success('Cập nhật vai trò thành công!');
       setIsModalOpen(false);
       // Reload lại danh sách user
       fetchUsers();
+      setTimeout(() => {
+        toast.success('Cập nhật vai trò thành công!');
+      }, 300);
     } catch (error) {
-      message.error('Cập nhật vai trò thất bại!');
+      toast.error('Cập nhật vai trò thất bại!');
     }
   };
 

@@ -179,6 +179,16 @@ const ProfilePage = () => {
       const userResponse = await GetAuthenByUserId(userId)
       console.log("userResponse:", userResponse)
       setUser(userResponse.data);
+      // Nếu gender rỗng thì set mặc định là 'male', nếu là 'Nam'/'Nữ' thì chuyển sang 'male'/'female'
+      let gender = userResponse.data.gender;
+      if (!gender) gender = 'male';
+      else if (gender === 'Nam') gender = 'male';
+      else if (gender === 'Nữ') gender = 'female';
+      else if (gender !== 'male' && gender !== 'female') gender = 'other';
+      setForm({
+        ...userResponse.data,
+        gender,
+      });
     };
 
     fetchUser();
@@ -191,13 +201,36 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
+      // Validate gender
+      if (!form.gender) {
+        alert('Vui lòng chọn giới tính!');
+        return;
+      }
+      // Validate phone number
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(form.phone)) {
+        alert('Số điện thoại phải đủ 10 số!');
+        return;
+      }
+      // Validate age >= 18
+      const today = new Date();
+      const dob = new Date(form.dob);
+      const age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        alert('Bạn phải đủ 18 tuổi trở lên!');
+        return;
+      }
       // Giả lập id, thực tế nên lấy từ user context hoặc localStorage
       const id = 1;
       const dataToSend = {
         id,
-        name: form.fullName,
+        name: form.name,
         gender: form.gender,
-        dob: form.birthDate,
+        dob: form.dob,
         phoneNumber: form.phone
       };
       console.log('Dữ liệu gửi lên:', dataToSend);
@@ -207,21 +240,6 @@ const ProfilePage = () => {
     } catch (error) {
       console.log('Lỗi cập nhật:', error.response?.data || error.message);
       alert('Cập nhật thông tin thất bại!');
-    }
-  };
-
-  const handleAvatarClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setForm({ ...form, avatarUrl: reader.result });
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -267,101 +285,75 @@ const ProfilePage = () => {
 
         {activeTab === 'profile' && user && (
           <div className="flex items-start mb-8">
-            <div className="flex flex-col items-center flex-[0_0_200px] ml-12">
-              <img
-                src={user.avatarImageUrl || 'https://i.imgur.com/1Q9Z1Zm.png'}
-                alt="Avatar"
-                className="w-[250px] h-[250px] rounded-full object-cover border-4 border-indigo-100 mb-6 shadow-md transition-all hover:scale-105 hover:border-indigo-900"
-              />
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                className="bg-indigo-900 text-white border-none rounded-lg py-3 px-6 font-semibold cursor-pointer mt-4 w-full max-w-[130px] transition-all hover:bg-indigo-800 hover:-translate-y-0.5 shadow-md hover:shadow-lg active:translate-y-0"
-                onClick={handleAvatarClick}
-              >
-                CHANGE
-              </button>
-            </div>
-
             <div className="flex-1 w-full max-w-xl mx-auto">
-              <div className="flex flex-row justify-around gap-5 max-w-xl mx-auto">
+              <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
-                    <input
-                      name="name"
-                      value={user.name}
-                      readOnly
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
-                    <input
-                      name="phone"
-                      value={user.phoneNumber}
-                      onChange={handleChange}
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
-                    <select
-                      name="bloodType"
-                      // value={form.bloodType}
-                      onChange={handleChange}
-                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                    >
-                      <option value="A+">A+</option>
-                      <option value="A-">A-</option>
-                      <option value="B+">B+</option>
-                      <option value="B-">B-</option>
-                      <option value="AB+">AB+</option>
-                      <option value="AB-">AB-</option>
-                      <option value="O+">O+</option>
-                      <option value="O-">O-</option>
-                    </select>
-                  </div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">NAME</label>
+                  <input
+                    name="name"
+                    value={form?.name || ''}
+                    onChange={handleChange}
+                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                  />
                 </div>
-
                 <div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">EMAIL</label>
-                    <input
-                      name="email"
-                      value={user.email}
-                      readOnly
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">GENDER</label>
-                    <select
-                      name="gender"
-                      value={user.gender}
-                      onChange={handleChange}
-                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                    >
-                      <option value="male">Nam</option>
-                      <option value="female">Nữ</option>
-                      <option value="other">Khác</option>
-                    </select>
-                  </div>
-                  <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BIRTH DATE</label>
-                    <input
-                      name="dob"
-                      value={user.dob}
-                      type="date"
-                      onChange={handleChange}
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                    />
-                  </div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">EMAIL</label>
+                  <input
+                    name="email"
+                    value={user.email}
+                    readOnly
+                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">PHONE</label>
+                  <input
+                    name="phone"
+                    value={form?.phone || ''}
+                    onChange={handleChange}
+                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                  />
+                </div>
+                <div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
+                  <select
+                    name="gender"
+                    value={form?.gender || ''}
+                    onChange={handleChange}
+                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                  >
+                    <option value="male">Nam</option>
+                    <option value="female">Nữ</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BLOOD TYPE</label>
+                  <select
+                    name="bloodType"
+                    value={form?.bloodType || ''}
+                    onChange={handleChange}
+                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                  >
+                    <option value="A+">A+</option>
+                    <option value="A-">A-</option>
+                    <option value="B+">B+</option>
+                    <option value="B-">B-</option>
+                    <option value="AB+">AB+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="O+">O+</option>
+                    <option value="O-">O-</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
+                  <input
+                    name="dob"
+                    value={form?.dob || ''}
+                    type="date"
+                    onChange={handleChange}
+                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                  />
                 </div>
               </div>
             </div>

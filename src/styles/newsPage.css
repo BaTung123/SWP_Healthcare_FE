@@ -52,29 +52,42 @@ body, html {
   margin-bottom: 16px;
   text-align: center;
 }
+/* Đảm bảo .search-input-wrap là flex để input và button nằm cùng hàng */
 .search-input-wrap {
   display: flex;
   align-items: center;
-  background: #f2f6fa;
-  border-radius: 8px;
-  overflow: hidden;
 }
-.search-input-wrap input {
-  border: none;
-  outline: none;
-  background: transparent;
-  padding: 10px 12px;
+
+/* Style cho input và button để đều nhau */
+.search-input-wrap input[type="text"] {
   flex: 1;
-  font-size: 1rem;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px 0 0 6px;
+  font-size: 16px;
+  outline: none;
+  height: 40px;
+  box-sizing: border-box;
 }
-.search-btn {
+
+.search-input-wrap .search-btn {
+  padding: 0 18px;
+  height: 40px;
+  border: 1px solid #ccc;
+  border-left: none;
   background: #1976d2;
   color: #fff;
-  border: none;
-  padding: 0 16px;
-  height: 100%;
+  font-size: 18px;
+  border-radius: 0 6px 6px 0;
   cursor: pointer;
-  font-size: 1.1rem;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-input-wrap .search-btn:hover {
+  background: #125ea2;
 }
 
 .sidebar-section {

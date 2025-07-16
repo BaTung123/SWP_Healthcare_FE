@@ -5,6 +5,7 @@ import { Button, Space, Table, Tooltip, Modal, Input, Form } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { CreateBlog, DeleteBlog, GetAllBlog, UpdateBlog } from '../../services/blog';
 import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 
 const BlogManagementPage = () => {
   // const [blogs, setBlogs] = useState([
@@ -83,6 +84,7 @@ const BlogManagementPage = () => {
       setAddTitle("");
       setAddDescription("");
       setAddImage("");
+      toast.success("Tạo bài viết thành công!");
     } catch (err) {
       console.error("Lỗi khi tạo blog:", err);
     }
@@ -122,6 +124,7 @@ const BlogManagementPage = () => {
       setEditDescription("");
       setEditingBlogId(null);
       setEditImage("");
+      toast.success("Cập nhật bài viết thành công!");
     } catch (err) {
       console.error("Lỗi khi tạo blog:", err);
     }
@@ -134,6 +137,7 @@ const BlogManagementPage = () => {
       const deleteBlogRes = await DeleteBlog(id);
       console.log("deleteBlogRes:", deleteBlogRes)
       getAllBlog();
+      toast.success("Xóa bài viết thành công!");
     }
     catch (err)
     {

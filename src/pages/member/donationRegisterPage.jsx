@@ -1,7 +1,7 @@
 //Đăng ký nhóm máu, thời gian sẵn sàng hiến máu.
 import dayjs from "dayjs";
 import { useState, useEffect, useCallback } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { GetUserProfileByUserId } from "../../services/userProfile";
 import { GetBloodDonationEventById } from "../../services/bloodDonationEvent";
@@ -40,6 +40,7 @@ const DonationRegisterPage = () => {
   const [userProfile, setUserProfile] = useState(null);
   
   const location = useLocation();
+  const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
   const eventId = params.get("eventId");
 
@@ -54,6 +55,7 @@ const DonationRegisterPage = () => {
     phone: "",
     quantity: "",
   });
+  const [errors, setErrors] = useState({});
 
   // Mock: các ngày đã đăng ký trước đó (giả lập, thực tế lấy từ API)
   const registeredDates = [
@@ -88,7 +90,6 @@ const DonationRegisterPage = () => {
       }
     } catch (error) {
       console.error("Error fetching initial data:", error);
-      toast.error("Không thể tải thông tin người dùng. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +107,6 @@ const DonationRegisterPage = () => {
 
   const validateDate = useCallback((selectedDate) => {
     if (!selectedDate) {
-      toast.error("Vui lòng chọn ngày.");
       return false;
     }
 
@@ -115,7 +115,6 @@ const DonationRegisterPage = () => {
 
     // Check if date is in the past
     if (selectedDateStr < today) {
-      toast.error("Không thể chọn ngày trong quá khứ.");
       return false;
     }
 
@@ -125,7 +124,6 @@ const DonationRegisterPage = () => {
       const eventEndDate = dayjs(donateEvent.endDate).format("YYYY-MM-DD");
 
       if (selectedDateStr < eventStartDate || selectedDateStr > eventEndDate) {
-        toast.error(`Ngày phải từ ${eventStartDate} đến ${eventEndDate}`);
         return false;
       }
     }
@@ -150,63 +148,59 @@ const DonationRegisterPage = () => {
   }, []);
 
   const validateForm = useCallback(() => {
+    const newErrors = {};
+    // Validate họ tên
+    if (!formData.fullName) {
+      newErrors.fullName = "Vui lòng nhập họ và tên.";
+    } else if (/[^a-zA-ZÀ-ỹ\s]/.test(formData.fullName)) {
+      newErrors.fullName = "Họ tên không được chứa số hoặc ký tự đặc biệt.";
+    }
     // Validate nhóm máu
     if (!formData.bloodType) {
-      toast.error("Vui lòng chọn nhóm máu.");
-      return false;
+      newErrors.bloodType = "Vui lòng chọn nhóm máu.";
     }
     // Validate loại hiến máu
     if (!formData.type) {
-      toast.error("Vui lòng chọn loại hiến máu.");
-      return false;
+      newErrors.type = "Vui lòng chọn loại hiến máu.";
     }
     // Validate ngày sinh
     if (!formData.birthDate) {
-      toast.error("Vui lòng nhập ngày sinh.");
-      return false;
-    }
-    // Validate tuổi (18-60)
-    const age = dayjs().diff(dayjs(formData.birthDate), 'year');
-    if (age < 18 || age > 60) {
-      toast.error("Tuổi phải từ 18 đến 60 để đủ điều kiện hiến máu.");
-      return false;
+      newErrors.birthDate = "Vui lòng nhập ngày sinh.";
+    } else {
+      const age = dayjs().diff(dayjs(formData.birthDate), 'year');
+      if (age < 18 || age > 60) {
+        newErrors.birthDate = "Tuổi phải từ 18 đến 60 để đủ điều kiện hiến máu.";
+      }
     }
     // Validate giới tính
     if (!formData.gender) {
-      toast.error("Vui lòng chọn giới tính.");
-      return false;
+      newErrors.gender = "Vui lòng chọn giới tính.";
     }
     // Validate số điện thoại
     const phone = formData.phone || '';
     if (!/^\d{10}$/.test(phone)) {
-      toast.error("Số điện thoại phải đủ 10 số và chỉ chứa số.");
-      return false;
+      newErrors.phone = "Số điện thoại phải đủ 10 số và chỉ chứa số.";
     }
     // Validate số lượng ml máu
     const quantity = Number(formData.quantity);
     if (!quantity || isNaN(quantity) || quantity < 50) {
-      toast.error("Vui lòng nhập số lượng máu muốn hiến (ml) tối thiểu 50ml.");
-      return false;
-    }
-    if (quantity > 500) {
-      toast.error("Số lượng máu hiến tối đa là 500ml cho một lần hiến.");
-      return false;
-    }
-    if (quantity % 50 !== 0) {
-      toast.error("Số lượng máu phải là bội số của 50ml.");
-      return false;
+      newErrors.quantity = "Vui lòng nhập số lượng máu muốn hiến (ml) tối thiểu 50ml.";
+    } else if (quantity > 500) {
+      newErrors.quantity = "Số lượng máu hiến tối đa là 500ml cho một lần hiến.";
+    } else if (quantity % 50 !== 0) {
+      newErrors.quantity = "Số lượng máu phải là bội số của 50ml.";
     }
     // Validate ngày đăng ký hiến
     if (!validateDate(formData.toDate)) {
-      return false;
+      newErrors.toDate = "Vui lòng chọn ngày hợp lệ.";
     }
     // Không cho phép đăng ký trùng ngày (giả lập)
     const selectedDateStr = dayjs(formData.toDate).format('YYYY-MM-DD');
     if (registeredDates.includes(selectedDateStr)) {
-      toast.error("Bạn đã đăng ký hiến máu vào ngày này rồi. Vui lòng chọn ngày khác.");
-      return false;
+      newErrors.toDate = "Bạn đã đăng ký hiến máu vào ngày này rồi. Vui lòng chọn ngày khác.";
     }
-    return true;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   }, [formData, validateDate]);
 
   const handleSubmit = async (e) => {
@@ -220,7 +214,6 @@ const DonationRegisterPage = () => {
       setLoading(true);
 
       const dataToSend = {
-        bloodStorageId: 0,
         userId: formData.userId,
         eventId: eventId ? Number(eventId) : 0,
         fullName: formData.fullName,
@@ -231,24 +224,15 @@ const DonationRegisterPage = () => {
         quantity: Number(formData.quantity),
         note: "",
         phoneNumber: formData.phone,
-        donationStartDate: {
-          year: dayjs(formData.toDate).year(),
-          month: dayjs(formData.toDate).month() + 1,
-          day: dayjs(formData.toDate).date(),
-          dayOfWeek: dayjs(formData.toDate).day()
-        },
-        donationEndDate: {
-          year: dayjs(formData.toDate).year(),
-          month: dayjs(formData.toDate).month() + 1,
-          day: dayjs(formData.toDate).date(),
-          dayOfWeek: dayjs(formData.toDate).day()
-        }
+        status: 0,
+        donationStartDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : "",
+        donationEndDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : ""
       };
+      console.log('dataToSend:', dataToSend);
 
-      const response = await postBloodDonationApplication(dataToSend);
+      const response = await postBloodDonationApplication({ request: dataToSend });
       console.log("Registration response:", response);
-      toast.success("Đăng ký thành công!");
-      
+      toast.success("Đăng ký hiến máu thành công!");
       // Reset form after successful submission
       setFormData(prev => ({
         ...prev,
@@ -257,6 +241,8 @@ const DonationRegisterPage = () => {
         toDate: "",
         quantity: "",
       }));
+      setErrors({});
+      // Chuyển hướng sang trang danh sách donor để tự động reload
 
     } catch (error) {
       console.error("Registration error:", error);
@@ -283,6 +269,7 @@ const DonationRegisterPage = () => {
         <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm">Đăng ký Hiến Máu</h1>
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
+          {/* Họ và tên */}
           <div className="flex flex-col">
             <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Họ và tên</label>
             <input
@@ -295,9 +282,10 @@ const DonationRegisterPage = () => {
               className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
               style={{ width: '100%' }}
             />
+            {errors.fullName && <span className="text-red-500 text-xs mt-1">{errors.fullName}</span>}
           </div>
 
-          {/* Ngày sinh và giới tính */}
+          {/* Thông tin cá nhân */}
           <div className="flex flex-col md:flex-row gap-4 md:gap-8">
             <div className="flex flex-col flex-1">
               <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Ngày sinh</label>
@@ -310,6 +298,7 @@ const DonationRegisterPage = () => {
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                 style={{ width: '100%' }}
               />
+              {errors.birthDate && <span className="text-red-500 text-xs mt-1">{errors.birthDate}</span>}
             </div>
             <div className="flex flex-col flex-1">
               <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Giới tính</label>
@@ -326,9 +315,11 @@ const DonationRegisterPage = () => {
                 <option value="Nữ">Nữ</option>
                 <option value="Khác">Khác</option>
               </select>
+              {errors.gender && <span className="text-red-500 text-xs mt-1">{errors.gender}</span>}
             </div>
           </div>
 
+          {/* Thông tin hiến máu */}
           <div className="flex flex-col md:flex-row gap-4 md:gap-8">
             <div className="flex flex-col flex-1">
               <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Nhóm máu</label>
@@ -347,6 +338,24 @@ const DonationRegisterPage = () => {
                   </option>
                 ))}
               </select>
+              {errors.bloodType && <span className="text-red-500 text-xs mt-1">{errors.bloodType}</span>}
+            </div>
+            <div className="flex flex-col flex-1">
+              <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Loại</label>
+              <select
+                name="type"
+                required
+                value={formData.type}
+                onChange={handleChange}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                style={{ width: '100%' }}
+              >
+                <option value="">-- Chọn loại --</option>
+                <option value="Toàn phần">Toàn phần</option>
+                <option value="Tiểu cầu">Tiểu cầu</option>
+                <option value="Huyết tương">Huyết tương</option>
+              </select>
+              {errors.type && <span className="text-red-500 text-xs mt-1">{errors.type}</span>}
             </div>
             <div className="flex flex-col flex-1">
               <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Số lượng (ml)</label>
@@ -363,9 +372,11 @@ const DonationRegisterPage = () => {
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                 style={{ width: '100%' }}
               />
+              {errors.quantity && <span className="text-red-500 text-xs mt-1">{errors.quantity}</span>}
             </div>
           </div>
 
+          {/* Thời gian sẵn sàng hiến */}
           <div className="flex flex-col">
             <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Thời gian sẵn sàng hiến</label>
             <div className="flex justify-center md:justify-start">
@@ -386,9 +397,12 @@ const DonationRegisterPage = () => {
                 placeholder="Chọn ngày"
                 disabled={loading}
               />
+              {errors.toDate && <span className="text-red-500 text-xs mt-1">{errors.toDate}</span>}
             </div>
+            <span className="text-xs text-gray-500 mt-1">Chỉ chọn ngày từ hôm nay trở đi.</span>
           </div>
 
+          {/* Số điện thoại dưới cùng */}
           <div className="flex flex-col">
             <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Số điện thoại</label>
             <input
@@ -398,10 +412,10 @@ const DonationRegisterPage = () => {
               value={formData.phone}
               onChange={handleChange}
               placeholder="VD: 0987654321"
-              disabled
               className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
               style={{ width: '100%' }}
             />
+            {errors.phone && <span className="text-red-500 text-xs mt-1">{errors.phone}</span>}
           </div>
 
           <button

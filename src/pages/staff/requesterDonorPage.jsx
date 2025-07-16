@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@ant-design/icons';
-import { GetAllDonorRegistration } from '../../services/donorRegistration';
+import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
 import { Input, Form } from 'antd';
@@ -11,101 +11,15 @@ const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 const DONATION_TYPES = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
 const STATUS_OPTIONS = [
     { value: '', label: 'Tất cả trạng thái' },
-    { value: 'Đang chờ', label: 'Đang chờ' },
+    // { value: 'Đang chờ', label: 'Đang chờ' }, // Ẩn khỏi select modal
     { value: 'Đã duyệt', label: 'Đã duyệt' },
     { value: 'Từ chối', label: 'Từ chối' },
 ];
 
-// Mock data
-const MOCK_DATA = [
-    {
-        registrationId: 1,
-        fullNameRegister: "Nguyễn Văn An",
-        birthDate: "1995-04-12",
-        bloodGroup: "A+",
-        type: "Toàn Phần",
-        availableDate: "2024-01-15",
-        phone: "0987654321",
-        status: "Đang chờ",
-        quantity: 250
-    },
-    {
-        registrationId: 2,
-        fullNameRegister: "Trần Thị Bình",
-        birthDate: "1992-09-23",
-        bloodGroup: "O+",
-        type: "Tiểu Cầu",
-        availableDate: "2024-01-20",
-        phone: "0123456789",
-        status: "Đã duyệt",
-        quantity: 300
-    },
-    {
-        registrationId: 3,
-        fullNameRegister: "Lê Văn Cường",
-        birthDate: "1988-12-05",
-        bloodGroup: "B+",
-        type: "Huyết Tương",
-        availableDate: "2024-01-18",
-        phone: "0369852147",
-        status: "Đang chờ",
-        quantity: 350
-    },
-    {
-        registrationId: 4,
-        fullNameRegister: "Phạm Thị Dung",
-        birthDate: "1990-07-30",
-        bloodGroup: "AB+",
-        type: "Toàn Phần",
-        availableDate: "2024-01-22",
-        phone: "0587412369",
-        status: "Từ chối",
-        quantity: 400
-    },
-    {
-        registrationId: 5,
-        fullNameRegister: "Hoàng Văn Em",
-        birthDate: "1993-11-11",
-        bloodGroup: "A-",
-        type: "Tiểu Cầu",
-        availableDate: "2024-01-25",
-        phone: "0741258963",
-        status: "Đã duyệt",
-        quantity: 200
-    },
-    {
-        registrationId: 6,
-        fullNameRegister: "Vũ Thị Phương",
-        birthDate: "1997-03-18",
-        bloodGroup: "O-",
-        type: "Huyết Tương",
-        availableDate: "2024-01-28",
-        phone: "0963258741",
-        status: "Đang chờ",
-        quantity: 450
-    },
-    {
-        registrationId: 7,
-        fullNameRegister: "Đỗ Văn Giang",
-        birthDate: "1985-09-09",
-        bloodGroup: "B-",
-        type: "Toàn Phần",
-        availableDate: "2024-01-30",
-        phone: "0321654987",
-        status: "Đã duyệt",
-        quantity: 300
-    },
-    {
-        registrationId: 8,
-        fullNameRegister: "Ngô Thị Hoa",
-        birthDate: "1991-05-22",
-        bloodGroup: "AB-",
-        type: "Tiểu Cầu",
-        availableDate: "2024-02-01",
-        phone: "0789456123",
-        status: "Đang chờ",
-        quantity: 350
-    }
+const DONATION_TYPE_OPTIONS = [
+  { value: 0, label: 'Toàn phần' },
+  { value: 1, label: 'Tiểu cầu' },
+  { value: 2, label: 'Huyết tương' },
 ];
 
 const RequesterDonorPage = () => {
@@ -164,23 +78,24 @@ const RequesterDonorPage = () => {
     const fetchRegistrationList = useCallback(async () => {
         try {
             setLoading(true);
-            const res = await GetAllDonorRegistration();
-            
-            if (res && res.length > 0) {
-                setOriginalList(res);
-                setFilteredList(res);
-                console.log("list registration:", res);
-            } else {
-                setOriginalList(MOCK_DATA);
-                setFilteredList(MOCK_DATA);
-                console.log("Using mock data:", MOCK_DATA);
-            }
+            const res = await getAllBloodDonationApplication();
+            // Map API data sang format bảng
+            const mapped = (res || []).map((item, idx) => ({
+                registrationId: item.id || idx,
+                fullNameRegister: item.fullName || "",
+                birthDate: item.dob ? dayjs(item.dob).format('DD/MM/YYYY') : "",
+                bloodGroup: (typeof item.bloodType === 'number') ? ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'][item.bloodType] : '',
+                type: (typeof item.bloodTransferType === 'number') ? ['Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'][item.bloodTransferType] : '',
+                availableDate: item.donationEndDate ? (dayjs(item.donationEndDate).isValid() ? dayjs(item.donationEndDate).format('DD/MM/YYYY') : "") : '',
+                phone: item.phoneNumber || "",
+                status: typeof item.status === 'number' ? (item.status === 0 ? 'Đang chờ' : item.status === 1 ? 'Đã duyệt' : 'Từ chối') : 'Đang chờ',
+                quantity: item.quantity || ""
+            }));
+            setOriginalList(mapped);
+            setFilteredList(mapped);
+            console.log("list registration:", mapped);
         } catch (error) {
             console.error("Error fetching registration list:", error);
-            // Fallback to mock data if API fails
-            setOriginalList(MOCK_DATA.slice(0, 3));
-            setFilteredList(MOCK_DATA.slice(0, 3));
-            console.log("Using fallback mock data");
         } finally {
             setLoading(false);
         }
@@ -226,15 +141,33 @@ const RequesterDonorPage = () => {
         setIsModalOpen(true);
     }, []);
 
-    const handleModalOk = useCallback(() => {
+    const handleModalOk = useCallback(async () => {
         if (editingRecord) {
-            setOriginalList(prev => prev.map(item =>
-                item === editingRecord ? { ...item, status: newStatus } : item
-            ));
+            setLoading(true);
+            try {
+                // Map status text về số
+                let statusNumber = 0;
+                if (newStatus === 'Đã duyệt') statusNumber = 1;
+                else if (newStatus === 'Từ chối') statusNumber = 2;
+                await updateBloodDonationApplicationStatus({
+                    id: editingRecord.registrationId,
+                    status: statusNumber,
+                    note: ''
+                });
+                // Cập nhật lại danh sách
+                await fetchRegistrationList();
+            } catch (e) {
+                console.error('Lỗi cập nhật trạng thái:', e);
+            } finally {
+                setLoading(false);
+                setIsModalOpen(false);
+                setEditingRecord(null);
+            }
+        } else {
+            setIsModalOpen(false);
+            setEditingRecord(null);
         }
-        setIsModalOpen(false);
-        setEditingRecord(null);
-    }, [editingRecord, newStatus]);
+    }, [editingRecord, newStatus, fetchRegistrationList]);
 
     const handleModalCancel = useCallback(() => {
         setIsModalOpen(false);
@@ -486,7 +419,7 @@ const RequesterDonorPage = () => {
                     className="w-full"
                     value={newStatus}
                     onChange={setNewStatus}
-                    options={STATUS_OPTIONS.filter(opt => opt.value)}
+                    options={STATUS_OPTIONS.filter(opt => opt.value && opt.value !== 'Đang chờ')}
                     disabled={loading}
                 />
             </Modal>
@@ -549,6 +482,7 @@ const RequesterDonorPage = () => {
                             />
                         </div>
                         {/* ngày sinh và giới tính */}
+                        {/**
                         <div className="flex flex-col md:flex-row gap-4 md:gap-8">
                             <div className="flex-1 flex flex-col">
                                 <label className="font-semibold mb-1">Ngày sinh</label>
@@ -577,6 +511,7 @@ const RequesterDonorPage = () => {
                                 </select>
                             </div>
                         </div>
+                        */}
                         {/* Nhóm máu và số lượng */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-8">
                             <div className="flex-1 flex flex-col">
@@ -636,14 +571,14 @@ const RequesterDonorPage = () => {
                                     name="type"
                                     required
                                     value={bloodDropFormData.type}
-                                    onChange={handleBloodDropFormChange}
+                                    onChange={e => setBloodDropFormData(prev => ({ ...prev, type: Number(e.target.value) }))}
                                     className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                     style={{ width: '100%' }}
                                 >
                                     <option value="">-- Chọn loại --</option>
-                                    <option value="Toàn phần">Toàn phần</option>
-                                    <option value="Tiểu cầu">Tiểu cầu</option>
-                                    <option value="Huyết tương">Huyết tương</option>
+                                    {DONATION_TYPE_OPTIONS.map(opt => (
+                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="flex-1 flex flex-col">

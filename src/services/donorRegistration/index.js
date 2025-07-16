@@ -73,3 +73,23 @@ export const DeleteDonorRegistration = async (appointmentId) => {
 export const postBloodDonationApplication = async (data) => {
   return instance.post('/BloodDonationApplication', data);
 };
+
+export const getAllBloodDonationApplication = async () => {
+  try {
+    const response = await instance.get('/BloodDonationApplication');
+    return response.data?.data?.bloodDonationApplications || [];
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách BloodDonationApplication:', error.response?.data || error.message);
+    throw error;
+  }
+}
+
+export const updateBloodDonationApplicationStatus = async ({ id, status, note }) => {
+  try {
+    const response = await instance.put('/BloodDonationApplication/status', { id, status, note });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật trạng thái BloodDonationApplication:', error.response?.data || error.message);
+    throw error;
+  }
+};

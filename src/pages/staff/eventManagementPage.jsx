@@ -3,14 +3,14 @@ import { CreateEvent } from "../../services/bloodDonationEvent";
 
 const EventRegistrationForm = () => {
   const [form, setForm] = useState({
-    eventName: "",
-    eventType: "",
-    facilityID: "",
-    eventDate: new Date().toISOString().split('T')[0],
-    endDate: "",
-    location: "",
-    targetDonors: "",
-    isActive: false,
+    name: "",
+    type: "",
+    locationName: "",
+    locationAddress: "",
+    targetParticipant: "",
+    eventStartTime: new Date().toISOString().split('T')[0],
+    eventEndTime: "",
+    status: false,
   });
   const [error, setError] = useState("");
 
@@ -25,26 +25,25 @@ const EventRegistrationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    if (Number(form.targetDonors) > 100) {
+    if (Number(form.targetParticipant) > 100) {
       setError("Số người hiến máu mục tiêu tối đa là 100.");
       return;
     }
-    // Chuyển đổi dữ liệu form sang đúng định dạng API
+    // Chuẩn hóa dữ liệu gửi API
     const eventBody = {
-      name: form.eventName,
-      type: form.eventType,
-      locationName: form.facilityID, // hoặc tên cơ sở nếu có
-      locationAddress: form.location,
-      targetParticipant: Number(form.targetDonors),
-      eventStartTime: new Date(form.eventDate).toISOString(),
-      eventEndTime: new Date(form.endDate).toISOString(),
-      status: form.isActive ? 1 : 0,
+      name: form.name,
+      type: form.type,
+      locationName: form.locationName,
+      locationAddress: form.locationAddress,
+      targetParticipant: Number(form.targetParticipant),
+      eventStartTime: new Date(form.eventStartTime).toISOString(),
+      eventEndTime: new Date(form.eventEndTime).toISOString(),
+      status: form.status ? 1 : 0,
     };
     try {
       const res = await CreateEvent(eventBody);
       alert("Tạo sự kiện thành công!");
-      // Reset form nếu muốn
-      // setForm({ ... });
+      // setForm({ ... }); // Reset nếu muốn
     } catch (err) {
       alert("Tạo sự kiện thất bại!");
     }
@@ -66,8 +65,8 @@ const EventRegistrationForm = () => {
               </label>
               <input
                 type="text"
-                name="eventName"
-                value={form.eventName}
+                name="name"
+                value={form.name}
                 onChange={handleChange}
                 required
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
@@ -79,8 +78,8 @@ const EventRegistrationForm = () => {
                 Loại sự kiện <span className="text-red-500">*</span>
               </label>
               <select
-                name="eventType"
-                value={form.eventType}
+                name="type"
+                value={form.type}
                 onChange={handleChange}
                 required
                 className="w-full border border-gray-300 rounded-md px-3 py-2"
@@ -98,26 +97,26 @@ const EventRegistrationForm = () => {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
-                Cơ sở tổ chức <span className="text-red-500">*</span>
+                Tên cơ sở tổ chức <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="facilityID"
-                value={form.facilityID}
+                name="locationName"
+                value={form.locationName}
                 onChange={handleChange}
                 required
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
-                placeholder="Nhập ID cơ sở y tế"
+                placeholder="Nhập tên cơ sở y tế"
               />
             </div>
             <div className="flex-1">
               <label className="block font-semibold mb-1">
-                Địa điểm <span className="text-red-500">*</span>
+                Địa chỉ tổ chức <span className="text-red-500">*</span>
               </label>
               <input
                 type="text"
-                name="location"
-                value={form.location}
+                name="locationAddress"
+                value={form.locationAddress}
                 onChange={handleChange}
                 required
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
@@ -134,12 +133,11 @@ const EventRegistrationForm = () => {
               </label>
               <input
                 type="date"
-                name="eventDate"
-                value={form.eventDate}
+                name="eventStartTime"
+                value={form.eventStartTime}
                 onChange={handleChange}
                 required
-                disabled
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 bg-gray-100 cursor-not-allowed"
+                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
             <div className="flex-1">
@@ -148,17 +146,17 @@ const EventRegistrationForm = () => {
               </label>
               <input
                 type="date"
-                name="endDate"
-                value={form.endDate}
+                name="eventEndTime"
+                value={form.eventEndTime}
                 onChange={handleChange}
                 required
-                min={form.eventDate}
+                min={form.eventStartTime}
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
           </div>
 
-          {/* Số người hiến máu mục tiêu và đã đăng ký */}
+          {/* Số người hiến máu mục tiêu */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
@@ -166,8 +164,8 @@ const EventRegistrationForm = () => {
               </label>
               <input
                 type="number"
-                name="targetDonors"
-                value={form.targetDonors}
+                name="targetParticipant"
+                value={form.targetParticipant}
                 onChange={handleChange}
                 required
                 min="1"
@@ -176,15 +174,14 @@ const EventRegistrationForm = () => {
                 placeholder="Ví dụ: 50"
               />
             </div>
-            {/* XÓA input Số người đã đăng ký */}
           </div>
 
           {/* Trạng thái hoạt động */}
           <div className="flex items-center space-x-3">
             <input
               type="checkbox"
-              name="isActive"
-              checked={form.isActive}
+              name="status"
+              checked={form.status}
               onChange={handleChange}
               className="border border-gray-300 rounded-md px-3 py-2"
             />

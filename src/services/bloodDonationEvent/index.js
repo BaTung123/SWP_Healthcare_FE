@@ -49,3 +49,13 @@ export const CreateEvent = async (eventData) => {
     throw error;
   }
 }
+
+export const GetAllEvents = async () => {
+  try {
+    const response = await instance.get("/Event");
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy list Event:", error.response?.data || error.message);
+    throw error;
+  }
+};

@@ -1,4 +1,4 @@
-import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined, DatabaseOutlined, ExperimentOutlined, UserSwitchOutlined, CalendarOutlined, ReadOutlined, InteractionOutlined, TeamOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -32,17 +32,17 @@ const SideBar = () => {
     const stockMenu = [
         {
             key: "/stock/blood-stock",
-            icon: <ProductOutlined />,
+            icon: <DatabaseOutlined />,
             label: <Link to="/stock/blood-stock">Blood Warehouse</Link>,
         },
         {
             key: "/stock/accept-blood-drop",
-            icon: <BarChartOutlined />,
+            icon: <ExperimentOutlined />,
             label: <Link to="/stock/accept-blood-drop">Accept Blood Drop</Link>,
         },
         {
             key: "/stock/receiver",
-            icon: <AuditOutlined />,
+            icon: <UserSwitchOutlined />,
             label: <Link to="/stock/receiver">Blood Receiver</Link>,
         },
     ]
@@ -51,22 +51,22 @@ const SideBar = () => {
     const staffMenu = [
         {
             key: "/staff/event",
-            icon: <BookOutlined />,
+            icon: <CalendarOutlined />,
             label: <Link to="/staff/event">Event Management</Link>,
         },
         {
             key: "/staff/blog",
-            icon: <BookOutlined />,
+            icon: <ReadOutlined />,
             label: <Link to="/staff/blog">Blog Management</Link>,
         },
         {
             key: "/staff/send-blood",
-            icon: <BarChartOutlined />,
+            icon: <InteractionOutlined />,
             label: <Link to="/staff/send-blood">Blood Request</Link>,
         },
         {
             key: "/staff/donor",
-            icon: <AuditOutlined />,
+            icon: <TeamOutlined />,
             label: <Link to="/staff/donor">Blood Donor</Link>,
         },
     ]

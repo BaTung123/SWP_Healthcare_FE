@@ -1,6 +1,6 @@
 //Liên hệ, phản hồi, form gửi câu hỏi.
 import React, { useState } from "react";
-import '@fortawesome/fontawesome-free/css/all.min.css';
+import "@fortawesome/fontawesome-free/css/all.min.css";
 import "../../styles/contactPage.css";
 import { SendEmailToAdmin } from "../../services/authentication";
 import { toast } from 'react-toastify';
@@ -11,7 +11,7 @@ function ContactPage() {
     body: ""
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const [message, setMessage] = useState({ type: "info", text: "" });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,17 +31,14 @@ function ContactPage() {
     }
 
     setIsLoading(true);
-    setMessage({ type: "", text: "" });
+    setMessage({ type: "info", text: "Đang gửi..." });
 
     try {
+      // Lấy userId từ localStorage
       const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.userId) {
-        toast.error("Không xác định được người dùng. Vui lòng đăng nhập lại!");
-        setIsLoading(false);
-        return;
-      }
-      const emailData = {
-        userId: user.userId,
+      const userId = user ? user.userId : null;
+      
+      const emailData = {    userId: userId, 
         subject: formData.subject,
         body: formData.body,
         isHtml: true
@@ -68,7 +65,7 @@ function ContactPage() {
               Kết nối với chúng tôi để <span className="contact-title-highlight">biết thêm thông tin!</span>
             </div>
             <div className="contact-desc">
-              Nếu bạn có bất kỳ câu hỏi nào về hiến máu, góp ý hoặc muốn trao đổi với đội ngũ hỗ trợ, hãy liên hệ với chúng tôi. Chúng tôi sẽ phản hồi trong vòng 24 giờ.
+              Nếu bạn có bất kỳ câu hỏi nào về hiến máu, góp ý hoặc muốn trao đổi với đội ngũ hỗ trợ, hãy liên hệ với chúng tôi. Chúng tôi sẽ phản hồi trong vòng24iờ.
             </div>
           </div>
           <div className="contact-info-right">
@@ -98,8 +95,8 @@ function ContactPage() {
             </div>
             <div className="contact-card-title">Số điện thoại:</div>
             <div className="contact-card-content">
-              Điện thoại: (+236)-768-9900<br />
-              Di động: +760-550-6578
+                             Điện thoại: (+236
+              Di động: +760-550578
             </div>
           </div>
           <div className="contact-card">
@@ -113,8 +110,7 @@ function ContactPage() {
             </div>
           </div>
         </div>
-        <div className="contact-form-row">
-          <form className="contact-form" onSubmit={handleSubmit}>
+        <div className="contact-form-row">   <form className="contact-form" onSubmit={handleSubmit}>
             <input 
               type="text" 
               name="subject"
@@ -136,12 +132,12 @@ function ContactPage() {
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? "ĐANG GỬI..." : "GỬI TIN NHẮN"}
+             {isLoading ? "ĐANG GỬI..." : "GỬI TIN NHẮN"}
             </button>
           </form>
           <div className="contact-doctor-img-wrap">
             <img
-              src="https://thebloodconnection.org/wp-content/uploads/2024/01/TBC-OctBlog-GivingBackToDonorsv3.jpg"
+              src="https://thebloodconnection.org/wp-content/uploads/224TBC-OctBlog-GivingBackToDonorsv3.jpg"
               alt="Tình nguyện viên y tế"
               className="contact-doctor-img"
             />
@@ -152,4 +148,4 @@ function ContactPage() {
   );
 }
 
-export default ContactPage;
+export default ContactPage; 

@@ -39,3 +39,13 @@ export const UpdateBloodDonationEvent = async (eventId, updateEvent) => {
     throw error;
   }
 }
+
+export const CreateEvent = async (eventData) => {
+  try {
+    const response = await instance.post("/Event", eventData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi tạo sự kiện:", error.response?.data || error.message);
+    throw error;
+  }
+}

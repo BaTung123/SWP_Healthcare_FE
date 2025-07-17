@@ -8,6 +8,43 @@ import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
 
+// Constants và helper functions để ngoài component
+const BLOOD_TYPE_MAP = {
+  "O-": 0, "O+": 1, "A-": 2, "A+": 3, "B-": 4, "B+": 5, "AB-": 6, "AB+": 7
+};
+const BLOOD_TYPE_REVERSE_MAP = [
+  "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"
+];
+function normalizeGender(gender) {
+  if (!gender) return 'male';
+  if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Male';
+  if (["Nữ", "Female", "female", "nữ"].includes(gender)) return 'Female';
+  return 'Other';
+}
+function normalizeBloodType(bloodType) {
+  if (typeof bloodType === 'number') return BLOOD_TYPE_REVERSE_MAP[bloodType] || '';
+  return bloodType || '';
+}
+function normalizeDob(dob) {
+  if (!dob) return '';
+  if (/^\d{2}-\d{2}-\d{4}$/.test(dob)) {
+    const [day, month, year] = dob.split('-');
+    return `${year}-${month}-${day}`;
+  }
+  return dob;
+}
+function validatePhone(phone) {
+  return /^\d{10}$/.test(phone);
+}
+function validateAge(dob) {
+  const today = new Date();
+  const birth = new Date(dob);
+  let age = today.getFullYear() - birth.getFullYear();
+  const m = today.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+  return age >= 18;
+}
+
 const ProfilePage = () => {
   const fileInputRef = useRef(null);
 
@@ -54,8 +91,7 @@ const ProfilePage = () => {
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
   const [user, setUser] = useState();
-
-  const [form, setForm] = useState(user);
+  const [form, setForm] = useState({});
 
   const columns = [
     {
@@ -81,9 +117,9 @@ const ProfilePage = () => {
       align: 'center',
       render: (gender) => {
         if (!gender) return '';
-        if (gender.toLowerCase() === 'male' || gender === 'Nam') return 'Nam';
-        if (gender.toLowerCase() === 'female' || gender === 'Nữ') return 'Nữ';
-        return 'Khác';
+        if (gender === 'Male' || gender === 'Nam' || gender === 'male' || gender === 'nam') return 'Male';
+        if (gender === 'Female' || gender === 'Nữ' || gender === 'female' || gender === 'nữ') return 'Female';
+        return 'Other';
       },
     },
     {
@@ -170,29 +206,26 @@ const ProfilePage = () => {
     },
   ];
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
-      console.log("payload:", payload)
-      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-      const userResponse = await GetAuthenByUserId(userId)
-      console.log("userResponse:", userResponse)
-      setUser(userResponse.data);
-      // Nếu gender rỗng thì set mặc định là 'male', nếu là 'Nam'/'Nữ' thì chuyển sang 'male'/'female'
-      let gender = userResponse.data.gender;
-      if (!gender) gender = 'male';
-      else if (gender === 'Nam') gender = 'male';
-      else if (gender === 'Nữ') gender = 'female';
-      else if (gender !== 'male' && gender !== 'female') gender = 'other';
-      setForm({
-        ...userResponse.data,
-        gender,
-      });
-    };
+  // Đưa fetchUser ra ngoài useEffect để có thể gọi lại
+  const fetchUser = async () => {
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+    const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
+    const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+    const userResponse = await GetAuthenByUserId(userId);
+    const userData = userResponse.data;
+    setUser(userData);
+    setForm({
+      ...userData,
+      gender: normalizeGender(userData.gender),
+      phone: userData.phoneNumber || '',
+      bloodType: normalizeBloodType(userData.bloodType),
+      dob: normalizeDob(userData.dob),
+    });
+  };
 
+  useEffect(() => {
     fetchUser();
-  }, [])
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -201,45 +234,57 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
-      // Validate gender
       if (!form.gender) {
-        alert('Vui lòng chọn giới tính!');
+        toast.error('Vui lòng chọn giới tính!');
         return;
       }
-      // Validate phone number
-      const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(form.phone)) {
-        alert('Số điện thoại phải đủ 10 số!');
+      if (!validatePhone(form.phone)) {
+        toast.error('Số điện thoại phải đủ 10 số!');
         return;
       }
-      // Validate age >= 18
-      const today = new Date();
-      const dob = new Date(form.dob);
-      const age = today.getFullYear() - dob.getFullYear();
-      const m = today.getMonth() - dob.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        alert('Bạn phải đủ 18 tuổi trở lên!');
+      if (!validateAge(form.dob)) {
+        toast.error('Bạn phải đủ 18 tuổi trở lên!');
         return;
       }
-      // Giả lập id, thực tế nên lấy từ user context hoặc localStorage
-      const id = 1;
+      // Lấy id từ user object
+      const id = user?.id;
+      const bloodTypeNumber = BLOOD_TYPE_MAP[form.bloodType];
+      if (bloodTypeNumber === undefined) {
+        toast.error('Vui lòng chọn nhóm máu hợp lệ!');
+        return;
+      }
+      // Không cần map lại gender, giữ nguyên tiếng Anh
       const dataToSend = {
         id,
         name: form.name,
-        gender: form.gender,
+        gender: form.gender?.toLowerCase(), // chuyển về lower-case
         dob: form.dob,
-        phoneNumber: form.phone
+        phoneNumber: form.phone,
+        bloodType: bloodTypeNumber
       };
       console.log('Dữ liệu gửi lên:', dataToSend);
       await updateUserInfo(dataToSend);
-      setUser(form);
-      alert('Cập nhật thông tin thành công!');
+      // Gọi lại API lấy user mới nhất
+      const userResponse = await GetAuthenByUserId(id);
+      const updatedUser = userResponse.data;
+      setUser(updatedUser);
+      setForm({
+        ...updatedUser,
+        gender: normalizeGender(updatedUser.gender),
+        phone: updatedUser.phoneNumber || '',
+        bloodType: normalizeBloodType(updatedUser.bloodType),
+        dob: normalizeDob(updatedUser.dob),
+      });
+      // Lưu vào localStorage nếu muốn
+      const savedUser = JSON.parse(localStorage.getItem("user"));
+      localStorage.setItem("user", JSON.stringify({
+        ...savedUser,
+        ...updatedUser
+      }));
+      toast.success('Cập nhật thông tin thành công!');
     } catch (error) {
       console.log('Lỗi cập nhật:', error.response?.data || error.message);
-      alert('Cập nhật thông tin thất bại!');
+      toast.error('Cập nhật thông tin thất bại!');
     }
   };
 
@@ -285,6 +330,16 @@ const ProfilePage = () => {
 
         {activeTab === 'profile' && user && (
           <div className="flex items-start mb-8">
+            {/* Hiển thị avatar nếu có */}
+            {user.avatarImageUrl && (
+              <div className="mr-8 flex-shrink-0">
+                <img
+                  src={user.avatarImageUrl}
+                  alt="Avatar"
+                  className="w-32 h-32 rounded-full object-cover border-4 border-indigo-200 shadow-md"
+                />
+              </div>
+            )}
             <div className="flex-1 w-full max-w-xl mx-auto">
               <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
@@ -322,9 +377,9 @@ const ProfilePage = () => {
                     onChange={handleChange}
                     className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                   >
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
+                    <option value="Male">Nam</option>
+                    <option value="Female">Nữ</option>
+                    <option value="Other">Khác</option>
                   </select>
                 </div>
                 <div>
@@ -335,14 +390,15 @@ const ProfilePage = () => {
                     onChange={handleChange}
                     className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                   >
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
+                    <option value="" disabled hidden>Chọn nhóm máu</option>
                     <option value="O-">O-</option>
+                    <option value="O+">O+</option>
+                    <option value="A-">A-</option>
+                    <option value="A+">A+</option>
+                    <option value="B-">B-</option>
+                    <option value="B+">B+</option>
+                    <option value="AB-">AB-</option>
+                    <option value="AB+">AB+</option>
                   </select>
                 </div>
                 <div>

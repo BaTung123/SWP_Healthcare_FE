@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
 import { Login } from "../../services/authentication";
+import { toast } from 'react-toastify';
 
 // Login page for user accounts.
 function LoginPage() {
@@ -56,7 +57,10 @@ function LoginPage() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log("payload:", payload)
         const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role }));
+        const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
+        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role, userId }));
+
+        toast.success('Đăng nhập thành công!');
 
         switch (role) {
           case "Admin":
@@ -76,11 +80,17 @@ function LoginPage() {
             break;
         }
       } else {
+        toast.error('Email hoặc mật khẩu không đúng!');
         setError('Email hoặc mật khẩu không đúng!');
       }
     } catch (err) {
       console.log("err", err)
-      setError(err.response.data.message);
+      let errorMsg = err.response?.data?.message || 'Đăng nhập thất bại!';
+      if (errorMsg === 'Invalid email or password') {
+        errorMsg = 'Email hoặc mật khẩu không đúng!';
+      }
+      toast.error(errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }

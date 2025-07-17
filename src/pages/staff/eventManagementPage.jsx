@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { CreateEvent } from "../../services/bloodDonationEvent";
 
 const EventRegistrationForm = () => {
   const [form, setForm] = useState({
@@ -9,10 +10,9 @@ const EventRegistrationForm = () => {
     endDate: "",
     location: "",
     targetDonors: "",
-    registeredDonors: "",
-    description: "",
     isActive: false,
   });
+  const [error, setError] = useState("");
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -22,10 +22,32 @@ const EventRegistrationForm = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Xử lý gửi dữ liệu ở đây
-    console.log(form);
+    setError("");
+    if (Number(form.targetDonors) > 100) {
+      setError("Số người hiến máu mục tiêu tối đa là 100.");
+      return;
+    }
+    // Chuyển đổi dữ liệu form sang đúng định dạng API
+    const eventBody = {
+      name: form.eventName,
+      type: form.eventType,
+      locationName: form.facilityID, // hoặc tên cơ sở nếu có
+      locationAddress: form.location,
+      targetParticipant: Number(form.targetDonors),
+      eventStartTime: new Date(form.eventDate).toISOString(),
+      eventEndTime: new Date(form.endDate).toISOString(),
+      status: form.isActive ? 1 : 0,
+    };
+    try {
+      const res = await CreateEvent(eventBody);
+      alert("Tạo sự kiện thành công!");
+      // Reset form nếu muốn
+      // setForm({ ... });
+    } catch (err) {
+      alert("Tạo sự kiện thất bại!");
+    }
   };
 
   return (
@@ -149,39 +171,12 @@ const EventRegistrationForm = () => {
                 onChange={handleChange}
                 required
                 min="1"
+                max="100"
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
                 placeholder="Ví dụ: 50"
               />
             </div>
-            <div className="flex-1">
-              <label className="block font-semibold mb-1">
-                Số người đã đăng ký
-              </label>
-              <input
-                type="number"
-                name="registeredDonors"
-                value={form.registeredDonors}
-                onChange={handleChange}
-                min="0"
-                className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2 text-base"
-                placeholder="Ví dụ: 20"
-              />
-            </div>
-          </div>
-
-          {/* Mô tả sự kiện */}
-          <div>
-            <label className="block font-semibold mb-1">
-              Mô tả sự kiện
-            </label>
-            <textarea
-              name="description"
-              value={form.description}
-              onChange={handleChange}
-              rows="4"
-              className="w-full border border-gray-300 rounded-md px-3 py-2 text-base resize-none"
-              placeholder="Mô tả chi tiết về sự kiện hiến máu..."
-            />
+            {/* XÓA input Số người đã đăng ký */}
           </div>
 
           {/* Trạng thái hoạt động */}
@@ -204,6 +199,9 @@ const EventRegistrationForm = () => {
             Đăng ký sự kiện
           </button>
         </form>
+        {error && (
+          <div className="text-red-500 font-semibold text-center mt-2">{error}</div>
+        )}
       </div>
     </div>
   );

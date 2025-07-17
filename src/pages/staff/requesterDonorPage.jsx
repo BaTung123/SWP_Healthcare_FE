@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@ant-design/icons';
-import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus } from '../../services/donorRegistration';
+import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus, updateBloodDonationApplicationInfo } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
 import { Input, Form } from 'antd';
@@ -238,15 +238,33 @@ const RequesterDonorPage = () => {
         setEditBloodModalOpen(true);
     }, []);
 
-    const handleBloodModalOk = useCallback(() => {
+    const handleBloodModalOk = useCallback(async () => {
         if (editingBloodRecord) {
-            setOriginalList(prev => prev.map(item =>
-                item === editingBloodRecord ? { ...item, bloodGroup: editBloodType, quantity: editQuantity } : item
-            ));
+            // Map blood type and transfer type to their indexes for API
+            const bloodTypeIndex = bloodTypes.indexOf(editBloodType);
+            const bloodTransferTypeIndex = bloodTransferTypes.indexOf(editingBloodRecord.type);
+            try {
+                setLoading(true);
+                await updateBloodDonationApplicationInfo({
+                    id: editingBloodRecord.registrationId,
+                    bloodType: bloodTypeIndex,
+                    bloodTransferType: bloodTransferTypeIndex,
+                    quantity: Number(editQuantity)
+                });
+                toast.success('Cập nhật thành công!');
+                await fetchRegistrationList();
+            } catch (error) {
+                toast.error('Cập nhật thất bại!');
+            } finally {
+                setLoading(false);
+                setEditBloodModalOpen(false);
+                setEditingBloodRecord(null);
+            }
+        } else {
+            setEditBloodModalOpen(false);
+            setEditingBloodRecord(null);
         }
-        setEditBloodModalOpen(false);
-        setEditingBloodRecord(null);
-    }, [editingBloodRecord, editBloodType, editQuantity]);
+    }, [editingBloodRecord, editBloodType, editQuantity, fetchRegistrationList]);
 
     const handleBloodModalCancel = useCallback(() => {
         setEditBloodModalOpen(false);

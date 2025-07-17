@@ -239,6 +239,10 @@ const ProfilePage = () => {
 
   const handleSave = async () => {
     try {
+      if (!form.name || form.name.trim().length < 5) {
+        toast.error('Tên phải có ít nhất 5 ký tự!');
+        return;
+      }
       if (!form.gender) {
         toast.error('Vui lòng chọn giới tính!');
         return;
@@ -353,8 +357,8 @@ const ProfilePage = () => {
                     <input
                       name="name"
                       value={form.name || form.fullName || ''}
-                      readOnly
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
+                      onChange={handleChange}
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">

@@ -4,6 +4,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
 import { GetAuthenByUserId, Login } from "../../services/authentication";
 import UserContext from "../../contexts/UserContext";
+import { toast } from 'react-toastify';
 
 // Login page for user accounts.
 function LoginPage() {
@@ -63,6 +64,8 @@ function LoginPage() {
         const userResponse = await GetAuthenByUserId(userId)
         setUser(userResponse.data);
         localStorage.setItem('user', JSON.stringify({ email: form.email, token, role }));
+
+        toast.success('Đăng nhập thành công!');
 
         switch (role) {
           case "Admin":

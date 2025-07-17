@@ -117,6 +117,7 @@ const ReceiverPage = () => {
       console.log("bloodImportSend", bloodImportSend);
       const updateBloodImportStatus = await updateBloodImportApplication(bloodImportSend);
       console.log("updateBloodImportStatus", updateBloodImportStatus);
+      toast.success('Cập nhật trạng thái thành công!');
     }
     setIsModalOpen(false);
     setEditingRecord(null);

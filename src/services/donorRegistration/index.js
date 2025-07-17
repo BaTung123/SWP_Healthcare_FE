@@ -99,3 +99,18 @@ export const updateBloodDonationApplicationStatus = async ({ id, status, note })
     throw error;
   }
 };
+
+export const updateBloodDonationApplicationInfo = async ({ id, bloodType, bloodTransferType, quantity }) => {
+  try {
+    const response = await instance.put('/BloodDonationApplication', {
+      id,
+      bloodType,
+      bloodTransferType,
+      quantity
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật thông tin BloodDonationApplication:', error.response?.data || error.message);
+    throw error;
+  }
+};

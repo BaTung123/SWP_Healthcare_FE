@@ -4,6 +4,7 @@ import '../../styles/bloodStockManagementPage.css';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { GetAllBlood } from '../../services/bloodStorage';
+import { toast } from 'react-toastify';
 
 const bloodTypeList = [
   'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
@@ -116,6 +117,7 @@ const BloodStockManagementPage = () => {
           ? { ...item, volume: newVolume, status: updatedStatus }
           : item
       ));
+      toast.success('Cập nhật số lượng/thông tin kho máu thành công!');
     }
     setIsModalOpen(false);
     setEditingRecord(null);

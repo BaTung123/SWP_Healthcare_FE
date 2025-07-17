@@ -70,8 +70,14 @@ export const DeleteDonorRegistration = async (appointmentId) => {
   }
 }
 
-export const postBloodDonationApplication = async (data) => {
-  return instance.post('/BloodDonationApplication', data);
+export const CreateBloodDonationApplication = async (data) => {
+  try {
+    const response = await instance.post("/BloodDonationApplication", data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi CreateBloodDonationApplication:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
 export const getAllBloodDonationApplication = async () => {

@@ -1,5 +1,5 @@
 // Hồ sơ người dùng, thông tin cá nhân.
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
 import { Button, DatePicker, Modal, Table } from 'antd';
 import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
@@ -7,6 +7,12 @@ import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
+import UserContext from '../../contexts/UserContext';
+
+
+const bloodTypes = [
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+];
 
 const ProfilePage = () => {
   const fileInputRef = useRef(null);
@@ -44,18 +50,45 @@ const ProfilePage = () => {
       status: 'từ chối',
     },
   ]);
-  const [registration, setRegistration] = useState(null);
-  const [appointmentList, setAppointmentList] = useState([]);
-  const [appointment, setAppointment] = useState(null);
-  const [event, setEvent] = useState(null);
-  const [newDate, setNewDate] = useState(null);
-  const [showChangeDate, setShowChangeDate] = useState(false);
-  const [showAppointList, setShowAppointList] = useState(false);
+  // const [registration, setRegistration] = useState(null);
+  // const [appointmentList, setAppointmentList] = useState([]);
+  // const [appointment, setAppointment] = useState(null);
+  // const [event, setEvent] = useState(null);
+  // const [newDate, setNewDate] = useState(null);
+  // const [showChangeDate, setShowChangeDate] = useState(false);
+  // const [showAppointList, setShowAppointList] = useState(false);
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
-  const [user, setUser] = useState();
+  // const [user, setUser] = useState();
 
-  const [form, setForm] = useState(user);
+  // const [form, setForm] = useState(user);
+  const { user } = useContext(UserContext);
+
+  const [formData, setFormData] = useState({
+    userId: "",
+    avatarUrl: "",
+    fullName: "",
+    email: "",
+    birthDate: null,
+    gender: "",
+    bloodType: "",
+    phone: "",
+  });
+
+  useEffect(() => {
+    if (user && user.dob) {
+      setFormData({
+        userId: user.id,
+        avatarUrl: user.avatarImageUrl,
+        fullName: user.name,
+        email: user.email,
+        birthDate: dayjs(user.dob, "DD-MM-YYYY"),
+        gender: user.gender,
+        bloodType: bloodTypes[user.bloodType],
+        phone: user.phoneNumber,
+      });
+    }
+  }, [user]);
 
   const columns = [
     {
@@ -88,8 +121,8 @@ const ProfilePage = () => {
     },
     {
       title: 'Nhóm Máu',
-      dataIndex: 'bloodGroup',
-      key: 'bloodGroup',
+      dataIndex: 'bloodType',
+      key: 'bloodType',
       width: 100,
       align: 'center',
     },
@@ -170,51 +203,27 @@ const ProfilePage = () => {
     },
   ];
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
-      console.log("payload:", payload)
-      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-      const userResponse = await GetAuthenByUserId(userId)
-      console.log("userResponse:", userResponse)
-      setUser(userResponse.data);
-      // Nếu gender rỗng thì set mặc định là 'male', nếu là 'Nam'/'Nữ' thì chuyển sang 'male'/'female'
-      let gender = userResponse.data.gender;
-      if (!gender) gender = 'male';
-      else if (gender === 'Nam') gender = 'male';
-      else if (gender === 'Nữ') gender = 'female';
-      else if (gender !== 'male' && gender !== 'female') gender = 'other';
-      setForm({
-        ...userResponse.data,
-        gender,
-      });
-    };
-
-    fetchUser();
-  }, [])
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSave = async () => {
     try {
       // Validate gender
-      if (!form.gender) {
+      if (!formData.gender) {
         alert('Vui lòng chọn giới tính!');
         return;
       }
       // Validate phone number
       const phoneRegex = /^\d{10}$/;
-      if (!phoneRegex.test(form.phone)) {
+      if (!phoneRegex.test(formData.phone)) {
         alert('Số điện thoại phải đủ 10 số!');
         return;
       }
       // Validate age >= 18
       const today = new Date();
-      const dob = new Date(form.dob);
+      const dob = new Date(formData.birthDate);
       const age = today.getFullYear() - dob.getFullYear();
       const m = today.getMonth() - dob.getMonth();
       if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
@@ -225,21 +234,34 @@ const ProfilePage = () => {
         return;
       }
       // Giả lập id, thực tế nên lấy từ user context hoặc localStorage
-      const id = 1;
       const dataToSend = {
-        id,
-        name: form.name,
-        gender: form.gender,
-        dob: form.dob,
-        phoneNumber: form.phone
+        id: formData.userId,
+        name: formData.fullName,
+        gender: formData.gender,
+        dob: formData.birthDate,
+        phoneNumber: formData.phone
       };
       console.log('Dữ liệu gửi lên:', dataToSend);
       await updateUserInfo(dataToSend);
-      setUser(form);
       alert('Cập nhật thông tin thành công!');
     } catch (error) {
       console.log('Lỗi cập nhật:', error.response?.data || error.message);
       alert('Cập nhật thông tin thất bại!');
+    }
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormData({ ...formData, avatarUrl: reader.result });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -288,72 +310,82 @@ const ProfilePage = () => {
             <div className="flex-1 w-full max-w-xl mx-auto">
               <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">NAME</label>
-                  <input
-                    name="name"
-                    value={form?.name || ''}
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
+                    <input
+                      name="name"
+                      value={formData.fullName}
+                      readOnly
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
+                    <select
+                      name="bloodType"
+                      value={formData.bloodType}
+                      onChange={handleChange}
+                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    >
+                      <option value="">-- Chọn nhóm máu --</option>
+                      {bloodTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">EMAIL</label>
-                  <input
-                    name="email"
-                    value={user.email}
-                    readOnly
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">PHONE</label>
-                  <input
-                    name="phone"
-                    value={form?.phone || ''}
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
-                  <select
-                    name="gender"
-                    value={form?.gender || ''}
-                    onChange={handleChange}
-                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  >
-                    <option value="male">Nam</option>
-                    <option value="female">Nữ</option>
-                    <option value="other">Khác</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BLOOD TYPE</label>
-                  <select
-                    name="bloodType"
-                    value={form?.bloodType || ''}
-                    onChange={handleChange}
-                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  >
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
-                  <input
-                    name="dob"
-                    value={form?.dob || ''}
-                    type="date"
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">EMAIL</label>
+                    <input
+                      name="email"
+                      value={formData.email}
+                      readOnly
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">GENDER</label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    >
+                      <option value="male">Nam</option>
+                      <option value="female">Nữ</option>
+                      <option value="other">Khác</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BIRTH DATE</label>
+                    <DatePicker
+                      style={{
+                        padding: 12,
+                        borderRadius: "0.75rem",
+                        border: "1px solid #e5e7eb"
+                      }}
+                      format="DD-MM-YYYY"
+                      value={formData.birthDate}
+                      onChange={(date) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          birthDate: date,
+                        }))
+                      }
+                      placeholder="Chọn ngày"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

@@ -1,12 +1,13 @@
 //Đăng ký nhóm máu, thời gian sẵn sàng hiến máu.
 import dayjs from "dayjs";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { GetUserProfileByUserId } from "../../services/userProfile";
 import { GetBloodDonationEventById } from "../../services/bloodDonationEvent";
-import { createDonorRegistration, DeleteDonorRegistration, postBloodDonationApplication } from "../../services/donorRegistration";
+import { CreateBloodDonationApplication } from "../../services/donorRegistration";
 import { DatePicker } from "antd";
+import UserContext from "../../contexts/UserContext";
 
 // Constants
 const BLOOD_TYPES = [
@@ -30,6 +31,11 @@ const DONATION_TYPES = [
 const BLOOD_TYPE_MAP = {
   "A+": 0, "A-": 1, "B+": 2, "B-": 3, "AB+": 4, "AB-": 5, "O+": 6, "O-": 7
 };
+
+const bloodTypes = [
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+];
+
 const DONATION_TYPE_MAP = {
   "Toàn Phần": 0, "Tiểu Cầu": 1, "Huyết Tương": 2
 };
@@ -39,6 +45,8 @@ const DonationRegisterPage = () => {
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState(null);
   
+  const { user } = useContext(UserContext);
+  
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
@@ -47,62 +55,38 @@ const DonationRegisterPage = () => {
   const [formData, setFormData] = useState({
     userId: "",
     fullName: "",
-    birthDate: "",
+    birthDate: null,
     gender: "",
     bloodType: "",
     type: "",
-    toDate: dayjs(), // Mặc định là ngày hiện tại
+    toDate: dayjs(),
     phone: "",
     quantity: "",
   });
-  const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    if (user && user.dob) {
+      setFormData({
+        userId: user.id,
+        fullName: user.name,
+        birthDate: dayjs(user.dob, "DD-MM-YYYY"),
+        gender: user.gender,
+        bloodType: "",
+        type: "",
+        toDate: dayjs(), 
+        phone: user.phoneNumber,
+        quantity: "",
+      });
+    }
+  }, [user]);
+  const [errors, setErrors] = useState({});
+  console.log("formData:", formData);
   // Mock: các ngày đã đăng ký trước đó (giả lập, thực tế lấy từ API)
   const registeredDates = [
     '2024-06-01',
     '2024-07-10',
     '2024-08-15',
   ];
-
-  // Fetch user profile and event data
-  const fetchInitialData = useCallback(async () => {
-    try {
-      setLoading(true);
-      
-      // Lấy userId từ localStorage (đã lưu khi đăng nhập)
-      const storedUserId = localStorage.getItem('userId');
-      if (!storedUserId) {
-        toast.error("Không xác định được userId. Vui lòng đăng nhập lại.");
-        setLoading(false);
-        return;
-      }
-      // Fetch user profile
-      const userProfileData = await GetUserProfileByUserId(storedUserId);
-      setUserProfile(userProfileData);
-      // Update form data with user info
-      setFormData(prev => ({
-        ...prev,
-        userId: storedUserId,
-        fullName: `${userProfileData.firstName} ${userProfileData.lastName}`,
-        phone: userProfileData.phoneNumber,
-        birthDate: userProfileData.birthDate || "",
-        gender: userProfileData.gender || "",
-      }));
-      // Fetch event data if eventId exists
-      if (eventId) {
-        const eventData = await GetBloodDonationEventById(eventId);
-        setDonateEvent(eventData);
-      }
-    } catch (error) {
-      console.error("Error fetching initial data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [eventId]);
-
-  useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
 
   // Date validation
   const disabledDate = useCallback((current) => {
@@ -229,14 +213,15 @@ const DonationRegisterPage = () => {
 
     try {
       setLoading(true);
+      console.log("formData:", formData);
 
       const dataToSend = {
-        userId: Number(formData.userId),
-        eventId: Number(eventId),
+        userId: formData.userId,
+        eventId: eventId ? Number(eventId) : null,
         fullName: formData.fullName,
         dob: formData.birthDate,
         gender: formData.gender,
-        bloodType: BLOOD_TYPE_MAP[formData.bloodType],
+        bloodType: bloodTypes[formData.bloodType],
         bloodTransferType: DONATION_TYPE_MAP[formData.type],
         quantity: Number(formData.quantity),
         note: "Hiến máu lần đầu", // hoặc lấy từ form nếu có
@@ -245,7 +230,7 @@ const DonationRegisterPage = () => {
       };
       console.log('dataToSend:', dataToSend);
 
-      const response = await postBloodDonationApplication(dataToSend);
+      const response = await CreateBloodDonationApplication(dataToSend);
       console.log("Registration response:", response);
       toast.success("Đăng ký hiến máu thành công!");
       // Reset form after successful submission
@@ -261,7 +246,7 @@ const DonationRegisterPage = () => {
 
     } catch (error) {
       console.error("Registration error:", error);
-      const errorMessage = error.response?.data || "Không thể đăng ký. Vui lòng thử lại.";
+      const errorMessage = error.response.data.message || "Không thể đăng ký. Vui lòng thử lại.";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -304,14 +289,21 @@ const DonationRegisterPage = () => {
           <div className="flex flex-col md:flex-row gap-4 md:gap-8">
             <div className="flex flex-col flex-1">
               <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Ngày sinh</label>
-              <input
-                type="date"
-                name="birthDate"
-                required
+              <DatePicker
+                style={{
+                  padding: 12,
+                  borderRadius: "0.75rem",
+                  border: "1px solid #e5e7eb"
+                }}
+                format="DD-MM-YYYY"
                 value={formData.birthDate}
-                onChange={handleChange}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                style={{ width: '100%' }}
+                onChange={(date) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    birthDate: date,
+                  }))
+                }
+                placeholder="Chọn ngày"
               />
               {errors.birthDate && <span className="text-red-500 text-xs mt-1">{errors.birthDate}</span>}
             </div>
@@ -347,10 +339,8 @@ const DonationRegisterPage = () => {
                 style={{ width: '100%' }}
               >
                 <option value="">-- Chọn nhóm máu --</option>
-                {BLOOD_TYPES.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
+                {bloodTypes.map(type => (
+                  <option key={type} value={type}>{type}</option>
                 ))}
               </select>
               {errors.bloodType && <span className="text-red-500 text-xs mt-1">{errors.bloodType}</span>}
@@ -366,9 +356,9 @@ const DonationRegisterPage = () => {
                 style={{ width: '100%' }}
               >
                 <option value="">-- Chọn loại --</option>
-                <option value="Toàn phần">Toàn phần</option>
-                <option value="Tiểu cầu">Tiểu cầu</option>
-                <option value="Huyết tương">Huyết tương</option>
+                <option value="Toàn Phần">Toàn Phần</option>
+                <option value="Tiểu Cầu">Tiểu Cầu</option>
+                <option value="Huyết Tương">Huyết Tương</option>
               </select>
               {errors.type && <span className="text-red-500 text-xs mt-1">{errors.type}</span>}
             </div>
@@ -405,7 +395,7 @@ const DonationRegisterPage = () => {
                   borderRadius: "0.75rem",
                   border: "1px solid #e5e7eb"
                 }}
-                format="DD/MM/YYYY"
+                format="DD-MM-YYYY"
                 value={formData.toDate}
                 onChange={handleToDateChange}
                 disabledDate={disabledDate}

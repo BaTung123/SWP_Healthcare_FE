@@ -5,9 +5,19 @@ import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus } 
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
 import { Input, Form } from 'antd';
+import { CreateBloodImportApplication, GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
+import { toast } from 'react-toastify';
 
 // Constants
 const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+const bloodTypes = [
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+];
+
+const bloodTransferTypes = [
+  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
+];
+
 const DONATION_TYPES = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
 const STATUS_OPTIONS = [
     { value: '', label: 'Tất cả trạng thái' },
@@ -20,6 +30,10 @@ const DONATION_TYPE_OPTIONS = [
   { value: 0, label: 'Toàn phần' },
   { value: 1, label: 'Tiểu cầu' },
   { value: 2, label: 'Huyết tương' },
+];
+
+const statusList = [
+  'Đang Chờ', 'Chấp Nhận', 'Đã Nhập', 'Từ Chối'
 ];
 
 const RequesterDonorPage = () => {
@@ -46,9 +60,10 @@ const RequesterDonorPage = () => {
     // Hàm mở modal gửi máu vào kho
     const handleOpenBloodDropModal = (record) => {
         setBloodDropFormData({
+            bloodDonationApplicationId: record.registrationId,
             fullName: record.fullNameRegister || "",
             birthDate: record.birthDate || "",
-            gender: "", // Nếu có thì truyền vào
+            gender: "", 
             bloodType: record.bloodGroup || "",
             quantity: record.quantity || 0,
             hospital: "",
@@ -57,6 +72,7 @@ const RequesterDonorPage = () => {
             needDate: dayjs().format("YYYY-MM-DD"),
             note: "",
         });
+        setEditingRecord(record);
         setIsBloodDropModalOpen(true);
     };
 
@@ -67,11 +83,20 @@ const RequesterDonorPage = () => {
     };
 
     // Hàm submit form gửi máu vào kho
-    const handleBloodDropFormSubmit = (e) => {
+    const handleBloodDropFormSubmit = async (e) => {
         e.preventDefault();
-        // Xử lý gửi dữ liệu tại đây
-        console.log("Submitted blood drop form data:", bloodDropFormData);
+        
+        console.log("bloodDropFormData:", bloodDropFormData);
+        const createBloodImportRes = await CreateBloodImportApplication(bloodDropFormData);
+        console.log("createBloodImportRes:", createBloodImportRes);
+
+        if (createBloodImportRes.code === 201) {
+            toast.success("Tạo đơn thành công!");
+        } else {
+            toast.error("Tạo đơn không thành công. Vui lòng thử lại.");
+        }
         setIsBloodDropModalOpen(false);
+        await fetchRegistrationList();
     };
 
     // Fetch registration list
@@ -79,16 +104,17 @@ const RequesterDonorPage = () => {
         try {
             setLoading(true);
             const res = await getAllBloodDonationApplication();
+            console.log("res:", res)
             // Map API data sang format bảng
             const mapped = (res || []).map((item, idx) => ({
                 registrationId: item.id || idx,
                 fullNameRegister: item.fullName || "",
-                birthDate: item.dob ? dayjs(item.dob).format('DD/MM/YYYY') : "",
-                bloodGroup: (typeof item.bloodType === 'number') ? ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'][item.bloodType] : '',
-                type: (typeof item.bloodTransferType === 'number') ? ['Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'][item.bloodTransferType] : '',
-                availableDate: item.donationEndDate ? (dayjs(item.donationEndDate).isValid() ? dayjs(item.donationEndDate).format('DD/MM/YYYY') : "") : '',
+                birthDate: item.dob,
+                bloodGroup: bloodTypes[item.bloodType],
+                type: bloodTransferTypes[item.bloodTransferType],
+                availableDate: item.donationEndDate,
                 phone: item.phoneNumber || "",
-                status: typeof item.status === 'number' ? (item.status === 0 ? 'Đang chờ' : item.status === 1 ? 'Đã duyệt' : 'Từ chối') : 'Đang chờ',
+                status: statusList[item.status],
                 quantity: item.quantity || ""
             }));
             setOriginalList(mapped);
@@ -146,6 +172,21 @@ const RequesterDonorPage = () => {
             setLoading(true);
             try {
                 // Map status text về số
+                console.log("editingRecord", editingRecord);
+                const importListRes = await GetAllBloodImportApplication();
+                console.log("importListRes", importListRes);
+                const importList = importListRes.data.bloodImports;
+                console.log("importList", importList);
+                const importObj = importList.find(item => item.bloodDonationApplicationId === editingRecord.registrationId && item.status === 0);
+                console.log("importObj", importObj);
+                if (!importObj) {
+                    toast.error("Vui lòng tạo đơn nhập máu trước khi duyệt");
+                    return;
+                }
+                const bloodImport = await GetBloodImportApplicationById(importObj.id);
+                console.log("bloodImport", bloodImport);
+
+                
                 let statusNumber = 0;
                 if (newStatus === 'Đã duyệt') statusNumber = 1;
                 else if (newStatus === 'Từ chối') statusNumber = 2;
@@ -154,6 +195,17 @@ const RequesterDonorPage = () => {
                     status: statusNumber,
                     note: ''
                 });
+
+                
+                const bloodImportSend = {
+                    id: bloodImport.data.id,
+                    status: statusNumber,
+                    note: ""
+                }
+                console.log("bloodImportSend", bloodImportSend);
+                const updateBloodImportStatus = await updateBloodImportApplication(bloodImportSend);
+                console.log("updateBloodImportStatus", updateBloodImportStatus);
+            
                 // Cập nhật lại danh sách
                 await fetchRegistrationList();
             } catch (e) {
@@ -245,7 +297,8 @@ const RequesterDonorPage = () => {
         },
         {
             title: 'Thời gian',
-            key: 'availableTime',
+            dataIndex: 'availableDate',
+            key: 'availableDate',
             align: 'center',
             render: (_, record) => record.availableDate ? dayjs(record.availableDate).format('DD/MM/YYYY') : '',
         },
@@ -263,9 +316,10 @@ const RequesterDonorPage = () => {
             render: (status) => {
                 let color;
                 switch (status) {
-                    case 'Đang chờ': color = 'text-orange-500'; break;
-                    case 'Đã duyệt': color = 'text-green-500'; break;
-                    default: color = 'text-red-500';
+                    case 'Đang Chờ': color = 'text-orange-500'; break;
+                    case 'Chấp Nhận': color = 'text-green-500'; break;
+                    case 'Từ Chối': color = 'text-red-500'; break;
+                    default: color = 'text-blue-500';
                 }
                 return (
                     <span className={`font-bold ${color} border-2 rounded-md p-1`}>
@@ -279,46 +333,36 @@ const RequesterDonorPage = () => {
             key: 'actions',
             align: 'center',
             width: 220,
-            render: (_, record) => (
-                <span className="flex items-center justify-center gap-2">
-                    {/* Sửa trạng thái */}
-                    <Tooltip title="Sửa trạng thái">
-                        <Button 
-                            type="dashed" 
-                            variant="dashed" 
-                            color="cyan" 
-                            onClick={() => handleEdit(record)}
-                            disabled={loading}
-                        >
-                            <EditOutlined />
-                        </Button>
-                    </Tooltip>
-                    {/* Sửa nhóm máu & số lượng */}
-                    <Tooltip title="Sửa nhóm máu & số lượng">
-                        <Button
-                            type="dashed"
-                            variant="dashed"
-                            color="orange"
-                            onClick={() => handleEditBlood(record)}
-                            disabled={loading}
-                        >
-                            <EditOutlined rotate={90} />
-                        </Button>
-                    </Tooltip>
-                    {/* Gửi máu vào kho */}
-                    <Tooltip title="Gửi máu vào kho">
-                        <Button
-                            type="dashed"
-                            variant="dashed"
-                            color="danger"
-                            onClick={() => handleOpenBloodDropModal(record)}
-                            disabled={loading}
-                        >
-                            <AuditOutlined />
-                        </Button>
-                    </Tooltip>
-                </span>
-            ),
+            render: (_, record) => {
+                if (record.status === "Đang Chờ") {
+                    return (
+                        <span className="flex items-center justify-center gap-2">
+                            <Tooltip title="Gửi máu vào kho">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="danger"
+                                    onClick={() => handleOpenBloodDropModal(record)}
+                                    disabled={loading}
+                                >
+                                    <AuditOutlined />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title="Sửa nhóm máu & số lượng">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="orange"
+                                    onClick={() => handleEditBlood(record)}
+                                    disabled={loading}
+                                >
+                                    <EditOutlined rotate={90} />
+                                </Button>
+                            </Tooltip>
+                        </span>
+                    )
+                }
+            },
         },
     ], [handleEdit, handleEditBlood, handleDelete, loading]);
 
@@ -349,8 +393,9 @@ const RequesterDonorPage = () => {
                         onChange={e => handleFilterChange('status', e.target.value)}
                         disabled={loading}
                     >
-                        {STATUS_OPTIONS.map(opt => (
-                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option value="">Tất cả trạng thái</option>
+                        {statusList.map(opt => (
+                            <option key={opt} value={opt}>{opt}</option>
                         ))}
                     </select>
                 </div>
@@ -362,7 +407,7 @@ const RequesterDonorPage = () => {
                         disabled={loading}
                     >
                         <option value="">Tất cả nhóm máu</option>
-                        {BLOOD_TYPES.filter(type => type).map(type => (
+                        {bloodTypes.map(type => (
                             <option key={type} value={type}>{type}</option>
                         ))}
                     </select>
@@ -479,39 +524,10 @@ const RequesterDonorPage = () => {
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                 placeholder="Nhập họ và tên"
                                 style={{ width: '100%' }}
+                                disabled={true}
                             />
                         </div>
-                        {/* ngày sinh và giới tính */}
-                        {/**
-                        <div className="flex flex-col md:flex-row gap-4 md:gap-8">
-                            <div className="flex-1 flex flex-col">
-                                <label className="font-semibold mb-1">Ngày sinh</label>
-                                <input
-                                    type="date"
-                                    name="birthDate"
-                                    value={bloodDropFormData.birthDate}
-                                    onChange={handleBloodDropFormChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                                    style={{ width: '100%' }}
-                                />
-                            </div>
-                            <div className="flex-1 flex flex-col">
-                                <label className="font-semibold mb-1">Giới tính</label>
-                                <select
-                                    name="gender"
-                                    value={bloodDropFormData.gender}
-                                    onChange={handleBloodDropFormChange}
-                                    className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                                    style={{ width: '100%' }}
-                                >
-                                    <option value="">-- Chọn giới tính --</option>
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                    <option value="Khác">Khác</option>
-                                </select>
-                            </div>
-                        </div>
-                        */}
+                        
                         {/* Nhóm máu và số lượng */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-8">
                             <div className="flex-1 flex flex-col">
@@ -523,16 +539,12 @@ const RequesterDonorPage = () => {
                                     required
                                     className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                     style={{ width: '100%' }}
+                                    disabled={true}
                                 >
                                     <option value="">-- Chọn nhóm máu --</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
+                                    {bloodTypes.map(type => (
+                                        <option key={type} value={type}>{type}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="flex-1 flex flex-col">
@@ -546,6 +558,7 @@ const RequesterDonorPage = () => {
                                     onChange={handleBloodDropFormChange}
                                     className="w-full text-center border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                     style={{ width: '100%' }}
+                                    disabled={true}
                                 />
                             </div>
                         </div>
@@ -561,6 +574,7 @@ const RequesterDonorPage = () => {
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                 min={dayjs().format("YYYY-MM-DD")}
                                 style={{ width: '100%' }}
+                                disabled={true}
                             />
                         </div>
                         {/* Loại và số điện thoại trên cùng một dòng */}
@@ -574,10 +588,11 @@ const RequesterDonorPage = () => {
                                     onChange={e => setBloodDropFormData(prev => ({ ...prev, type: Number(e.target.value) }))}
                                     className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                     style={{ width: '100%' }}
+                                    disabled={true}
                                 >
                                     <option value="">-- Chọn loại --</option>
-                                    {DONATION_TYPE_OPTIONS.map(opt => (
-                                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                    {bloodTransferTypes.map(value => (
+                                      <option key={value} value={value}>{value}</option>
                                     ))}
                                 </select>
                             </div>
@@ -592,6 +607,7 @@ const RequesterDonorPage = () => {
                                     className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                     placeholder="VD: 0901234567"
                                     style={{ width: '100%' }}
+                                    disabled={true}
                                 />
                             </div>
                         </div>

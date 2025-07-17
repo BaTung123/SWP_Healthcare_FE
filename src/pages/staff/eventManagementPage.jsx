@@ -8,9 +8,9 @@ const EventRegistrationForm = () => {
     locationName: "",
     locationAddress: "",
     targetParticipant: "",
-    eventStartTime: new Date().toISOString().split('T')[0],
+    eventStartTime: "",
     eventEndTime: "",
-    status: false,
+    status: 0,
   });
   const [error, setError] = useState("");
 
@@ -40,6 +40,7 @@ const EventRegistrationForm = () => {
       eventEndTime: new Date(form.eventEndTime).toISOString(),
       status: form.status ? 1 : 0,
     };
+    console.log("eventBody:", eventBody);
     try {
       const res = await CreateEvent(eventBody);
       alert("Tạo sự kiện thành công!");

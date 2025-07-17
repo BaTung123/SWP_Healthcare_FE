@@ -1,12 +1,13 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
-import { GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
+import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
 import { Button, DatePicker, Modal, Table } from 'antd';
 import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
 import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
+import UserContext from '../../contexts/UserContext';
 
 // Constants và helper functions để ngoài component
 const BLOOD_TYPE_MAP = {
@@ -15,6 +16,15 @@ const BLOOD_TYPE_MAP = {
 const BLOOD_TYPE_REVERSE_MAP = [
   "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"
 ];
+
+const bloodTransferTypes = [
+  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
+];
+
+const statusList = [
+  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
+];
+
 function normalizeGender(gender) {
   if (!gender) return 'male';
   if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Male';
@@ -49,38 +59,7 @@ const ProfilePage = () => {
   const fileInputRef = useRef(null);
 
   const [activeTab, setActiveTab] = useState('profile');
-  const [registrationList, setRegistrationList] = useState([
-    {
-      registrationId: 1,
-      fullNameRegister: 'Nguyễn Văn An',
-      birthDate: '1995-04-12',
-      gender: 'Nam',
-      bloodGroup: 'A+',
-      type: 'Toàn Phần',
-      availableDate: '2024-06-01',
-      status: 'đang chờ',
-    },
-    {
-      registrationId: 2,
-      fullNameRegister: 'Trần Thị Bình',
-      birthDate: '1992-09-23',
-      gender: 'Nữ',
-      bloodGroup: 'O-',
-      type: 'Tiểu Cầu',
-      availableDate: '2024-07-10',
-      status: 'đã duyệt',
-    },
-    {
-      registrationId: 3,
-      fullNameRegister: 'Lê Văn Cường',
-      birthDate: '1988-12-05',
-      gender: 'Nam',
-      bloodGroup: 'B+',
-      type: 'Huyết Tương',
-      availableDate: '2024-08-15',
-      status: 'từ chối',
-    },
-  ]);
+  const [registrationList, setRegistrationList] = useState([]);
   // const [registration, setRegistration] = useState(null);
   // const [appointmentList, setAppointmentList] = useState([]);
   // const [appointment, setAppointment] = useState(null);
@@ -90,7 +69,7 @@ const ProfilePage = () => {
   // const [showAppointList, setShowAppointList] = useState(false);
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
-  const [user, setUser] = useState();
+  const [userItem, setUserItem] = useState();
   const [form, setForm] = useState({});
 
   // Thêm khai báo bloodTypes
@@ -101,15 +80,15 @@ const ProfilePage = () => {
   const columns = [
     {
       title: 'Họ và Tên',
-      dataIndex: 'fullNameRegister',
-      key: 'fullNameRegister',
+      dataIndex: 'fullName',
+      key: 'fullName',
       width: 200,
       align: 'center',
     },
     {
       title: 'Ngày sinh',
-      dataIndex: 'birthDate',
-      key: 'birthDate',
+      dataIndex: 'dob',
+      key: 'dob',
       width: 130,
       align: 'center',
       render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
@@ -133,20 +112,23 @@ const ProfilePage = () => {
       key: 'bloodType',
       width: 100,
       align: 'center',
+      render: (bloodType) => bloodTypes[bloodType]
     },
     {
       title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'bloodTransferType',
+      key: 'bloodTransferType',
       width: 120,
       align: 'center',
+      render: (type) => bloodTransferTypes[type]
     },
     {
       title: 'Ngày đã chọn',
-      key: 'selectedDate',
+      dataIndex: 'donationEndDate',
+      key: 'donationEndDate',
       width: 200,
       align: 'center',
-      render: (record) => record.availableDate ? dayjs(record.availableDate).format('DD/MM/YYYY') : '',
+      render: (record) => record ? dayjs(record).format('DD/MM/YYYY') : '',
     },
     {
       title: 'Trạng Thái',
@@ -156,27 +138,16 @@ const ProfilePage = () => {
       align: 'center',
       render: (status) => {
         let color;
-        let statusText;
-        switch (status) {
-          case 'đã duyệt':
-            color = 'text-blue-500';
-            statusText = 'Đã duyệt';
-            break;
-          case 'đang chờ':
-            color = 'text-orange-500';
-            statusText = 'Đang chờ';
-            break;
-          case 'từ chối':
-            color = 'text-red-500';
-            statusText = 'Từ chối';
-            break;
-          default:
-            color = 'text-gray-500';
-            statusText = 'Khác';
+        const text = statusList[status];
+        switch (text) {
+          case 'Đang Chờ': color = 'text-orange-500'; break;
+          case 'Chấp Nhận': color = 'text-blue-500'; break;
+          case 'Từ Chối': color = 'text-red-500'; break;
+          default: color = 'text-green-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`} >
-            {statusText}
+            {text}
           </span>
         );
       },
@@ -218,7 +189,7 @@ const ProfilePage = () => {
     const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
     const userResponse = await GetAuthenByUserId(userId);
     const userData = userResponse.data;
-    setUser(userData);
+    setUserItem(userData);
     setForm({
       ...userData,
       gender: normalizeGender(userData.gender),
@@ -231,6 +202,20 @@ const ProfilePage = () => {
   useEffect(() => {
     fetchUser();
   }, []);
+
+  const { user } = useContext(UserContext);
+  console.log("user:", user);
+  useEffect(() => {
+    const fetchDonateApplication = async () => {
+      const donateApplicationRes = await getAllBloodDonationApplication();
+      console.log("donateApplicationRes:", donateApplicationRes);
+
+      const donateList = donateApplicationRes.filter(app => app.fullName === user.name);
+      console.log("donateList:", donateList);
+      setRegistrationList(donateList);
+    }
+    fetchDonateApplication();
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -276,7 +261,7 @@ const ProfilePage = () => {
       // Gọi lại API lấy user mới nhất
       const userResponse = await GetAuthenByUserId(id);
       const updatedUser = userResponse.data;
-      setUser(updatedUser);
+      setUserItem(updatedUser);
       setForm({
         ...updatedUser,
         gender: normalizeGender(updatedUser.gender),
@@ -297,19 +282,6 @@ const ProfilePage = () => {
     }
   };
 
-  const handleShowAppointmentList = async (registrationId) => {
-    setShowAppointList(true);
-    if (showAppointForRegister === registrationId) {
-      setShowAppointList(false);
-      setShowAppointForRegister(null);
-      return;
-    }
-
-    const appointments = await GetAllAppointmentWithRegistrationId(registrationId)
-    console.log("Appointments received:", appointments);
-    setAppointmentList(appointments);
-    setShowAppointForRegister(registrationId);
-  }
 
   return (
     <div className="max-w-[1200px] mx-auto p-8">
@@ -322,12 +294,6 @@ const ProfilePage = () => {
             onClick={() => setActiveTab('profile')}
           >
             PROFILE
-          </div>
-          <div
-            className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'history' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
-            onClick={() => setActiveTab('history')}
-          >
-            HISTORY
           </div>
           <div
             className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'registration' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
@@ -420,22 +386,6 @@ const ProfilePage = () => {
                 </div>
               </div>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'history' && (
-          <div>
-            <h3 className="text-2xl font-semibold mb-6">Lịch sử hiến máu</h3>
-            <Table
-              className="rounded-2xl shadow-lg bg-white custom-table-user"
-              dataSource={user.donationHistory}
-              columns={historyColumns}
-              rowKey={(record, idx) => idx}
-              pagination={{
-                pageSize: 5,
-                position: ['bottomCenter'],
-              }}
-            />
           </div>
         )}
 

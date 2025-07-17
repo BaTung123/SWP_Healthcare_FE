@@ -211,27 +211,45 @@ const BloodDonationEventPage = () => {
                 className="transition-transform duration-300 hover:scale-105 hover:shadow-xl relative"
                 title={event.eventName}
                 extra={(() => {
-                  // status: 0=active, 1=ended, 2=cancelled
+                  const now = dayjs();
+                  const start = dayjs(event.eventDate);
+                  const end = dayjs(event.endDate);
+
                   let badgeProps = {
                     status: "processing",
                     text: (
                       <span style={{ fontSize: 16 }}>Đang diễn ra</span>
                     ),
                   };
-                  if (event.status === 1) {
+
+                  if (event.status === 4) {
                     badgeProps = {
-                      status: "error",
-                      text: (
-                        <span style={{ fontSize: 16, color: "#ff4d4f" }}>Đã kết thúc</span>
-                      ),
+                      status: "default",
+                      text: <span style={{ fontSize: 16, color: "#888" }}>Đã hủy</span>,
                     };
                   } else if (event.status === 2) {
                     badgeProps = {
-                      status: "default",
-                      text: (
-                        <span style={{ fontSize: 16, color: "#888" }}>Đã hủy</span>
-                      ),
+                      status: "warning",
+                      text: <span style={{ fontSize: 16, color: "#faad14" }}>Đã đầy</span>,
                     };
+                  } else {
+                    // Trạng thái theo thời gian
+                    if (now.isBefore(start)) {
+                      badgeProps = {
+                        status: "processing",
+                        text: <span style={{ fontSize: 16 }}>Sắp diễn ra</span>,
+                      };
+                    } else if (now.isAfter(end)) {
+                      badgeProps = {
+                        status: "error",
+                        text: <span style={{ fontSize: 16, color: "#ff4d4f" }}>Đã kết thúc</span>,
+                      };
+                    } else {
+                      badgeProps = {
+                        status: "success",
+                        text: <span style={{ fontSize: 16, color: "#52c41a" }}>Đang diễn ra</span>,
+                      };
+                    }
                   }
                   return <Badge {...badgeProps} />;
                 })()}
@@ -245,12 +263,12 @@ const BloodDonationEventPage = () => {
                 </p>
                 <p><strong>Chỉ tiêu người tham gia:</strong> {event.targetDonors}</p>
                 {event.description && <p><strong>Mô tả:</strong> {event.description}</p>}
-                {event.status === 0 &&
+                {event.status === 1 &&
                   <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <Button
                       type="primary"
                       className="mt-2 w-full"
-                      onClick={() => openRegisterModal(event)}
+                      onClick={() => navigate(`/member/register-donation?eventId=${event.eventId}`)}
                     >
                       Đăng kí tham gia
                     </Button>
@@ -265,7 +283,6 @@ const BloodDonationEventPage = () => {
         open={showRegisterModal}
         onCancel={() => setShowRegisterModal(false)}
         footer={null}
-        destroyOnClose
         centered
       >
         <div style={{ maxWidth: 520, margin: "0 auto", padding: 12 }}>

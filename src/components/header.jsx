@@ -1,29 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Dropdown, Space } from "antd";
 import { DownOutlined } from "@ant-design/icons";
 import img from "../assets/react.svg";
 import { GetAuthenByUserId } from "../services/authentication";
+import UserContext from "../contexts/UserContext";
 
 const Header = () => {
   const currentPath = window.location.pathname;
-  const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   const dropdownRef = useRef(null);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      const payload = JSON.parse(atob(savedUser.token.split('.')[1]));
-      console.log("payload:", payload)
-      const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
-      const userResponse = await GetAuthenByUserId(userId)
-      console.log("userResponse:", userResponse)
-      setUser(userResponse.data);
-    };
-
-    fetchUser();
-  }, [])
+  const { user } = useContext(UserContext);
 
   console.log("user:", user)
 
@@ -141,7 +130,6 @@ const Header = () => {
                     <button
                       onClick={() => {
                         localStorage.removeItem("user");
-                        setUser(null);
                         window.location.href = "/";
                       }}
                       className="w-full text-left flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 transition-colors"

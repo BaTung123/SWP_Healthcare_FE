@@ -34,21 +34,21 @@ const AcceptBloodDropPage = () => {
 
   
   const fetchRequestList = async () => {
-      const requestListRes = await GetAllBloodRequestApplication();
-      console.log("requestListRes", requestListRes.data.bloodRequestApplications)
-      const requestList = requestListRes.data.bloodRequestApplications;
-      const requestObjList = requestList.map(request => {
-  
-        return {
-          ...request,
-          bloodTransferType: bloodTransferTypes[request.bloodTransferType],
-          bloodType: bloodTypes[request.bloodType],
-          status: statusList[request.status]
-        }
-      })
-  
-      setData(requestObjList)
-    }
+    const requestListRes = await GetAllBloodRequestApplication();
+    console.log("requestListRes", requestListRes.data.bloodRequestApplications)
+    const requestList = requestListRes.data.bloodRequestApplications;
+    const requestObjList = requestList.map(request => {
+
+      return {
+        ...request,
+        bloodTransferType: bloodTransferTypes[request.bloodTransferType],
+        bloodType: bloodTypes[request.bloodType],
+        status: statusList[request.status]
+      }
+    })
+
+    setData(requestObjList)
+  }
   useEffect(() => {
     fetchRequestList()
   }, [])
@@ -138,22 +138,23 @@ const AcceptBloodDropPage = () => {
     },
     {
       title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'bloodTransferType',
+      key: 'bloodTransferType',
       align: 'center',
       width: 110,
     },
     {
       title: 'Ngày cần',
-      dataIndex: 'needDate',
-      key: 'needDate',
+      dataIndex: 'bloodRequestDate',
+      key: 'bloodRequestDate',
       align: 'center',
       width: 110,
+      render: (date) => dayjs(date).format('DD-MM-YYYY'),
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'phone',
-      key: 'phone',
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
       align: 'center',
       width: 130,
     },

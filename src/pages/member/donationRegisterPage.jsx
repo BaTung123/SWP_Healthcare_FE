@@ -157,7 +157,9 @@ const DonationRegisterPage = () => {
       newErrors.birthDate = "Vui lòng nhập ngày sinh.";
     } else {
       const age = dayjs().diff(dayjs(formData.birthDate), 'year');
-      if (age < 18 || age > 60) {
+      if (age < 18) {
+        newErrors.birthDate = "Bạn phải đủ 18 tuổi trở lên để đăng ký hiến máu.";
+      } else if (age > 60) {
         newErrors.birthDate = "Tuổi phải từ 18 đến 60 để đủ điều kiện hiến máu.";
       }
     }
@@ -177,7 +179,7 @@ const DonationRegisterPage = () => {
     } else if (quantity > 500) {
       newErrors.quantity = "Số lượng máu hiến tối đa là 500ml cho một lần hiến.";
     } else if (quantity % 50 !== 0) {
-      newErrors.quantity = "Số lượng máu phải là bội số của 50ml.";
+      newErrors.quantity = "Số lượng máu phải là bội số của 50ml (0, 50, 100, ..., 500).";
     }
     // Validate ngày đăng ký hiến
     if (!validateDate(formData.toDate)) {
@@ -194,6 +196,16 @@ const DonationRegisterPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Kiểm tra userId và eventId hợp lệ trước khi gửi API
+    if (!formData.userId || isNaN(Number(formData.userId))) {
+      toast.error("Không xác định được userId. Vui lòng đăng nhập lại.");
+      return;
+    }
+    if (!eventId || isNaN(Number(eventId))) {
+      toast.error("Không xác định được sự kiện hiến máu.");
+      return;
+    }
 
     if (!validateForm()) {
       return;
@@ -212,10 +224,8 @@ const DonationRegisterPage = () => {
         bloodType: bloodTypes[formData.bloodType],
         bloodTransferType: DONATION_TYPE_MAP[formData.type],
         quantity: Number(formData.quantity),
-        note: "",
+        note: "Hiến máu lần đầu", // hoặc lấy từ form nếu có
         phoneNumber: formData.phone,
-        status: 0,
-        donationStartDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : "",
         donationEndDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : ""
       };
       console.log('dataToSend:', dataToSend);

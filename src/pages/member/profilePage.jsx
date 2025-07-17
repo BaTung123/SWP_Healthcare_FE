@@ -209,7 +209,45 @@ const ProfilePage = () => {
   };
 
   const handleSave = async () => {
-    console.log("formData:", formData);
+    try {
+      // Validate gender
+      if (!formData.gender) {
+        alert('Vui lòng chọn giới tính!');
+        return;
+      }
+      // Validate phone number
+      const phoneRegex = /^\d{10}$/;
+      if (!phoneRegex.test(formData.phone)) {
+        alert('Số điện thoại phải đủ 10 số!');
+        return;
+      }
+      // Validate age >= 18
+      const today = new Date();
+      const dob = new Date(formData.birthDate);
+      const age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        alert('Bạn phải đủ 18 tuổi trở lên!');
+        return;
+      }
+      // Giả lập id, thực tế nên lấy từ user context hoặc localStorage
+      const dataToSend = {
+        id: formData.userId,
+        name: formData.fullName,
+        gender: formData.gender,
+        dob: formData.birthDate,
+        phoneNumber: formData.phone
+      };
+      console.log('Dữ liệu gửi lên:', dataToSend);
+      await updateUserInfo(dataToSend);
+      alert('Cập nhật thông tin thành công!');
+    } catch (error) {
+      console.log('Lỗi cập nhật:', error.response?.data || error.message);
+      alert('Cập nhật thông tin thất bại!');
+    }
   };
 
   const handleAvatarClick = () => {
@@ -269,29 +307,8 @@ const ProfilePage = () => {
 
         {activeTab === 'profile' && user && (
           <div className="flex items-start mb-8">
-            <div className="flex flex-col items-center flex-[0_0_200px] ml-12">
-              <img
-                src={user.avatarImageUrl || 'https://i.imgur.com/1Q9Z1Zm.png'}
-                alt="Avatar"
-                className="w-[250px] h-[250px] rounded-full object-cover border-4 border-indigo-100 mb-6 shadow-md transition-all hover:scale-105 hover:border-indigo-900"
-              />
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-              />
-              <button
-                className="bg-indigo-900 text-white border-none rounded-lg py-3 px-6 font-semibold cursor-pointer mt-4 w-full max-w-[130px] transition-all hover:bg-indigo-800 hover:-translate-y-0.5 shadow-md hover:shadow-lg active:translate-y-0"
-                onClick={handleAvatarClick}
-              >
-                CHANGE
-              </button>
-            </div>
-
             <div className="flex-1 w-full max-w-xl mx-auto">
-              <div className="flex flex-row justify-around gap-5 max-w-xl mx-auto">
+              <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
                   <div className="flex flex-col gap-1 w-full mb-3">
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>

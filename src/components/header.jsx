@@ -103,19 +103,14 @@ const Header = () => {
                 href="/member/register-donation"
                 className="bg-gradient-to-r from-[#D32F2F] to-[#F44336] !text-white p-2.5 rounded-md hover:from-[#a32121] hover:to-[#f24040] transition-colors duration-300 ease-in-out"
               >
-                🩸Donate Now
+                🩸Hiến máu
               </a>
               <div ref={dropdownRef} className="relative">
                 <button
-                  className="cursor-pointer px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 hover:from-blue-700 hover:to-cyan-500 font-semibold text-sm shadow-md flex items-center transition-colors duration-300 ease-in-out"
+                  className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-400 text-white p-2.5 px-8 rounded-md hover:from-blue-700 hover:to-cyan-500 font-semibold text-sm shadow-md transition-colors duration-300 ease-in-out"
                   onClick={() => setShowUserMenu(!showUserMenu)}
                 >
-                  <img
-                    src={img}
-                    alt="User Avatar"
-                    className="w-7 h-7 rounded-full object-cover"
-                  />
-                  <span className="ml-2 text-white">{user.name}</span>
+                  <span style={{ color: '#fff' }}>{user.name}</span>
                 </button>
 
                 {showUserMenu && (
@@ -144,7 +139,7 @@ const Header = () => {
           ) : (
             <a
               href="/login"
-              className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-blue-600 to-cyan-400 !text-white font-semibold text-sm shadow-md hover:from-blue-700 hover:to-cyan-500 hover:shadow-lg transition-transform transform hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-cyan-400 !text-white p-2.5 rounded-md hover:from-blue-700 hover:to-cyan-500 transition-colors duration-300 ease-in-out"
             >
               <i className="fa-solid fa-user"></i>
               Đăng nhập

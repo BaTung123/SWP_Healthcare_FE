@@ -93,6 +93,11 @@ const ProfilePage = () => {
   const [user, setUser] = useState();
   const [form, setForm] = useState({});
 
+  // Thêm khai báo bloodTypes
+  const bloodTypes = [
+    'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  ];
+
   const columns = [
     {
       title: 'Họ và Tên',
@@ -229,7 +234,7 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setForm({ ...form, [name]: value });
   };
 
   const handleSave = async () => {
@@ -347,7 +352,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
                     <input
                       name="name"
-                      value={formData.fullName}
+                      value={form.name || form.fullName || ''}
                       readOnly
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                     />
@@ -356,7 +361,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
                     <input
                       name="phone"
-                      value={formData.phone}
+                      value={form.phone || ''}
                       onChange={handleChange}
                       className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     />
@@ -365,7 +370,7 @@ const ProfilePage = () => {
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
                     <select
                       name="bloodType"
-                      value={formData.bloodType}
+                      value={form.bloodType || ''}
                       onChange={handleChange}
                       className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
@@ -385,57 +390,29 @@ const ProfilePage = () => {
                     readOnly
                     className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                   />
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">PHONE</label>
-                  <input
-                    name="phone"
-                    value={form?.phone || ''}
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
-                  <select
-                    name="gender"
-                    value={form?.gender || ''}
-                    onChange={handleChange}
-                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  >
-                    <option value="Male">Nam</option>
-                    <option value="Female">Nữ</option>
-                    <option value="Other">Khác</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BLOOD TYPE</label>
-                  <select
-                    name="bloodType"
-                    value={form?.bloodType || ''}
-                    onChange={handleChange}
-                    className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  >
-                    <option value="" disabled hidden>Chọn nhóm máu</option>
-                    <option value="O-">O-</option>
-                    <option value="O+">O+</option>
-                    <option value="A-">A-</option>
-                    <option value="A+">A+</option>
-                    <option value="B-">B-</option>
-                    <option value="B+">B+</option>
-                    <option value="AB-">AB-</option>
-                    <option value="AB+">AB+</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
-                  <input
-                    name="dob"
-                    value={form?.dob || ''}
-                    type="date"
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
+                  <div className="flex flex-col gap-1 w-full mb-3 mt-3">
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
+                    <select
+                      name="gender"
+                      value={form.gender || ''}
+                      onChange={handleChange}
+                      className="w-full py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    >
+                      <option value="Male">Nam</option>
+                      <option value="Female">Nữ</option>
+                      <option value="Other">Khác</option>
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
+                    <input
+                      name="dob"
+                      value={form.dob || ''}
+                      type="date"
+                      onChange={handleChange}
+                      className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    />
+                  </div>
                 </div>
               </div>
             </div>

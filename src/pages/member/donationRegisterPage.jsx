@@ -202,10 +202,10 @@ const DonationRegisterPage = () => {
       toast.error("Không xác định được userId. Vui lòng đăng nhập lại.");
       return;
     }
-    if (!eventId || isNaN(Number(eventId))) {
-      toast.error("Không xác định được sự kiện hiến máu.");
-      return;
-    }
+    // if (!eventId || isNaN(Number(eventId))) {
+    //   toast.error("Không xác định được sự kiện hiến máu.");
+    //   return;
+    // }
 
     if (!validateForm()) {
       return;

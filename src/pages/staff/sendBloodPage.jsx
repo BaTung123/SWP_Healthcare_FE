@@ -28,8 +28,9 @@ const statusOptions = [
   { value: 'Từ Chối', label: 'Từ Chối' },
 ];
 
+// Sửa lại cho đúng các trạng thái hợp lệ
 const statusOptionsWithPending = [
-  { value: 'Đã nhận', label: 'Đã nhận' },
+  { value: 'Đã Nhận', label: 'Đã Nhận' },
 ];
 
 // Định nghĩa form mặc định
@@ -105,14 +106,24 @@ const SendBloodPage = () => {
   console.log("newStatus", newStatus)
   const handleModalOk = async () => {
     if (editingRecord) {
+      // Chỉ cho phép chuyển sang 'Đã Nhận' hoặc 'Từ Chối'
+      let statusIdx = statusList.indexOf(newStatus);
+      if (statusIdx === -1) {
+        toast.error('Trạng thái không hợp lệ!');
+        return;
+      }
       const updateRequestObj = {
         id: editingRecord.id,
-        status: statusList.indexOf(newStatus),
+        status: statusIdx,
         note: rejectReason || ""
       };
-      console.log("updateRequestObj", updateRequestObj)
-      const updateRequestRes = await UpdateBloodRequestStatus(updateRequestObj);
-      console.log("updateRequestRes", updateRequestRes)
+      try {
+        const updateRequestRes = await UpdateBloodRequestStatus(updateRequestObj);
+        console.log("updateRequestRes", updateRequestRes)
+        toast.success('Cập nhật trạng thái thành công!');
+      } catch (err) {
+        toast.error('Cập nhật trạng thái thất bại!');
+      }
     }
     setIsModalOpen(false);
     setEditingRecord(null);
@@ -467,15 +478,10 @@ const SendBloodPage = () => {
                   required
                   className="w-full border border-gray-300 rounded-md px-3 py-2"
                 >
-                  <option value="">-- Chọn nhóm máu --</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
+                  <option value="" disabled hidden>-- Chọn nhóm máu --</option>
+                  {bloodTypes.map(type => (
+                    <option key={type} value={type}>{type}</option>
+                  ))}
                 </select>
               </div>
               <div className="flex-1">

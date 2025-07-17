@@ -1,68 +1,31 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { FileTextOutlined } from '@ant-design/icons';
-
-const initialReceiverList = [
-  {
-    name: "Nguyễn Văn A",
-    bloodType: "A+",
-    amount: 500,
-    type: "Toàn phần",
-    time: "2024-07-01",
-    phone: "0901234567",
-    status: 'Đang chờ',
-  },
-  {
-    name: "Trần Thị B",
-    bloodType: "O-",
-    amount: 350,
-    type: "Tiểu cầu",
-    time: "2024-07-01",
-    phone: "0912345678",
-    status: 'Đã duyệt',
-  },
-  {
-    name: "Lê Văn C",
-    bloodType: "B+",
-    amount: 450,
-    type: "Huyết tương",
-    time: "2024-08-10",
-    phone: "0987654321",
-    status: 'Đang chờ',
-  },
-  {
-    name: "Phạm Thị D",
-    bloodType: "AB-",
-    amount: 500,
-    type: "Toàn phần",
-    time: "2024-07-01",
-    phone: "0934567890",
-    status: 'Từ chối',
-  },
-  {
-    name: "Hoàng Văn E",
-    bloodType: "O+",
-    amount: 350,
-    type: "Tiểu cầu",
-    time: "2024-09-01",
-    phone: "0978123456",
-    status: 'Đang chờ',
-  },
-];
+import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus } from '../../services/donorRegistration';
+import { GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
+import dayjs from 'dayjs';
+import { toast } from 'react-toastify';
 
 const bloodTypes = [
-  '', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+];
+
+const bloodTransferTypes = [
+  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
+];
+
+const statusList = [
+  'Đang Chờ', 'Chấp Nhận', 'Đã Nhập', 'Từ Chối'   
 ];
 
 const statusOptions = [
-  { value: 'Đang chờ', label: 'Đang chờ' },
-  { value: 'Đã duyệt', label: 'Đã duyệt' },
-  { value: 'Từ chối', label: 'Từ chối' },
+  { value: 'Chấp Nhận', label: 'Chấp Nhận' },
+  { value: 'Từ Chối', label: 'Từ Chối' },
 ];
 
 const ReceiverPage = () => {
-  const [data, setData] = useState(initialReceiverList);
+  const [data, setData] = useState([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
@@ -72,14 +35,36 @@ const ReceiverPage = () => {
   const [rejectReason, setRejectReason] = useState('');
   const [detailModal, setDetailModal] = useState({ open: false, reason: '' });
 
+
+  const fetchDonateList = async () => {
+    const donateListRes = await getAllBloodDonationApplication();
+    console.log("donateListRes", donateListRes)
+    const donateList = donateListRes;
+    const donateObjList = donateList.map(donate => {
+
+      return {
+        ...donate,
+        bloodTransferType: bloodTransferTypes[donate.bloodTransferType],
+        bloodType: bloodTypes[donate.bloodType],
+        status: statusList[donate.status]
+      }
+    })
+
+    setData(donateObjList)
+  }
+  useEffect(() => {
+    fetchDonateList();
+  }, [])
+
   // Filtered data for display only
   const filteredData = data.filter(r => {
-    const matchName = search ? r.name.toLowerCase().includes(search.toLowerCase()) : true;
+    const matchName = search ? r.fullName.toLowerCase().includes(search.toLowerCase()) : true;
     const matchStatus = filterStatus ? r.status === filterStatus : true;
     const matchBloodType = filterBloodType ? r.bloodType === filterBloodType : true;
     return matchName && matchStatus && matchBloodType;
   });
 
+  console.log("filteredData", filteredData)
   const handleSearch = (value) => {
     setSearch(value);
   };
@@ -99,24 +84,44 @@ const ReceiverPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleModalOk = () => {
+  const handleModalOk = async () => {
     if (editingRecord) {
-      setData(prev => prev.map(item =>
-        item === editingRecord
-          ? { ...item, status: newStatus, rejectReason: newStatus === 'Từ chối' ? rejectReason : undefined }
-          : item
-      ));
-      // Save to localStorage if rejected
-      const uniqueKey = `blood_request_${editingRecord.phone}_${editingRecord.time}`;
-      if (newStatus === 'Từ chối') {
-        localStorage.setItem(uniqueKey, JSON.stringify({ status: 'Từ chối', rejectReason }));
-      } else {
-        localStorage.removeItem(uniqueKey);
+      console.log("editingRecord", editingRecord)
+      const updateDonateObj = {
+        id: editingRecord.id,
+        status: statusList.indexOf(newStatus),
+        note: rejectReason || ""
+      };
+      const importListRes = await GetAllBloodImportApplication();
+      console.log("importListRes", importListRes);
+      const importList = importListRes.data.bloodImports;
+      console.log("importList", importList);
+      const importObj = importList.find(item => item.bloodDonationApplicationId === editingRecord.id && item.status === 0);
+      console.log("importObj", importObj);
+      if (!importObj) {
+        toast.error("Vui lòng chờ y tá tạo đơn nhập máu.");
+        return;
       }
+
+      console.log("updateRequestObj", updateDonateObj)
+      const updateDonateRes = await updateBloodDonationApplicationStatus(updateDonateObj);
+      console.log("updateDonateRes", updateDonateRes)
+
+      const bloodImport = await GetBloodImportApplicationById(importObj.id);
+      console.log("bloodImport", bloodImport);
+      const bloodImportSend = {
+        id: bloodImport.data.id,
+        status: updateDonateObj.status,
+        note: updateDonateObj.note || ""
+      }
+      console.log("bloodImportSend", bloodImportSend);
+      const updateBloodImportStatus = await updateBloodImportApplication(bloodImportSend);
+      console.log("updateBloodImportStatus", updateBloodImportStatus);
     }
     setIsModalOpen(false);
     setEditingRecord(null);
     setRejectReason('');
+    fetchDonateList();
   };
 
   const handleModalCancel = () => {
@@ -138,8 +143,8 @@ const ReceiverPage = () => {
     },
     {
       title: 'Họ tên',
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'fullName',
+      key: 'fullName',
       align: 'center',
       width: 140,
     },
@@ -153,30 +158,31 @@ const ReceiverPage = () => {
     },
     {
       title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
+      dataIndex: 'bloodTransferType',
+      key: 'bloodTransferType',
       align: 'center',
       width: 110,
     },
     {
       title: 'Số lượng (ml)',
-      dataIndex: 'amount',
-      key: 'amount',
+      dataIndex: 'quantity',
+      key: 'quantity',
       align: 'center',
       width: 120,
     },
     // Bỏ cột Bệnh viện
     {
       title: 'Thời gian',
-      dataIndex: 'time',
-      key: 'time',
+      dataIndex: 'donationEndDate',
+      key: 'donationEndDate',
       align: 'center',
       width: 160,
+      render: (date) => dayjs(date).format("DD-MM-YYYY")
     },
     {
       title: 'Số điện thoại',
-      dataIndex: 'phone',
-      key: 'phone',
+      dataIndex: 'phoneNumber',
+      key: 'phoneNumber',
       align: 'center',
       width: 130,
     },
@@ -190,10 +196,10 @@ const ReceiverPage = () => {
         let color;
         let text = status;
         switch (status) {
-          case 'Đang chờ': color = 'text-orange-500'; break;
-          case 'Đã duyệt': color = 'text-blue-500'; break;
-          case 'Từ chối': color = 'text-red-500'; break;
-          default: color = 'text-gray-500';
+          case 'Đang Chờ': color = 'text-orange-500'; break;
+          case 'Đã Duyệt': color = 'text-blue-500'; break;
+          case 'Từ Chối': color = 'text-red-500'; break;
+          default: color = 'text-green-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`}>
@@ -207,15 +213,20 @@ const ReceiverPage = () => {
       key: 'actions',
       align: 'center',
       width: 180,
-      render: (_, record) => (
-        <span className="flex items-center justify-center gap-2">
-          <Tooltip title="Sửa">
-            <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
-              <EditOutlined />
-            </Button>
-          </Tooltip>
-        </span>
-      ),
+      render: (_, record) => {
+        if (record.status === "Chấp Nhận" || record.status === "Từ Chối")
+          return;
+
+        return (
+          <span className="flex items-center justify-center gap-2">
+            <Tooltip title="Sửa">
+              <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
+                <EditOutlined />
+              </Button>
+            </Tooltip>
+          </span>
+        );
+      }
     },
   ];
 
@@ -257,9 +268,9 @@ const ReceiverPage = () => {
             onChange={e => handleStatusFilter(e.target.value)}
           >
             <option value="">Tất cả trạng thái</option>
-            <option value="Đang chờ">Đang chờ</option>
-            <option value="Đã duyệt">Đã duyệt</option>
-            <option value="Từ chối">Từ chối</option>
+            {statusList.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
           </select>
         </div>
         <div className="ml-2">
@@ -269,7 +280,7 @@ const ReceiverPage = () => {
             onChange={e => handleBloodTypeFilter(e.target.value)}
           >
             <option value="">Tất cả nhóm máu</option>
-            {bloodTypes.filter(type => type).map(type => (
+            {bloodTypes.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
@@ -279,7 +290,7 @@ const ReceiverPage = () => {
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
         dataSource={filteredData}
         columns={columns}
-        rowKey={(record, idx) => record.phone + record.time}
+        rowKey={(record) => record.id}
         pagination={{
           pageSize: 5,
           position: ['bottomCenter'],
@@ -301,7 +312,7 @@ const ReceiverPage = () => {
           onChange={value => setNewStatus(value)}
           options={statusOptions}
         />
-        {newStatus === 'Từ chối' && (
+        {newStatus === 'Từ Chối' && (
           <div className="mt-4">
             <label className="block font-semibold mb-1">Lý do từ chối:</label>
             <Input.TextArea

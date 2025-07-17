@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/loginPage.css";
-import { Login } from "../../services/authentication";
-import { toast } from 'react-toastify';
+import { GetAuthenByUserId, Login } from "../../services/authentication";
+import UserContext from "../../contexts/UserContext";
 
 // Login page for user accounts.
 function LoginPage() {
@@ -12,6 +12,8 @@ function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false); // Thêm state này
+
+  const { setUser } = useContext(UserContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -57,10 +59,10 @@ function LoginPage() {
         const payload = JSON.parse(atob(token.split('.')[1]));
         console.log("payload:", payload)
         const role = payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"]
-        const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"]
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role, userId }));
-
-        toast.success('Đăng nhập thành công!');
+        const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
+        const userResponse = await GetAuthenByUserId(userId)
+        setUser(userResponse.data);
+        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role }));
 
         switch (role) {
           case "Admin":

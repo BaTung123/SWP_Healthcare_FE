@@ -1,5 +1,5 @@
 // Hồ sơ người dùng, thông tin cá nhân.
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useContext } from 'react';
 import { GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
 import { Button, DatePicker, Modal, Table } from 'antd';
 import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
@@ -81,13 +81,13 @@ const ProfilePage = () => {
       status: 'từ chối',
     },
   ]);
-  const [registration, setRegistration] = useState(null);
-  const [appointmentList, setAppointmentList] = useState([]);
-  const [appointment, setAppointment] = useState(null);
-  const [event, setEvent] = useState(null);
-  const [newDate, setNewDate] = useState(null);
-  const [showChangeDate, setShowChangeDate] = useState(false);
-  const [showAppointList, setShowAppointList] = useState(false);
+  // const [registration, setRegistration] = useState(null);
+  // const [appointmentList, setAppointmentList] = useState([]);
+  // const [appointment, setAppointment] = useState(null);
+  // const [event, setEvent] = useState(null);
+  // const [newDate, setNewDate] = useState(null);
+  // const [showChangeDate, setShowChangeDate] = useState(false);
+  // const [showAppointList, setShowAppointList] = useState(false);
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
   const [user, setUser] = useState();
@@ -124,8 +124,8 @@ const ProfilePage = () => {
     },
     {
       title: 'Nhóm Máu',
-      dataIndex: 'bloodGroup',
-      key: 'bloodGroup',
+      dataIndex: 'bloodType',
+      key: 'bloodType',
       width: 100,
       align: 'center',
     },
@@ -229,7 +229,7 @@ const ProfilePage = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSave = async () => {
@@ -343,14 +343,40 @@ const ProfilePage = () => {
             <div className="flex-1 w-full max-w-xl mx-auto">
               <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
-                  <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">NAME</label>
-                  <input
-                    name="name"
-                    value={form?.name || ''}
-                    onChange={handleChange}
-                    className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
-                  />
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
+                    <input
+                      name="name"
+                      value={formData.fullName}
+                      readOnly
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
+                    <input
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1 w-full mb-3">
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
+                    <select
+                      name="bloodType"
+                      value={formData.bloodType}
+                      onChange={handleChange}
+                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                    >
+                      <option value="">-- Chọn nhóm máu --</option>
+                      {bloodTypes.map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
+
                 <div>
                   <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">EMAIL</label>
                   <input

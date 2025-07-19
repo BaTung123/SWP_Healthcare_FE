@@ -43,3 +43,15 @@ export const SendEmailToAdmin = async (emailData) => {
     throw error;
   }
 };
+
+export const GetAllUsers = async () => {
+  try {
+    const response = await instance.get("/Authentication");
+    console.log("Raw API response:", response);
+    console.log("Response data:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách users:", error.response?.data || error.message);
+    throw error;
+  }
+};

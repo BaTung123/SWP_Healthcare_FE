@@ -2,6 +2,9 @@
 import { Bar, Doughnut, Line } from 'react-chartjs-2'
 import { Chart as ChartJS, BarElement, ArcElement, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend } from 'chart.js';
 import { FaUser, FaHandHoldingMedical, FaPercentage, FaTint } from 'react-icons/fa';
+import { useState, useEffect } from 'react';
+import { GetAllUsers } from '../../services/authentication';
+import { getAllBloodDonationApplication } from '../../services/donorRegistration';
 ChartJS.register(
   BarElement,
   ArcElement,
@@ -84,10 +87,48 @@ const AdminDashboardPage = () => {
   };
 
   // Dữ liệu mẫu cho Over View
-  const totalUsers = 5000;
-  const totalDonors = 1200;
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalDonors, setTotalDonors] = useState(0);
   const donationRate = ((totalDonors / totalUsers) * 100).toFixed(1); // Tỉ lệ hiến máu
   const pendingRequests = 35;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch users
+        const userResponse = await GetAllUsers();
+        console.log("User API Response:", userResponse);
+        
+        if (userResponse && userResponse.data && userResponse.data.users) {
+          const userCount = userResponse.data.users.length;
+          console.log("Total users found:", userCount);
+          setTotalUsers(userCount);
+        } else {
+          console.log("No users found or invalid response structure");
+          setTotalUsers(0);
+        }
+        
+        // Fetch blood donation applications
+        const donationResponse = await getAllBloodDonationApplication();
+        console.log("Blood Donation API Response:", donationResponse);
+        
+        if (donationResponse && Array.isArray(donationResponse)) {
+          const donorCount = donationResponse.length;
+          console.log("Total donors found:", donorCount);
+          setTotalDonors(donorCount);
+        } else {
+          console.log("No donors found or invalid response structure");
+          setTotalDonors(0);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setTotalUsers(0);
+        setTotalDonors(0);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <>

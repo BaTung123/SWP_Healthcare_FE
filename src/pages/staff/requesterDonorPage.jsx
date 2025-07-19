@@ -18,7 +18,7 @@ const bloodTransferTypes = [
   'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
 ];
 
-const DONATION_TYPES = ['', 'Toàn Phần', 'Tiểu Cầu', 'Huyết Tương'];
+const DONATION_TYPES = ['', 'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'];
 const STATUS_OPTIONS = [
     { value: '', label: 'Tất cả trạng thái' },
     // { value: 'Đang chờ', label: 'Đang chờ' }, // Ẩn khỏi select modal

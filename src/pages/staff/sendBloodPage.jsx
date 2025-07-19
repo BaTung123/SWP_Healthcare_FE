@@ -2,7 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import '../../styles/bloodStockManagementPage.css';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { FileTextOutlined } from '@ant-design/icons';
 import { CreateBloodRequestStatus, GetAllBloodRequestApplication, UpdateBloodRequestStatus } from '../../services/bloodRequestApplication';
 import dayjs from 'dayjs';
@@ -53,6 +53,7 @@ const SendBloodPage = () => {
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
   const [filterBloodType, setFilterBloodType] = useState("");
+  const [filterType, setFilterType] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
   const [newStatus, setNewStatus] = useState("");
@@ -87,13 +88,15 @@ const SendBloodPage = () => {
     const matchName = search ? r.fullName.toLowerCase().includes(search.toLowerCase()) : true;
     const matchStatus = filterStatus ? r.status === filterStatus : true;
     const matchBloodType = filterBloodType ? r.bloodType === filterBloodType : true;
-    return matchName && matchStatus && matchBloodType;
+    const matchType = filterType ? r.bloodTransferType === filterType : true;
+    return matchName && matchStatus && matchBloodType && matchType;
   });
 
   // Các handler sử dụng useCallback để tránh tạo lại không cần thiết
   const handleSearch = useCallback((value) => setSearch(value), []);
   const handleStatusFilter = useCallback((status) => setFilterStatus(status), []);
   const handleBloodTypeFilter = useCallback((type) => setFilterBloodType(type), []);
+  const handleTypeFilter = useCallback((type) => setFilterType(type), []);
 
   const handleEdit = (record) => {
     setEditingRecord(record);
@@ -373,14 +376,25 @@ const SendBloodPage = () => {
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
+          <select
+            className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm"
+            value={filterType}
+            onChange={e => handleTypeFilter(e.target.value)}
+          >
+            <option value="">Tất cả loại</option>
+            {bloodTransferTypes.filter(type => type).map(type => (
+              <option key={type} value={type}>{type}</option>
+            ))}
+          </select>
         </div>
         <Button
-          type="primary"
-          icon={<PlusOutlined />}
-          className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md ml-4"
+          className="hover:!bg-[#073a82] ml-4"
+          style={{gap: 10, background: "#073AAA", color: "white", border: "none"}}
+          size='large'
           onClick={() => setIsRequestModalOpen(true)}
         >
-          Gửi yêu cầu máu
+          <PlusCircleOutlined />
+          <span>Gửi yêu cầu máu</span>
         </Button>
       </div>
       <Table

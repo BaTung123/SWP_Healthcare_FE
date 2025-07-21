@@ -263,17 +263,23 @@ const BloodDonationEventPage = () => {
                 </p>
                 <p><strong>Chỉ tiêu người tham gia:</strong> {event.targetDonors}</p>
                 {event.description && <p><strong>Mô tả:</strong> {event.description}</p>}
-                {event.status === 1 &&
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <Button
-                      type="primary"
-                      className="mt-2 w-full"
-                      onClick={() => navigate(`/member/register-donation?eventId=${event.eventId}`)}
-                    >
-                      Đăng kí tham gia
-                    </Button>
-                  </div>
-                }
+                {(() => {
+                  const now = dayjs();
+                  const start = dayjs(event.eventDate);
+                  const end = dayjs(event.endDate);
+                  const isOngoing = now.isAfter(start) && now.isBefore(end);
+                  return isOngoing ? (
+                    <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <Button
+                        type="primary"
+                        className="mt-2 w-full"
+                        onClick={() => navigate(`/member/register-donation?eventId=${event.eventId}`)}
+                      >
+                        Đăng kí tham gia
+                      </Button>
+                    </div>
+                  ) : null;
+                })()}
               </Card>
             </div>
           ))}

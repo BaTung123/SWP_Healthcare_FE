@@ -35,13 +35,13 @@ function ContactPage() {
 
     try {
       const user = JSON.parse(localStorage.getItem('user'));
-      if (!user || !user.userId) {
+      if (!user || !user.id) {
         toast.error("Không xác định được người dùng. Vui lòng đăng nhập lại!");
         setIsLoading(false);
         return;
       }
       const emailData = {
-        userId: user.userId,
+        userId: user.id,
         subject: formData.subject,
         body: formData.body,
         isHtml: true

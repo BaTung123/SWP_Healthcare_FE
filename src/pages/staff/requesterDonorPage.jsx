@@ -32,6 +32,12 @@ const DONATION_TYPE_OPTIONS = [
   { value: 2, label: 'Huyết tương' },
 ];
 
+const CLASSIFY_OPTIONS = [
+    { value: 'Tất cả', label: 'Tất cả' },
+    { value: true, label: 'Sự kiện' },
+    { value: false, label: 'Thường' },
+]
+
 const statusList = [
   'Đang Chờ', 'Chấp Nhận', 'Đã Nhập', 'Từ Chối'
 ];
@@ -45,6 +51,7 @@ const RequesterDonorPage = () => {
         status: '',
         bloodType: '',
         type: '',
+        isEvent: 'Tất cả'
     });
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRecord, setEditingRecord] = useState(null);
@@ -115,7 +122,8 @@ const RequesterDonorPage = () => {
                 availableDate: item.donationEndDate,
                 phone: item.phoneNumber || "",
                 status: statusList[item.status],
-                quantity: item.quantity || ""
+                quantity: item.quantity || "",
+                isEvent: !!item.eventId
             }));
             setOriginalList(mapped);
             setFilteredList(mapped);
@@ -147,6 +155,9 @@ const RequesterDonorPage = () => {
         }
         if (nextFilters.type) {
             result = result.filter(r => r.type === nextFilters.type);
+        }
+        if (nextFilters.isEvent !== 'Tất cả') {
+            result = result.filter(r => r.isEvent === nextFilters.isEvent)
         }
         setFilteredList(result);
     }, [originalList]);
@@ -292,6 +303,19 @@ const RequesterDonorPage = () => {
             key: 'birthDate',
             align: 'center',
             render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
+        },
+        {
+            title: 'Phân loại',
+            dataIndex: 'isEvent',
+            key: 'isEvent',
+            align: 'center',
+            render: (isEvent) => {
+                return (
+                    <span className={`font-bold ${isEvent ? 'text-blue-500' : 'text-purple-500'} border-2 rounded-md p-1`}>
+                        {isEvent ? 'Sự kiện' : 'Thường'}
+                    </span>
+                );
+            }
         },
         {
             title: 'Nhóm máu',
@@ -440,6 +464,18 @@ const RequesterDonorPage = () => {
                         <option value="">Tất cả loại</option>
                         {DONATION_TYPES.filter(type => type).map(type => (
                             <option key={type} value={type}>{type}</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="ml-2">
+                    <select
+                        className="text-sm border pl-4 pr-4 py-2 bg-white border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-400 shadow-sm disabled:bg-gray-100"
+                        value={filters.isEvent}
+                        onChange={e => handleFilterChange('isEvent', e.target.value === 'true' ? true : e.target.value === 'false' ? false : 'Tất cả')}
+                        disabled={loading}
+                    >
+                        {CLASSIFY_OPTIONS.map(opt => (
+                            <option key={opt.label} value={opt.value}>{opt.label}</option>
                         ))}
                     </select>
                 </div>

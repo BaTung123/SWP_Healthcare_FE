@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
-import { Card, Badge, Button, Modal, message, Typography } from "antd";
+import { useEffect, useState, useContext } from "react";
+import { Card, Badge, Button, Modal, Typography } from "antd";
+import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { GetAllBloodDonationEvents, UpdateBloodDonationEvent, GetAllEvents } from "../../services/bloodDonationEvent";
 import { CreateBloodDonationApplication } from "../../services/donorRegistration";
 import dayjs from "dayjs";
-import { GetUserProfileByUserId } from "../../services/userProfile";
+import UserContext from "../../contexts/UserContext";
 
 const { Title, Text } = Typography;
 const bloodGroups = [
@@ -39,8 +40,7 @@ const BloodDonationEventPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [userId, setUserId] = useState(0);
-  const [userProfile, setUserProfile] = useState(null);
+  const { user } = useContext(UserContext);
 
   useEffect(() => {
     fetchEvents();
@@ -74,7 +74,7 @@ const BloodDonationEventPage = () => {
       setEvents(mappedEvents);
     } catch (error) {
       setEvents([]);
-      message.error("Không thể tải danh sách sự kiện");
+      toast.error("Không thể tải danh sách sự kiện");
     } finally {
       setLoading(false);
     }
@@ -106,15 +106,14 @@ const BloodDonationEventPage = () => {
     if (!validateForm()) return;
     setSubmitting(true);
     try {
-      // Lấy userId từ localStorage nếu có
-      let userId = 0;
-      try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const userObj = JSON.parse(userStr);
-          userId = userObj.userId || userObj.id || 0;
-        }
-      } catch {}
+      // Lấy userId từ context
+      const userId = user?.userId || user?.id;
+      if (!userId) {
+        toast.error("Vui lòng đăng nhập để đăng ký.");
+        setSubmitting(false);
+        return;
+      }
+      
       // Map bloodGroup và donationType sang số nếu cần
       const donationTypeMap = {"Toàn phần":0,"Tiểu cầu":1,"Huyết tương":2};
       // Chuyển đổi ngày sinh và ngày sẵn sàng hiến
@@ -139,7 +138,7 @@ const BloodDonationEventPage = () => {
         } : { year: 1970, month: 1, day: 1, dayOfWeek: 4 }
       };
       await CreateBloodDonationApplication(reqBody);
-      message.success("Đăng ký thành công! Cảm ơn bạn đã tham gia hiến máu.");
+      toast.success("Đăng ký thành công! Cảm ơn bạn đã tham gia hiến máu.");
       setShowRegisterModal(false);
       setFormData({
         fullName: "",
@@ -154,42 +153,41 @@ const BloodDonationEventPage = () => {
       });
       setErrors({});
     } catch (error) {
-      message.error("Đăng ký thất bại. Vui lòng thử lại!");
+      toast.error("Đăng ký thất bại. Vui lòng thử lại!");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const openRegisterModal = async (event) => {
+  const openRegisterModal = (event) => {
+    if (!user) {
+      toast.error("Bạn cần đăng nhập để đăng ký sự kiện.");
+      return;
+    }
+
     setSelectedEvent(event);
     setShowRegisterModal(true);
-    // Prefill userId and user info
-    let uid = 0;
-    try {
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        const userObj = JSON.parse(userStr);
-        uid = userObj.userId || userObj.id || 0;
-        setUserId(uid);
-      }
-    } catch {}
-    if (uid) {
-      try {
-        const profileRes = await GetUserProfileByUserId(uid);
-        const profile = profileRes.data || profileRes; // fallback if no .data
-        setUserProfile(profile);
-        setFormData((prev) => ({
-          ...prev,
-          fullName: profile.fullName || "",
-          birthDate: profile.dob ? profile.dob.slice(0, 10) : "",
-          gender: profile.gender || "",
-          bloodGroup: getBloodGroupStringFromType(profile.bloodType),
-          phone: profile.phoneNumber || "",
-        }));
-      } catch (err) {
-        setUserProfile(null);
-      }
-    }
+
+    // Convert dob from DD-MM-YYYY to YYYY-MM-DD for the date input
+    const dobParts = user.dob ? user.dob.split("-") : null;
+    const birthDate = dobParts ? `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}` : "";
+
+    // Map gender
+    let gender = user.gender || "";
+    if (gender.toLowerCase() === "male") gender = "Nam";
+    if (gender.toLowerCase() === "female") gender = "Nữ";
+
+    setFormData((prev) => ({
+      ...prev,
+      fullName: user.name || "",
+      birthDate: birthDate,
+      gender: gender,
+      bloodGroup: getBloodGroupStringFromType(user.bloodType),
+      phone: user.phoneNumber || "",
+      note: "",
+      quantity: "",
+      donationType: "",
+    }));
   };
 
   return (
@@ -273,7 +271,7 @@ const BloodDonationEventPage = () => {
                       <Button
                         type="primary"
                         className="mt-2 w-full"
-                        onClick={() => navigate(`/member/register-donation?eventId=${event.eventId}`)}
+                        onClick={() => openRegisterModal(event)}
                       >
                         Đăng kí tham gia
                       </Button>
@@ -292,10 +290,7 @@ const BloodDonationEventPage = () => {
         centered
       >
         <div style={{ maxWidth: 520, margin: "0 auto", padding: 12 }}>
-          {/* Hiển thị userId nếu có */}
-          {userId ? (
-            <div className="mb-2 text-sm text-gray-600">Mã người dùng: <b>{userId}</b></div>
-          ) : null}
+          
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <Title level={1} style={{ color: "#c82333", marginBottom: 0 }}>HIẾN</Title>
             <Title level={2} style={{ color: "#222", marginTop: 0 }}>MÁU</Title>

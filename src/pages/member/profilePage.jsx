@@ -27,7 +27,7 @@ const statusList = [
 
 function normalizeGender(gender) {
   if (!gender) return 'male';
-  if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Male';
+  if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Males';
   if (["Nữ", "Female", "female", "nữ"].includes(gender)) return 'Female';
   return 'Other';
 }
@@ -101,8 +101,8 @@ const ProfilePage = () => {
       align: 'center',
       render: (gender) => {
         if (!gender) return '';
-        if (gender === 'Male' || gender === 'Nam' || gender === 'male' || gender === 'nam') return 'Male';
-        if (gender === 'Female' || gender === 'Nữ' || gender === 'female' || gender === 'nữ') return 'Female';
+        if (gender === 'Male' || gender === 'Nam' || gender === 'male' || gender === 'nam') return 'Nam';
+        if (gender === 'Female' || gender === 'Nữ' || gender === 'female' || gender === 'nữ') return 'Nữ';
         return 'Other';
       },
     },

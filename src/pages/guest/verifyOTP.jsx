@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { instance } from '../../services/instance';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const VerifyOTP = () => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -17,7 +19,6 @@ const VerifyOTP = () => {
       newOtp[index] = value;
       setOtp(newOtp);
 
-      // Tự động chuyển sang ô tiếp theo
       if (value && index < 5) {
         const nextInput = document.querySelector(`input[name="otp-${index + 1}"]`);
         if (nextInput) nextInput.focus();
@@ -26,7 +27,6 @@ const VerifyOTP = () => {
   };
 
   const handleKeyDown = (index, e) => {
-    // Xử lý phím Backspace
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
       const prevInput = document.querySelector(`input[name="otp-${index - 1}"]`);
       if (prevInput) prevInput.focus();
@@ -36,56 +36,50 @@ const VerifyOTP = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const otpString = otp.join('');
-    
+
     if (otpString.length !== 6) {
-      alert('Vui lòng nhập đầy đủ 6 số OTP');
+      toast.warn('Vui lòng nhập đầy đủ 6 số OTP');
       return;
     }
 
     setIsLoading(true);
     setError('');
     try {
-      // Gọi API xác thực OTP
       const response = await instance.put('/Authentication/verify', {
         email,
         otpCode: otpString,
         purposeType
       });
-      // Thành công
-      alert('Xác thực OTP thành công!');
+      toast.success('Xác thực OTP thành công!');
       navigate('/login');
     } catch (error) {
       console.error('OTP verification failed:', error);
       setError(
         error?.response?.data?.message || 'Xác thực OTP thất bại. Vui lòng thử lại.'
       );
+      toast.error(error?.response?.data?.message || 'Xác thực OTP thất bại.');
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleResendOTP = async () => {
-    // Xử lý gửi lại OTP qua email
-    console.log('email:', email);
-    console.log('purposeType:', purposeType);
-    try 
-    {
-     const resendOtp =  await instance.post('/Authentication/generate', {
-      email,
-      purposeType,
-      expiryTimeInMinutes: 5
-     })
-     console.log('Resending OTP to email...');
-     alert('Mã OTP mới đã được gửi đến email của bạn.');
-    }
-    catch (error) 
-    {
+    try {
+      await instance.post('/Authentication/generate', {
+        email,
+        purposeType,
+        expiryTimeInMinutes: 5
+      });
+      toast.info('Mã OTP mới đã được gửi đến email của bạn.');
+    } catch (error) {
       console.error('OTP resend failed:', error);
+      toast.error('Gửi lại OTP thất bại. Vui lòng thử lại sau.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-8 px-4">
+      <ToastContainer />
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
@@ -95,37 +89,29 @@ const VerifyOTP = () => {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold text-gray-800 mb-2">
-              Xác thực OTP
-            </h1>
-            <p className="text-gray-600">
-              Nhập mã 6 số đã được gửi đến email của bạn
-            </p>
+            <h1 className="text-2xl font-bold text-gray-800 mb-2">Xác thực OTP</h1>
+            <p className="text-gray-600">Nhập mã 6 số đã được gửi đến email của bạn</p>
           </div>
 
           {/* OTP Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* OTP Input Fields */}
-            <div>
-              <div className="flex gap-3 justify-center">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    type="text"
-                    name={`otp-${index}`}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    maxLength="1"
-                    className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
-                    placeholder="•"
-                  />
-                ))}
-              </div>
+            <div className="flex gap-3 justify-center">
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  name={`otp-${index}`}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(index, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(index, e)}
+                  maxLength="1"
+                  className="w-12 h-12 text-center text-lg font-semibold border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200"
+                  placeholder="•"
+                />
+              ))}
             </div>
-            {error && <div style={{ color: 'red', textAlign: 'center', marginTop: 8 }}>{error}</div>}
+            {error && <div className="text-red-500 text-center">{error}</div>}
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading || otp.join('').length !== 6}
@@ -144,7 +130,6 @@ const VerifyOTP = () => {
               )}
             </button>
 
-            {/* Resend OTP - Left aligned */}
             <div className="text-left mt-5">
               <button
                 type="button"
@@ -155,13 +140,11 @@ const VerifyOTP = () => {
               </button>
             </div>
 
-            {/* Timer */}
             <div className="text-center text-sm text-gray-500">
               Mã OTP có hiệu lực trong 5 phút
             </div>
           </form>
 
-          {/* Footer */}
           <div className="mt-8 pt-6 border-t border-gray-200 text-center">
             <p className="text-sm text-gray-600">
               Không nhận được email? 
@@ -180,4 +163,4 @@ const VerifyOTP = () => {
   );
 };
 
-export default VerifyOTP; 
+export default VerifyOTP;

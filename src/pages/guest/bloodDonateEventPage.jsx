@@ -5,7 +5,6 @@ import { useNavigate } from "react-router-dom";
 import { GetAllBloodDonationEvents, UpdateBloodDonationEvent, GetAllEvents } from "../../services/bloodDonationEvent";
 import { CreateBloodDonationApplication } from "../../services/donorRegistration";
 import dayjs from "dayjs";
-import { GetUserProfileByUserId } from "../../services/userProfile";
 import UserContext from "../../contexts/UserContext";
 
 const { Title, Text } = Typography;
@@ -41,8 +40,6 @@ const BloodDonationEventPage = () => {
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [userId, setUserId] = useState(0);
-  const [userProfile, setUserProfile] = useState(null);
   const { user } = useContext(UserContext);
 
   useEffect(() => {
@@ -109,15 +106,14 @@ const BloodDonationEventPage = () => {
     if (!validateForm()) return;
     setSubmitting(true);
     try {
-      // Lấy userId từ localStorage nếu có
-      let userId = 0;
-      try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const userObj = JSON.parse(userStr);
-          userId = userObj.userId || userObj.id || 0;
-        }
-      } catch {}
+      // Lấy userId từ context
+      const userId = user?.userId || user?.id;
+      if (!userId) {
+        toast.error("Vui lòng đăng nhập để đăng ký.");
+        setSubmitting(false);
+        return;
+      }
+      
       // Map bloodGroup và donationType sang số nếu cần
       const donationTypeMap = {"Toàn phần":0,"Tiểu cầu":1,"Huyết tương":2};
       // Chuyển đổi ngày sinh và ngày sẵn sàng hiến
@@ -132,9 +128,14 @@ const BloodDonationEventPage = () => {
         bloodType: bloodGroupMap[formData.bloodGroup] ?? 0,
         bloodTransferType: donationTypeMap[formData.donationType] ?? 0,
         quantity: Number(formData.quantity),
-        request: formData.note || "Đăng ký hiến máu",
+        request: formData.note || "",
         phoneNumber: formData.phone,
-        donationEndDate: toDate ? toDate.toISOString().slice(0, 10) : "1970-01-01"
+        donationEndDate: toDate ? {
+          year: toDate.getFullYear(),
+          month: toDate.getMonth() + 1,
+          day: toDate.getDate(),
+          dayOfWeek: toDate.getDay()
+        } : { year: 1970, month: 1, day: 1, dayOfWeek: 4 }
       };
       await CreateBloodDonationApplication(reqBody);
       toast.success("Đăng ký thành công! Cảm ơn bạn đã tham gia hiến máu.");
@@ -158,51 +159,35 @@ const BloodDonationEventPage = () => {
     }
   };
 
-  const openRegisterModal = async (event) => {
+  const openRegisterModal = (event) => {
+    if (!user) {
+      toast.error("Bạn cần đăng nhập để đăng ký sự kiện.");
+      return;
+    }
+
     setSelectedEvent(event);
     setShowRegisterModal(true);
-    // Ưu tiên lấy user từ context
-    if (user) {
-      const genderMap = { "male": "Nam", "female": "Nữ", "other": "Khác" };
-      setFormData((prev) => ({
-        ...prev,
-        fullName: user.name || "",
-        birthDate: user.dob ? user.dob.split("-").reverse().join("-") : "",
-        gender: genderMap[user.gender] || "",
-        bloodGroup: getBloodGroupStringFromType(user.bloodType),
-        phone: user.phoneNumber || "",
-      }));
-      setUserId(user.userId || user.id || 0);
-      setUserProfile(user);
-    } else {
-      // Nếu không có user context, fallback lấy từ localStorage và API như cũ
-      let uid = 0;
-      try {
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-          const userObj = JSON.parse(userStr);
-          uid = userObj.userId || userObj.id || 0;
-          setUserId(uid);
-        }
-      } catch {}
-      if (uid) {
-        try {
-          const profileRes = await GetUserProfileByUserId(uid);
-          const profile = profileRes.data || profileRes;
-          setUserProfile(profile);
-          setFormData((prev) => ({
-            ...prev,
-            fullName: profile.fullName || "",
-            birthDate: profile.dob ? profile.dob.slice(0, 10) : "",
-            gender: profile.gender || "",
-            bloodGroup: getBloodGroupStringFromType(profile.bloodType),
-            phone: profile.phoneNumber || "",
-          }));
-        } catch (err) {
-          setUserProfile(null);
-        }
-      }
-    }
+
+    // Convert dob from DD-MM-YYYY to YYYY-MM-DD for the date input
+    const dobParts = user.dob ? user.dob.split("-") : null;
+    const birthDate = dobParts ? `${dobParts[2]}-${dobParts[1]}-${dobParts[0]}` : "";
+
+    // Map gender
+    let gender = user.gender || "";
+    if (gender.toLowerCase() === "male") gender = "Nam";
+    if (gender.toLowerCase() === "female") gender = "Nữ";
+
+    setFormData((prev) => ({
+      ...prev,
+      fullName: user.name || "",
+      birthDate: birthDate,
+      gender: gender,
+      bloodGroup: getBloodGroupStringFromType(user.bloodType),
+      phone: user.phoneNumber || "",
+      note: "",
+      quantity: "",
+      donationType: "",
+    }));
   };
 
   return (
@@ -298,16 +283,14 @@ const BloodDonationEventPage = () => {
           ))}
         </div>
       )}
-      {/* Modal đăng ký chuyển lại thành popup */}
       <Modal
         open={showRegisterModal}
         onCancel={() => setShowRegisterModal(false)}
         footer={null}
         centered
-        destroyOnClose
       >
         <div style={{ maxWidth: 520, margin: "0 auto", padding: 12 }}>
-          {/* Hiển thị userId nếu có */}
+          
           <div style={{ textAlign: "center", marginBottom: 16 }}>
             <Title level={1} style={{ color: "#c82333", marginBottom: 0 }}>HIẾN</Title>
             <Title level={2} style={{ color: "#222", marginTop: 0 }}>MÁU</Title>
@@ -318,7 +301,7 @@ const BloodDonationEventPage = () => {
               <Text strong>Thời gian: </Text>
               <Text>{dayjs(selectedEvent.eventDate).format("DD/MM/YYYY")} - {dayjs(selectedEvent.endDate).format("DD/MM/YYYY")}</Text><br />
               <Text strong>Địa điểm: </Text>
-              <Text>{selectedEvent.locationName}</Text>
+              <Text>{selectedEvent.location}</Text>
             </div>
           )}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>

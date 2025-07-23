@@ -207,23 +207,21 @@ const SendBloodPage = () => {
       bloodRequestDate: neededTimeType === 'gap' ? null : requestForm.bloodRequestDate
     };
 
-    console.log("bloodRequestData:", bloodRequestData);
-    const createBloodRequestRes = await CreateBloodRequestStatus(bloodRequestData);
-    console.log("createBloodRequestRes:", createBloodRequestRes);
-
-    const createBloodExpObj = {
-      bloodRequestApplicationId: createBloodRequestRes.data.id,
-      note: createBloodRequestRes.data.note
+    try {
+      const createBloodRequestRes = await CreateBloodRequestStatus(bloodRequestData);
+      const createBloodExpObj = {
+        bloodRequestApplicationId: createBloodRequestRes.data.id,
+        note: createBloodRequestRes.data.note
+      }
+      await CreateBloodExportApplication(createBloodExpObj);
+      setIsRequestModalOpen(false);
+      setRequestForm(initialRequestForm);
+      setNeededTimeType('gap');
+      toast.success("Tạo yêu cầu cần máu thành công.");
+      fetchRequestList();
+    } catch (err) {
+      toast.error("Gửi yêu cầu thất bại!");
     }
-    console.log("createBloodExpObj:", createBloodExpObj)
-    const createBloodExpRes = await CreateBloodExportApplication(createBloodExpObj);
-    console.log("createBloodExpRes:", createBloodExpRes)
-
-    setIsRequestModalOpen(false);
-    setRequestForm(initialRequestForm);
-    setNeededTimeType('gap');
-    toast.success("Tạo yêu cầu cần máu thành công.")
-    fetchRequestList();
   };
 
   const renderActions = (_, record) => {

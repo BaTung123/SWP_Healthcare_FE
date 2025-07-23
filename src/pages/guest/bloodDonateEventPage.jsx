@@ -130,12 +130,7 @@ const BloodDonationEventPage = () => {
         quantity: Number(formData.quantity),
         request: formData.note || "",
         phoneNumber: formData.phone,
-        donationEndDate: toDate ? {
-          year: toDate.getFullYear(),
-          month: toDate.getMonth() + 1,
-          day: toDate.getDate(),
-          dayOfWeek: toDate.getDay()
-        } : { year: 1970, month: 1, day: 1, dayOfWeek: 4 }
+        donationEndDate: toDate ? toDate.toISOString().slice(0, 10) : "1970-01-01"
       };
       await CreateBloodDonationApplication(reqBody);
       toast.success("Đăng ký thành công! Cảm ơn bạn đã tham gia hiến máu.");

@@ -1,5 +1,5 @@
 import { useEffect, useState, useContext } from "react";
-import { Card, Badge, Button, Modal, Typography } from "antd";
+import { Card, Badge, Button, Modal, Typography, DatePicker } from "antd";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import { GetAllBloodDonationEvents, UpdateBloodDonationEvent, GetAllEvents } from "../../services/bloodDonationEvent";
@@ -85,8 +85,8 @@ const BloodDonationEventPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-  const handleDateChange = (e) => {
-    setFormData((prev) => ({ ...prev, toDate: e.target.value }));
+  const handleDateChange = (date, dateString) => {
+    setFormData((prev) => ({ ...prev, toDate: dateString }));
   };
   const validateForm = () => {
     const newErrors = {};
@@ -118,7 +118,7 @@ const BloodDonationEventPage = () => {
       const donationTypeMap = {"Toàn phần":0,"Tiểu cầu":1,"Huyết tương":2};
       // Chuyển đổi ngày sinh và ngày sẵn sàng hiến
       const dob = formData.birthDate ? new Date(formData.birthDate) : null;
-      const toDate = formData.toDate ? new Date(formData.toDate) : null;
+      const toDate = formData.toDate ? dayjs(formData.toDate, "DD/MM/YYYY").toDate() : null;
       const reqBody = {
         userId,
         eventId: selectedEvent?.eventId || 0,
@@ -383,12 +383,12 @@ const BloodDonationEventPage = () => {
             </div>
             <div className="flex flex-col">
               <label className="mb-1 font-semibold text-[#b30000]">Thời gian sẵn sàng hiến</label>
-              <input
-                type="date"
-                name="toDate"
-                value={formData.toDate}
+              <DatePicker
+                format="DD/MM/YYYY"
+                value={formData.toDate ? dayjs(formData.toDate, "DD/MM/YYYY") : null}
                 onChange={handleDateChange}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
+                placeholder="Chọn ngày sẵn sàng hiến"
               />
               {errors.toDate && <span className="text-red-500 text-xs mt-1">{errors.toDate}</span>}
             </div>

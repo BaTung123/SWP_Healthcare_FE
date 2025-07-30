@@ -96,7 +96,16 @@ const BloodDonationEventPage = () => {
     if (!formData.bloodGroup) newErrors.bloodGroup = "Vui lòng chọn nhóm máu.";
     if (!formData.donationType) newErrors.donationType = "Vui lòng chọn loại hiến máu.";
     if (!formData.quantity || isNaN(formData.quantity) || formData.quantity < 50 || formData.quantity > 500) newErrors.quantity = "Số lượng máu phải từ 50 đến 500ml.";
-    if (!formData.toDate) newErrors.toDate = "Vui lòng chọn ngày sẵn sàng hiến.";
+    if (!formData.toDate) {
+      newErrors.toDate = "Vui lòng chọn ngày sẵn sàng hiến.";
+    } else if (selectedEvent) {
+      const start = dayjs(selectedEvent.eventDate, "YYYY-MM-DD");
+      const end = dayjs(selectedEvent.endDate, "YYYY-MM-DD");
+      const chosen = dayjs(formData.toDate, "DD/MM/YYYY");
+      if (chosen.isBefore(start, 'day') || chosen.isAfter(end, 'day')) {
+        newErrors.toDate = `Ngày sẵn sàng hiến phải trong khoảng từ ${start.format("DD/MM/YYYY")} đến ${end.format("DD/MM/YYYY")}`;
+      }
+    }
     if (!formData.phone || !/^\d{10}$/.test(formData.phone)) newErrors.phone = "Số điện thoại phải đủ 10 số và chỉ chứa số.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -187,7 +196,7 @@ const BloodDonationEventPage = () => {
 
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Sự kiện hiến máu</h1>
+      <h1 className="text-2xl font-bold mb-6 text-center text-red-600">Sự kiện hiến máu</h1>
 
       {loading ? (
         <p>Đang tải...</p>
@@ -248,11 +257,17 @@ const BloodDonationEventPage = () => {
                 })()}
                 style={{ width: "100%" }}
               >
-                <p><strong>Loại sự kiện:</strong> {event.type}</p>
+                <p><strong>Loại sự kiện:</strong> {
+                  event.type === 'emergency' ? 'Hiến máu khẩn cấp'
+                  : event.type === 'regular' ? 'Hiến máu định kỳ'
+                  : event.type === 'campaign' ? 'Chiến dịch hiến máu'
+                  : event.type === 'festival' ? 'Sự kiện lễ hội'
+                  : event.type
+                }</p>
                 <p><strong>Địa điểm:</strong> {event.locationName}</p>
                 <p><strong>Địa chỉ:</strong> {event.locationAddress}</p>
                 <p>
-                  <strong>Thời gian:</strong> {dayjs(event.eventDate).format("DD/MM/YYYY HH:mm")} - {dayjs(event.endDate).format("DD/MM/YYYY HH:mm")}
+                  <strong>Thời gian:</strong> {dayjs(event.eventDate).format("DD/MM/YYYY")} - {dayjs(event.endDate).format("DD/MM/YYYY")}
                 </p>
                 <p><strong>Chỉ tiêu người tham gia:</strong> {event.targetDonors}</p>
                 {event.description && <p><strong>Mô tả:</strong> {event.description}</p>}
@@ -287,16 +302,15 @@ const BloodDonationEventPage = () => {
         <div style={{ maxWidth: 520, margin: "0 auto", padding: 12 }}>
           
           <div style={{ textAlign: "center", marginBottom: 16 }}>
-            <Title level={1} style={{ color: "#c82333", marginBottom: 0 }}>HIẾN</Title>
-            <Title level={2} style={{ color: "#222", marginTop: 0 }}>MÁU</Title>
-            <Text strong style={{ color: "#c82333", fontSize: 16 }}>HIẾN MÁU - CỨU NGƯỜI</Text>
+            <Title level={1} style={{ color: "#c82333", marginBottom: 0 }}>HIẾN MÁU</Title>
+            <Text strong style={{ color: "#222", fontSize: 16 }}>HIẾN MÁU - CỨU NGƯỜI</Text>
           </div>
           {selectedEvent && (
             <div style={{ marginBottom: 16, textAlign: "center" }}>
               <Text strong>Thời gian: </Text>
               <Text>{dayjs(selectedEvent.eventDate).format("DD/MM/YYYY")} - {dayjs(selectedEvent.endDate).format("DD/MM/YYYY")}</Text><br />
               <Text strong>Địa điểm: </Text>
-              <Text>{selectedEvent.location}</Text>
+              <Text>{selectedEvent.locationName}</Text>
             </div>
           )}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -389,6 +403,12 @@ const BloodDonationEventPage = () => {
                 onChange={handleDateChange}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
                 placeholder="Chọn ngày sẵn sàng hiến"
+                disabledDate={date => {
+                  if (!selectedEvent) return false;
+                  const start = dayjs(selectedEvent.eventDate);
+                  const end = dayjs(selectedEvent.endDate);
+                  return date.isBefore(start, 'day') || date.isAfter(end, 'day');
+                }}
               />
               {errors.toDate && <span className="text-red-500 text-xs mt-1">{errors.toDate}</span>}
             </div>

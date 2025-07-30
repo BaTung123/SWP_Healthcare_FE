@@ -65,15 +65,26 @@ const DonationRegisterPage = () => {
   });
 
   useEffect(() => {
-    if (user && user.dob) {
+    if (user) {
+      // Map giới tính
+      let gender = "Khác";
+      if (user.gender === "male" || user.gender === "Nam") gender = "Nam";
+      else if (user.gender === "female" || user.gender === "Nữ") gender = "Nữ";
+      // Map nhóm máu
+      let bloodType = "";
+      if (typeof user.bloodType === "number") {
+        bloodType = bloodTypes[user.bloodType];
+      } else if (typeof user.bloodType === "string") {
+        bloodType = user.bloodType;
+      }
       setFormData({
         userId: user.id,
         fullName: user.name,
-        birthDate: dayjs(user.dob, "DD-MM-YYYY"),
-        gender: user.gender,
-        bloodType: "",
+        birthDate: user.dob ? dayjs(user.dob, "DD-MM-YYYY") : null,
+        gender: gender,
+        bloodType: bloodType,
         type: "",
-        toDate: dayjs(), 
+        toDate: dayjs(),
         phone: user.phoneNumber,
         quantity: "",
       });

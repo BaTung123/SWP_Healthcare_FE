@@ -86,6 +86,18 @@ const ProfilePage = () => {
       align: 'center',
     },
     {
+      title: 'Phân loại',
+      key: 'type',
+      align: 'center',
+      width: 160,
+      render: (record) => {
+        if (record.eventId) {
+          return <span className="font-bold text-blue-500 border-2 rounded-md p-1">Sự kiện</span>;
+        }
+        return <span className="font-bold text-purple-500 border-2 rounded-md p-1">Bình thường</span>;
+      }
+    },
+    {
       title: 'Ngày sinh',
       dataIndex: 'dob',
       key: 'dob',

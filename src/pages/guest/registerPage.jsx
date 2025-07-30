@@ -15,44 +15,56 @@ const RegisterPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
+  // Thay error thành errors object
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
+    // Xóa lỗi khi user nhập lại
+    setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const newErrors = {};
 
-    // Validate
-    if (!form.name || !form.email || !form.password || !form.confirmPassword) {
-      setError('Vui lòng nhập đầy đủ thông tin.');
+    if (!form.name) {
+      newErrors.name = 'Vui lòng nhập họ và tên.';
+    } else if (form.name.trim().length < 5) {
+      newErrors.name = 'Họ và tên phải có ít nhất 5 ký tự.';
+    }
+
+    if (!form.email) {
+      newErrors.email = 'Vui lòng nhập email.';
+    } else {
+      const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+      if (!gmailRegex.test(form.email)) {
+        newErrors.email = 'Vui lòng nhập địa chỉ Gmail hợp lệ (kết thúc bằng @gmail.com).';
+      }
+    }
+
+    if (!form.password) {
+      newErrors.password = 'Vui lòng nhập mật khẩu.';
+    } else {
+      const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?=.*\d).{8,}$/;
+      if (!passwordRegex.test(form.password)) {
+        newErrors.password = 'Mật khẩu phải có ít nhất 8 ký tự, 1 chữ in hoa, 1 ký tự đặc biệt và 1 số.';
+      }
+    }
+
+    if (!form.confirmPassword) {
+      newErrors.confirmPassword = 'Vui lòng nhập lại mật khẩu.';
+    } else if (form.password !== form.confirmPassword) {
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp.';
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) {
       return;
     }
-    // Full Name phải trên 5 ký tự
-    if (form.name.trim().length < 5) {
-      setError('Họ và tên phải có ít nhất 5 ký tự.');
-      return;
-    }
-    // Email phải là Gmail
-    const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
-    if (!gmailRegex.test(form.email)) {
-      setError('Vui lòng nhập địa chỉ Gmail hợp lệ (kết thúc bằng @gmail.com).');
-      return;
-    }
-    // Password: 1 chữ in hoa, 1 ký tự đặc biệt, 1 số, >=8 ký tự
-    const passwordRegex = /^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?])(?=.*\d).{8,}$/;
-    if (!passwordRegex.test(form.password)) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự, 1 chữ in hoa, 1 ký tự đặc biệt và 1 số.');
-      return;
-    }
-    if (form.password !== form.confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp.');
-      return;
-    }
-    setError('');
-    
+
     console.log("form", form)
     const registerResponse = await Register(form);
     console.log("registerResponse", registerResponse)
@@ -83,7 +95,9 @@ const RegisterPage = () => {
             <h2 style={{ marginBottom: 24, color: '#1976d2' }}>Register</h2>
             <form className="login-form" onSubmit={handleSubmit}>
               <input type="text" name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />
+              {errors.name && <div style={{ color: 'red', marginBottom: 8 }}>{errors.name}</div>}
               <input type="email" name="email" placeholder="Email" value={form.email} onChange={handleChange} required />
+              {errors.email && <div style={{ color: 'red', marginBottom: 8 }}>{errors.email}</div>}
               <div style={{ position: 'relative', width: '100%' }}>
                 <input
                   type={showPassword ? 'text' : 'password'}
@@ -111,6 +125,7 @@ const RegisterPage = () => {
                   <i className={showPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}></i>
                 </span>
               </div>
+              {errors.password && <div style={{ color: 'red', marginBottom: 8 }}>{errors.password}</div>}
               <div style={{ position: 'relative', width: '100%' }}>
                 <input
                   type={showConfirmPassword ? 'text' : 'password'}
@@ -138,7 +153,7 @@ const RegisterPage = () => {
                   <i className={showConfirmPassword ? 'fa-regular fa-eye-slash' : 'fa-regular fa-eye'}></i>
                 </span>
               </div>
-              {error && <div style={{ color: 'red', marginBottom: 8 }}>{error}</div>}
+              {errors.confirmPassword && <div style={{ color: 'red', marginBottom: 8 }}>{errors.confirmPassword}</div>}
               <button className="login-btn" type="submit">Register</button>
               <div className="login-link">
                 Already have an account?{" "}

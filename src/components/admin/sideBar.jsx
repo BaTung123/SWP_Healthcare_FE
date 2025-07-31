@@ -116,8 +116,9 @@ const SideBar = () => {
         >
             <div className="p-2 flex items-center justify-center">
                 <div className="w-full">
-                    <div className="flex items-center justify-center h-[60px]">
+                    <div className="flex flex-col items-center justify-center h-[60px]">
                         <span className="text-2xl font-bold text-white text-center">HealthCare</span>
+                        <span className="text-sm text-gray-300 text-center mt-1">{role}</span>
                     </div>
                 </div>
             </div>

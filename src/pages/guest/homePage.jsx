@@ -274,7 +274,7 @@ function HomePage() {
           <div className="home-process-card">
             <div className="home-process-number">01</div>
             <img src="https://img.freepik.com/free-photo/doctor-talking-with-patient-hospital_1303-17879.jpg" alt="step1" className="home-process-img" />
-            <div className="home-process-title">Đăng ký hiến máu</div>
+            <div className="home-process-title"></div>
             <div className="home-process-desc">Cung cấp thông tin cơ bản và kiểm tra điều kiện hiến máu.</div>
           </div>
           <div className="home-process-card">

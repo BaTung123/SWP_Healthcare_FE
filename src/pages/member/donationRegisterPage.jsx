@@ -348,8 +348,8 @@ const DonationRegisterPage = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                 style={{ width: '100%' }}
+                disabled={!!user?.bloodType}
               >
-                <option value="">-- Chọn nhóm máu --</option>
                 {bloodTypes.map(type => (
                   <option key={type} value={type}>{type}</option>
                 ))}

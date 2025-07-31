@@ -298,20 +298,20 @@ const ProfilePage = () => {
   return (
     <div className="max-w-[1200px] mx-auto p-8">
       <div className="rounded-lg shadow-md bg-white p-6">
-        <h2 className="text-4xl font-bold text-indigo-900 mb-6">About You</h2>
+        <h2 className="text-4xl font-bold text-indigo-900 mb-6">Thông tin cá nhân</h2>
 
         <div className="flex border-b-2 border-indigo-100 mb-10">
           <div
             className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'profile' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
             onClick={() => setActiveTab('profile')}
           >
-            PROFILE
+            HỒ SƠ
           </div>
           <div
             className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'registration' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
             onClick={() => setActiveTab('registration')}
           >
-            REGISTRATION
+            LỊCH SỬ HIẾN MÁU
           </div>
         </div>
 
@@ -331,7 +331,7 @@ const ProfilePage = () => {
               <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">HỌ VÀ TÊN</label>
                     <input
                       name="name"
                       value={form.name || form.fullName || ''}
@@ -340,7 +340,7 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">SỐ ĐIỆN THOẠI</label>
                     <input
                       name="phone"
                       value={form.phone || ''}
@@ -349,14 +349,13 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NHÓM MÁU</label>
                     <select
                       name="bloodType"
                       value={form.bloodType || ''}
                       onChange={handleChange}
                       className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
-                      <option value="">-- Chọn nhóm máu --</option>
                       {bloodTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
@@ -373,7 +372,7 @@ const ProfilePage = () => {
                     className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                   />
                   <div className="flex flex-col gap-1 w-full mb-3 mt-3">
-                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GIỚI TÍNH</label>
                     <select
                       name="gender"
                       value={form.gender || ''}
@@ -386,7 +385,7 @@ const ProfilePage = () => {
                     </select>
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">NGÀY SINH</label>
                     <input
                       name="dob"
                       value={form.dob || ''}
@@ -407,7 +406,7 @@ const ProfilePage = () => {
               className="!bg-indigo-900 !text-white border-none font-semibold text-lg py-3 px-12 rounded-lg shadow-md transition-all hover:!bg-indigo-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
               onClick={handleSave}
             >
-              SAVE
+              LƯU
             </button>
           </div>
         )}

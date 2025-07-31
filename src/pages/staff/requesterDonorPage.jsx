@@ -58,11 +58,19 @@ const RequesterDonorPage = () => {
     const [newStatus, setNewStatus] = useState('pending');
     const [editBloodModalOpen, setEditBloodModalOpen] = useState(false);
     const [editingBloodRecord, setEditingBloodRecord] = useState(null);
-    const [editBloodType, setEditBloodType] = useState('');
     const [editQuantity, setEditQuantity] = useState('');
     // State cho modal gửi máu vào kho
     const [isBloodDropModalOpen, setIsBloodDropModalOpen] = useState(false);
     const [bloodDropFormData, setBloodDropFormData] = useState(null);
+    
+    // State cho modal mới
+    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+    const [newModalData, setNewModalData] = useState(null);
+
+    // State cho modal kiểm tra sức khỏe
+    const [isHealthCheckModalOpen, setIsHealthCheckModalOpen] = useState(false);
+    const [healthCheckData, setHealthCheckData] = useState(null);
+    const [healthCheckError, setHealthCheckError] = useState("");
 
     // Hàm mở modal gửi máu vào kho
     const handleOpenBloodDropModal = (record) => {
@@ -104,6 +112,170 @@ const RequesterDonorPage = () => {
         }
         setIsBloodDropModalOpen(false);
         await fetchRegistrationList();
+    };
+
+    // Hàm mở modal mới
+    const handleOpenNewModal = (record) => {
+        setNewModalData({
+            registrationId: record.registrationId,
+            fullName: record.fullNameRegister || "",
+            bloodType: record.bloodGroup || "",
+            status: record.status || "",
+            newStatus: record.status || "",
+            note: ""
+        });
+        setIsNewModalOpen(true);
+    };
+
+    // Hàm submit form modal mới
+    const handleNewModalFormSubmit = async () => {
+        if (!newModalData.newStatus) {
+            toast.error("Vui lòng chọn trạng thái mới!");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            
+            // Map status text về số
+            let statusNumber = 0;
+            if (newModalData.newStatus === 'Chấp Nhận') statusNumber = 1;
+            else if (newModalData.newStatus === 'Từ Chối') statusNumber = 2;
+
+            // Cập nhật trạng thái đơn hiến máu
+            await updateBloodDonationApplicationStatus({
+                id: newModalData.registrationId,
+                status: statusNumber,
+                note: newModalData.note || ''
+            });
+
+            toast.success("Cập nhật trạng thái thành công!");
+            setIsNewModalOpen(false);
+            await fetchRegistrationList();
+        } catch (error) {
+            console.error('Lỗi cập nhật trạng thái:', error);
+            toast.error("Cập nhật trạng thái thất bại!");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Hàm mở modal kiểm tra sức khỏe
+    const handleOpenHealthCheckModal = (record) => {
+        setHealthCheckData({
+            registrationId: record.registrationId,
+            fullName: record.fullNameRegister || "",
+            bloodType: record.bloodGroup || "",
+            phone: record.phone || "",
+            healthCheckResult: "",
+            bloodPressure: "",
+            heartRate: "",
+            temperature: "",
+            hemoglobin: "",
+            weight: "",
+            height: "",
+            note: ""
+        });
+        setHealthCheckError("");
+        setIsHealthCheckModalOpen(true);
+    };
+
+    // Hàm xử lý thay đổi giá trị trong form
+    const handleHealthCheckChange = (field, value) => {
+        setHealthCheckData(prev => ({ ...prev, [field]: value }));
+        // Clear error when user starts typing
+        if (healthCheckError) {
+            setHealthCheckError("");
+        }
+    };
+
+    // Hàm submit form kiểm tra sức khỏe
+    const handleHealthCheckFormSubmit = async () => {
+        setHealthCheckError("");
+
+        // Kiểm tra kết quả kiểm tra sức khỏe
+        if (!healthCheckData.healthCheckResult) {
+            setHealthCheckError("Vui lòng chọn kết quả kiểm tra sức khỏe!");
+            return;
+        }
+
+        // Kiểm tra huyết áp
+        if (healthCheckData.bloodPressure && !/^\d{2,3}\/\d{2,3}$/.test(healthCheckData.bloodPressure)) {
+            setHealthCheckError("Huyết áp phải có định dạng: số/số (VD: 120/80)");
+            return;
+        }
+
+        // Kiểm tra nhịp tim
+        if (healthCheckData.heartRate) {
+            const heartRate = parseInt(healthCheckData.heartRate);
+            if (isNaN(heartRate) || heartRate < 40 || heartRate > 200) {
+                setHealthCheckError("Nhịp tim phải từ 40-200 lần/phút");
+                return;
+            }
+        }
+
+        // Kiểm tra nhiệt độ
+        if (healthCheckData.temperature) {
+            const temperature = parseFloat(healthCheckData.temperature);
+            if (isNaN(temperature) || temperature < 35 || temperature > 42) {
+                setHealthCheckError("Nhiệt độ phải từ 35-42°C");
+                return;
+            }
+        }
+
+        // Kiểm tra hemoglobin
+        if (healthCheckData.hemoglobin) {
+            const hemoglobin = parseFloat(healthCheckData.hemoglobin);
+            if (isNaN(hemoglobin) || hemoglobin < 7 || hemoglobin > 20) {
+                setHealthCheckError("Hemoglobin phải từ 7-20 g/dL");
+                return;
+            }
+        }
+
+        // Kiểm tra cân nặng
+        if (healthCheckData.weight) {
+            const weight = parseFloat(healthCheckData.weight);
+            if (isNaN(weight) || weight < 30 || weight > 200) {
+                setHealthCheckError("Cân nặng phải từ 30-200 kg");
+                return;
+            }
+        }
+
+        // Kiểm tra chiều cao
+        if (healthCheckData.height) {
+            const height = parseInt(healthCheckData.height);
+            if (isNaN(height) || height < 100 || height > 250) {
+                setHealthCheckError("Chiều cao phải từ 100-250 cm");
+                return;
+            }
+        }
+
+        // Kiểm tra BMI nếu có cả cân nặng và chiều cao
+        if (healthCheckData.weight && healthCheckData.height) {
+            const weight = parseFloat(healthCheckData.weight);
+            const height = parseInt(healthCheckData.height) / 100;
+            const bmi = weight / (height * height);
+            if (bmi < 18.5 || bmi > 35) {
+                setHealthCheckError(`BMI phải từ 18.5-35 (Hiện tại: ${bmi.toFixed(1)})`);
+                return;
+            }
+        }
+
+        try {
+            setLoading(true);
+            
+            // Ở đây có thể thêm API call để lưu thông tin kiểm tra sức khỏe
+            console.log("Health check data:", healthCheckData);
+            
+            toast.success("Lưu thông tin kiểm tra sức khỏe thành công!");
+            setIsHealthCheckModalOpen(false);
+            setHealthCheckError(""); // Clear error after successful save
+        } catch (error) {
+            console.error('Lỗi lưu thông tin kiểm tra sức khỏe:', error);
+            toast.error("Lưu thông tin kiểm tra sức khỏe thất bại!");
+        } finally {
+            setLoading(false);
+        }
     };
 
     // Fetch registration list
@@ -244,21 +416,19 @@ const RequesterDonorPage = () => {
     // Modal handlers for blood info
     const handleEditBlood = useCallback((record) => {
         setEditingBloodRecord(record);
-        setEditBloodType(record.bloodGroup || '');
         setEditQuantity(record.quantity || '');
         setEditBloodModalOpen(true);
     }, []);
 
     const handleBloodModalOk = useCallback(async () => {
         if (editingBloodRecord) {
-            // Map blood type and transfer type to their indexes for API
-            const bloodTypeIndex = bloodTypes.indexOf(editBloodType);
+            // Map transfer type to its index for API
             const bloodTransferTypeIndex = bloodTransferTypes.indexOf(editingBloodRecord.type);
             try {
                 setLoading(true);
                 await updateBloodDonationApplicationInfo({
                     id: editingBloodRecord.registrationId,
-                    bloodType: bloodTypeIndex,
+                    bloodType: bloodTypes.indexOf(editingBloodRecord.bloodGroup),
                     bloodTransferType: bloodTransferTypeIndex,
                     quantity: Number(editQuantity)
                 });
@@ -275,7 +445,7 @@ const RequesterDonorPage = () => {
             setEditBloodModalOpen(false);
             setEditingBloodRecord(null);
         }
-    }, [editingBloodRecord, editBloodType, editQuantity, fetchRegistrationList]);
+    }, [editingBloodRecord, editQuantity, fetchRegistrationList]);
 
     const handleBloodModalCancel = useCallback(() => {
         setEditBloodModalOpen(false);
@@ -374,7 +544,7 @@ const RequesterDonorPage = () => {
             title: 'Thao tác',
             key: 'actions',
             align: 'center',
-            width: 220,
+            width: 280,
             render: (_, record) => {
                 if (record.status === "Đang Chờ") {
                     return (
@@ -390,7 +560,7 @@ const RequesterDonorPage = () => {
                                     <AuditOutlined />
                                 </Button>
                             </Tooltip>
-                            <Tooltip title="Sửa nhóm máu & số lượng">
+                            <Tooltip title="Sửa số lượng">
                                 <Button
                                     type="dashed"
                                     variant="dashed"
@@ -399,6 +569,28 @@ const RequesterDonorPage = () => {
                                     disabled={loading}
                                 >
                                     <EditOutlined rotate={90} />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title="Thao tác mới">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="blue"
+                                    onClick={() => handleOpenNewModal(record)}
+                                    disabled={loading}
+                                >
+                                    <AuditOutlined />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title="Kiểm tra sức khỏe">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="purple"
+                                    onClick={() => handleOpenHealthCheckModal(record)}
+                                    disabled={loading}
+                                >
+                                    <AuditOutlined />
                                 </Button>
                             </Tooltip>
                         </span>
@@ -523,9 +715,9 @@ const RequesterDonorPage = () => {
                 />
             </Modal>
 
-            {/* Modal chỉnh sửa nhóm máu & số lượng */}
+            {/* Modal chỉnh sửa số lượng */}
             <Modal
-                title="Chỉnh sửa nhóm máu & số lượng"
+                title="Chỉnh sửa số lượng"
                 open={editBloodModalOpen}
                 onOk={handleBloodModalOk}
                 onCancel={handleBloodModalCancel}
@@ -533,14 +725,6 @@ const RequesterDonorPage = () => {
                 cancelText="Huỷ"
                 confirmLoading={loading}
             >
-                <div className="mb-2">Chọn nhóm máu mới:</div>
-                <Select
-                    className="w-full mb-4"
-                    value={editBloodType}
-                    onChange={setEditBloodType}
-                    options={BLOOD_TYPES.filter(type => type).map(type => ({ value: type, label: type }))}
-                    disabled={loading}
-                />
                 <div className="mb-2">Nhập số lượng máu hiến (ml):</div>
                 <input
                     type="number"
@@ -688,6 +872,210 @@ const RequesterDonorPage = () => {
                     </form>
                 )}
             </Modal>
+
+            {/* Modal chỉnh sửa trạng thái */}
+            <Modal
+                title="Chỉnh sửa trạng thái"
+                open={isNewModalOpen}
+                onOk={handleNewModalFormSubmit}
+                onCancel={() => setIsNewModalOpen(false)}
+                okText="Lưu"
+                cancelText="Huỷ"
+                confirmLoading={loading}
+            >
+                <div className="mb-2">Chọn trạng thái mới:</div>
+                <Select
+                    className="w-full"
+                    value={newModalData?.newStatus}
+                    onChange={(value) => setNewModalData(prev => ({ ...prev, newStatus: value }))}
+                    options={[
+                        { value: 'Chấp Nhận', label: 'Chấp Nhận' },
+                        { value: 'Từ Chối', label: 'Từ Chối' },
+                    ]}
+                    disabled={loading}
+                />
+                {newModalData?.newStatus === 'Từ Chối' && (
+                    <div className="mt-4">
+                        <label className="block font-semibold mb-1">Lý do từ chối:</label>
+                        <Input.TextArea
+                            value={newModalData?.note || ''}
+                            onChange={e => setNewModalData(prev => ({ ...prev, note: e.target.value }))}
+                            placeholder="Nhập lý do từ chối..."
+                            rows={3}
+                        />
+                    </div>
+                )}
+            </Modal>
+
+            {/* Modal kiểm tra sức khỏe */}
+            <Modal
+                title="Thông tin Kiểm Tra Sức Khỏe"
+                open={isHealthCheckModalOpen}
+                onOk={handleHealthCheckFormSubmit}
+                onCancel={() => setIsHealthCheckModalOpen(false)}
+                okText="Lưu"
+                cancelText="Huỷ"
+                confirmLoading={loading}
+                width={600}
+            >
+                                 {healthCheckData && (
+                     <div className="space-y-4">
+                         {/* Thông tin cơ bản */}
+                         <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block font-semibold mb-1">Họ và tên:</label>
+                                <input
+                                    type="text"
+                                    value={healthCheckData.fullName}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50"
+                                    disabled
+                                />
+                            </div>
+                            <div>
+                                <label className="block font-semibold mb-1">Nhóm máu:</label>
+                                <input
+                                    type="text"
+                                    value={healthCheckData.bloodType}
+                                    className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50"
+                                    disabled
+                                />
+                            </div>
+                        </div>
+
+                                                 {/* Các chỉ số sức khỏe */}
+                         <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                 <label className="block font-semibold mb-1">Huyết áp (mmHg):</label>
+                                 <input
+                                     type="text"
+                                     value={healthCheckData.bloodPressure}
+                                     onChange={e => handleHealthCheckChange('bloodPressure', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 120/80"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block font-semibold mb-1">Nhịp tim (lần/phút):</label>
+                                 <input
+                                     type="number"
+                                     value={healthCheckData.heartRate}
+                                     onChange={e => handleHealthCheckChange('heartRate', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 72"
+                                 />
+                             </div>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                 <label className="block font-semibold mb-1">Nhiệt độ (°C):</label>
+                                 <input
+                                     type="number"
+                                     step="0.1"
+                                     value={healthCheckData.temperature}
+                                     onChange={e => handleHealthCheckChange('temperature', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 36.5"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block font-semibold mb-1">Hemoglobin (g/dL):</label>
+                                 <input
+                                     type="number"
+                                     step="0.1"
+                                     value={healthCheckData.hemoglobin}
+                                     onChange={e => handleHealthCheckChange('hemoglobin', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 13.5"
+                                 />
+                             </div>
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-4">
+                             <div>
+                                 <label className="block font-semibold mb-1">Cân nặng (kg):</label>
+                                 <input
+                                     type="number"
+                                     step="0.1"
+                                     value={healthCheckData.weight}
+                                     onChange={e => handleHealthCheckChange('weight', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 65"
+                                 />
+                             </div>
+                             <div>
+                                 <label className="block font-semibold mb-1">Chiều cao (cm):</label>
+                                 <input
+                                     type="number"
+                                     value={healthCheckData.height}
+                                     onChange={e => handleHealthCheckChange('height', e.target.value)}
+                                     className="w-full border border-gray-300 rounded px-3 py-2"
+                                     placeholder="VD: 170"
+                                 />
+                             </div>
+                         </div>
+
+                                                 {/* Kết quả kiểm tra */}
+                         <div>
+                             <label className="block font-semibold mb-1">Kết quả kiểm tra sức khỏe:</label>
+                             <Select
+                                 className="w-full"
+                                 value={healthCheckData.healthCheckResult}
+                                 onChange={(value) => handleHealthCheckChange('healthCheckResult', value)}
+                                 options={[
+                                     { value: 'Đạt', label: 'Đạt - Có thể hiến máu' },
+                                     { value: 'Không đạt', label: 'Không đạt - Không thể hiến máu' },
+                                     { value: 'Cần kiểm tra thêm', label: 'Cần kiểm tra thêm' },
+                                 ]}
+                                 disabled={loading}
+                             />
+                         </div>
+
+                         {/* Hiển thị BMI nếu có cả cân nặng và chiều cao */}
+                         {healthCheckData.weight && healthCheckData.height && (
+                             <div className="bg-blue-50 p-3 rounded-lg">
+                                 {(() => {
+                                     const weight = parseFloat(healthCheckData.weight);
+                                     const height = parseInt(healthCheckData.height) / 100;
+                                     const bmi = weight / (height * height);
+                                     const isBMIOk = bmi >= 18.5 && bmi <= 35.0;
+                                     
+                                     return (
+                                         <div className="flex items-center justify-between">
+                                             <p className="text-sm font-semibold text-blue-800">
+                                                 BMI: {bmi.toFixed(1)}
+                                             </p>
+                                             <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                                                 isBMIOk 
+                                                     ? 'bg-green-100 text-green-800' 
+                                                     : 'bg-red-100 text-red-800'
+                                             }`}>
+                                                 {isBMIOk ? 'Đạt' : 'Không đạt'}
+                                             </span>
+                                         </div>
+                                     );
+                                 })()}
+                             </div>
+                         )}
+
+                                                                          {/* Ghi chú */}
+                         <div>
+                             <label className="block font-semibold mb-1">Ghi chú:</label>
+                             <Input.TextArea
+                                 value={healthCheckData.note || ''}
+                                 onChange={e => handleHealthCheckChange('note', e.target.value)}
+                                 placeholder="Nhập ghi chú về tình trạng sức khỏe..."
+                                 rows={3}
+                             />
+                         </div>
+
+                         {/* Error display */}
+                         {healthCheckError && (
+                             <div className="text-red-500 font-semibold text-center mt-2">{healthCheckError}</div>
+                         )}
+                     </div>
+                 )}
+             </Modal>
         </div>
     );
 }

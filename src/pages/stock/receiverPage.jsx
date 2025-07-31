@@ -40,15 +40,27 @@ const ReceiverPage = () => {
     const donateListRes = await getAllBloodDonationApplication();
     console.log("donateListRes", donateListRes)
     const donateList = donateListRes;
-    const donateObjList = donateList.map(donate => {
-
-      return {
-        ...donate,
-        bloodTransferType: bloodTransferTypes[donate.bloodTransferType],
-        bloodType: bloodTypes[donate.bloodType],
-        status: statusList[donate.status]
-      }
-    })
+    
+    // Lấy danh sách bloodImportApplication để kiểm tra đơn nào đã được gửi vào kho
+    const importListRes = await GetAllBloodImportApplication();
+    console.log("importListRes", importListRes);
+    const importList = importListRes.data.bloodImports;
+    console.log("importList", importList);
+    
+    // Chỉ lấy những đơn đăng ký có bloodImportApplication tương ứng (đã được gửi vào kho)
+    const donateObjList = donateList
+      .filter(donate => {
+        // Kiểm tra xem đơn này có bloodImportApplication không
+        return importList.some(importItem => importItem.bloodDonationApplicationId === donate.id);
+      })
+      .map(donate => {
+        return {
+          ...donate,
+          bloodTransferType: bloodTransferTypes[donate.bloodTransferType],
+          bloodType: bloodTypes[donate.bloodType],
+          status: statusList[donate.status]
+        }
+      });
 
     setData(donateObjList)
   }

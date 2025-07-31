@@ -1,7 +1,8 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
 import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
-import { Button, DatePicker, Modal, Table } from 'antd';
+import { Button, DatePicker, Modal, Table, Tooltip } from 'antd';
+import { ReadOutlined } from '@ant-design/icons';
 import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
 import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
@@ -22,7 +23,7 @@ const bloodTransferTypes = [
 ];
 
 const statusList = [
-  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
+  'Đang Chờ', 'Hoàn Thành', 'Đã Xuất', 'Từ Chối'
 ];
 
 function normalizeGender(gender) {
@@ -71,6 +72,10 @@ const ProfilePage = () => {
 
   const [userItem, setUserItem] = useState();
   const [form, setForm] = useState({});
+
+  // State cho modal ghi chú
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [noteData, setNoteData] = useState('');
 
   // Thêm khai báo bloodTypes
   const bloodTypes = [
@@ -142,6 +147,7 @@ const ProfilePage = () => {
       align: 'center',
       render: (record) => record ? dayjs(record).format('DD/MM/YYYY') : '',
     },
+
     {
       title: 'Trạng Thái',
       dataIndex: 'status',
@@ -153,9 +159,9 @@ const ProfilePage = () => {
         const text = statusList[status];
         switch (text) {
           case 'Đang Chờ': color = 'text-orange-500'; break;
-          case 'Chấp Nhận': color = 'text-blue-500'; break;
+          case 'Hoàn Thành': color = 'text-green-500'; break;
           case 'Từ Chối': color = 'text-red-500'; break;
-          default: color = 'text-green-500';
+          default: color = 'text-blue-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`} >
@@ -163,6 +169,26 @@ const ProfilePage = () => {
           </span>
         );
       },
+    },
+    {
+      title: 'Thao tác',
+      key: 'action',
+      width: 120,
+      align: 'center',
+      render: (_, record) => (
+        <div className="flex justify-center gap-2">
+          <Tooltip title="Ghi chú">
+            <Button
+              type="dashed"
+              variant="dashed"
+              color="cyan"
+              onClick={() => handleOpenNoteModal(record)}
+            >
+              <ReadOutlined />
+            </Button>
+          </Tooltip>
+        </div>
+      ),
     },
   ]
 
@@ -292,6 +318,17 @@ const ProfilePage = () => {
       console.log('Lỗi cập nhật:', error.response?.data || error.message);
       toast.error('Cập nhật thông tin thất bại!');
     }
+  };
+
+  // Handler cho modal ghi chú
+  const handleOpenNoteModal = (record) => {
+    setNoteData(record.request || '');
+    setIsNoteModalOpen(true);
+  };
+
+  const handleNoteModalCancel = () => {
+    setIsNoteModalOpen(false);
+    setNoteData('');
   };
 
 
@@ -470,6 +507,30 @@ const ProfilePage = () => {
             ))} */}
           </>
         )}
+
+        {/* Modal ghi chú */}
+        <Modal
+          title="Ghi chú"
+          open={isNoteModalOpen}
+          onCancel={handleNoteModalCancel}
+          footer={[
+            <Button key="close" onClick={handleNoteModalCancel}>
+              Đóng
+            </Button>
+          ]}
+        >
+          <div className="p-4">
+            {noteData && noteData !== "Hiến máu lần đầu" ? (
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <p className="text-gray-800 whitespace-pre-wrap">{noteData}</p>
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 italic">
+                Không có ghi chú
+              </div>
+            )}
+          </div>
+        </Modal>
       </div>
     </div>
   )

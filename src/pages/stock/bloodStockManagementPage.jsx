@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import '../../styles/bloodStockManagementPage.css';
 import { Table, Input, Button, Tooltip, Modal, Select } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons';
-import { GetAllBlood } from '../../services/bloodStorage';
+import { GetAllBlood, UpdateBloodStorage } from '../../services/bloodStorage';
 import { toast } from 'react-toastify';
 
 const bloodTypeList = [
@@ -104,20 +104,39 @@ const BloodStockManagementPage = () => {
   // Khi chỉnh sửa volume, cập nhật lại status
   const handleEdit = (record) => {
     setEditingRecord(record);
-    setNewVolume(record.volume);
-    setNewStatus(getStatus(record.volume));
+    setNewVolume(record.quantity);
+    setNewStatus(getStatus(record.quantity));
     setIsModalOpen(true);
   };
 
-  const handleModalOk = () => {
+  const handleModalOk = async () => {
     if (editingRecord) {
-      const updatedStatus = getStatus(newVolume);
-      setFiltered(prev => prev.map(item =>
-        item === editingRecord
-          ? { ...item, volume: newVolume, status: updatedStatus }
-          : item
-      ));
-      toast.success('Cập nhật số lượng/thông tin kho máu thành công!');
+      try {
+        // Gọi API để update
+        await UpdateBloodStorage(editingRecord.id, {
+          quantity: newVolume
+        });
+        
+        const updatedStatus = getStatus(newVolume);
+        const updatedRecord = { ...editingRecord, quantity: newVolume, status: updatedStatus };
+        
+        // Cập nhật cả originalList và filtered
+        setOriginalList(prev => prev.map(item =>
+          item.id === editingRecord.id
+            ? updatedRecord
+            : item
+        ));
+        setFiltered(prev => prev.map(item =>
+          item.id === editingRecord.id
+            ? updatedRecord
+            : item
+        ));
+        
+        toast.success('Cập nhật số lượng/thông tin kho máu thành công!');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật:', error);
+        toast.error('Có lỗi xảy ra khi cập nhật thông tin kho máu!');
+      }
     }
     setIsModalOpen(false);
     setEditingRecord(null);
@@ -237,7 +256,7 @@ const BloodStockManagementPage = () => {
         className="rounded-2xl shadow-lg bg-white custom-ant-table"
         dataSource={filtered}
         columns={columns}
-        rowKey={(record, idx) => `${record.bloodType}-${record.volume}`}
+                 rowKey={(record, idx) => record.id || `${record.bloodType}-${record.quantity}`}
         pagination={{
           pageSize: 8,
           position: ['bottomCenter'],
@@ -253,21 +272,22 @@ const BloodStockManagementPage = () => {
         okText="Lưu"
         cancelText="Huỷ"
       >
-        {editingRecord && (
-          <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
-            <div className="mb-1"><b>Nhóm máu:</b> {editingRecord.bloodType}</div>
-            <div className="mb-1"><b>Số lượng (ml):</b> {editingRecord.volume}</div>
-            <div className="mb-1 flex items-center gap-2">
-              <b>Trạng thái:</b>
-              {editingRecord.status === 'Not Enough' ? (
-                <span className="font-bold text-[#e53935] bg-[#ffebee] border-2 rounded-md p-1">Không đủ</span>
-              ) : (
-                <span className="font-bold text-[#4caf50] bg-[#e8f5e9] border-2 rounded-md p-1">Đủ</span>
-              )}
-            </div>
-          </div>
-        )}
-        <div className="mb-2">Nhập số lượng (ml):</div>
+                 {editingRecord && (
+           <div className="mb-4 p-3 rounded-lg bg-gray-50 border border-gray-200">
+             <div className="mb-1"><b>ID:</b> {editingRecord.id}</div>
+             <div className="mb-1"><b>Nhóm máu:</b> {bloodTypeList[editingRecord.bloodType]}</div>
+             <div className="mb-1"><b>Số lượng hiện tại (ml):</b> {editingRecord.quantity}</div>
+             <div className="mb-1 flex items-center gap-2">
+               <b>Trạng thái hiện tại:</b>
+               {editingRecord.status === 'Not Enough' ? (
+                 <span className="font-bold text-[#e53935] bg-[#ffebee] border-2 rounded-md p-1">Không đủ</span>
+               ) : (
+                 <span className="font-bold text-[#4caf50] bg-[#e8f5e9] border-2 rounded-md p-1">Đủ</span>
+               )}
+             </div>
+           </div>
+         )}
+        <div className="mb-2">Nhập số lượng mới (ml):</div>
         <Input
           type="number"
           min={0}
@@ -279,6 +299,7 @@ const BloodStockManagementPage = () => {
             setNewVolume(val);
             setNewStatus(getStatus(val));
           }}
+          placeholder="Nhập số lượng máu mới"
         />
         <div className="mb-2">Trạng thái:</div>
         <Select

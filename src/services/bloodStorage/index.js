@@ -19,3 +19,13 @@ export const GetBloodType = async (id) => {
     throw error;
   }
 }
+
+export const UpdateBloodStorage = async (id, updateData) => {
+  try {
+    const response = await instance.put(`/BloodStorage/${id}`, updateData);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi cập nhật BloodStorage:", error.response?.data || error.message);
+    throw error;
+  }
+}

@@ -431,7 +431,7 @@ const BloodDonationEventPage = () => {
                 name="note"
                 value={formData.note}
                 onChange={handleChange}
-                placeholder="Nhập ghi chú (tùy chọn)"
+                placeholder="Bệnh nền, tình trạng sức khỏe, thuốc đang sử dụng..."
                 className="w-full border border-gray-200 rounded-lg px-4 py-2 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000]"
               />
             </div>

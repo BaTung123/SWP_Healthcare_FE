@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
-import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@ant-design/icons';
+import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined, ReadOutlined } from '@ant-design/icons';
 import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus, updateBloodDonationApplicationInfo } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
@@ -66,11 +66,16 @@ const RequesterDonorPage = () => {
     // State cho modal mới
     const [isNewModalOpen, setIsNewModalOpen] = useState(false);
     const [newModalData, setNewModalData] = useState(null);
+    const [error, setError] = useState("");
 
     // State cho modal kiểm tra sức khỏe
     const [isHealthCheckModalOpen, setIsHealthCheckModalOpen] = useState(false);
     const [healthCheckData, setHealthCheckData] = useState(null);
     const [healthCheckError, setHealthCheckError] = useState("");
+
+    // State cho modal ghi chú
+    const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+    const [noteData, setNoteData] = useState("");
 
     // Hàm mở modal gửi máu vào kho
     const handleOpenBloodDropModal = (record) => {
@@ -88,30 +93,84 @@ const RequesterDonorPage = () => {
             note: "",
         });
         setEditingRecord(record);
+        setError("");
         setIsBloodDropModalOpen(true);
     };
 
     // Hàm xử lý thay đổi form gửi máu vào kho
     const handleBloodDropFormChange = (e) => {
         const { name, value } = e.target;
+        
+        // Prevent negative values for quantity field
+        if (name === 'quantity') {
+            const numValue = parseFloat(value);
+            if (value !== '' && (isNaN(numValue) || numValue < 0)) {
+                return; // Don't update if negative or invalid
+            }
+        }
+        
         setBloodDropFormData((prev) => ({ ...prev, [name]: value }));
     };
 
     // Hàm submit form gửi máu vào kho
     const handleBloodDropFormSubmit = async (e) => {
         e.preventDefault();
-        
-        console.log("bloodDropFormData:", bloodDropFormData);
-        const createBloodImportRes = await CreateBloodImportApplication(bloodDropFormData);
-        console.log("createBloodImportRes:", createBloodImportRes);
+        setError("");
 
-        if (createBloodImportRes.code === 201) {
-            toast.success("Tạo đơn thành công!");
-        } else {
+        // Validate required fields
+        if (!bloodDropFormData.fullName?.trim()) {
+            setError("Vui lòng nhập họ và tên!");
+            return;
+        }
+
+        if (!bloodDropFormData.bloodType) {
+            setError("Vui lòng chọn nhóm máu!");
+            return;
+        }
+
+        if (!bloodDropFormData.quantity || bloodDropFormData.quantity <= 0) {
+            setError("Vui lòng nhập số lượng máu hợp lệ!");
+            return;
+        }
+
+        if (!bloodDropFormData.needDate) {
+            setError("Vui lòng chọn ngày bỏ máu vào kho!");
+            return;
+        }
+
+        if (!bloodDropFormData.type) {
+            setError("Vui lòng chọn loại máu!");
+            return;
+        }
+
+        if (!bloodDropFormData.phone?.trim()) {
+            setError("Vui lòng nhập số điện thoại!");
+            return;
+        }
+
+        // Validate phone number format
+        const phoneRegex = /^[0-9]{10,11}$/;
+        if (!phoneRegex.test(bloodDropFormData.phone.replace(/\s/g, ''))) {
+            setError("Số điện thoại phải có 10-11 chữ số!");
+            return;
+        }
+
+        try {
+            console.log("bloodDropFormData:", bloodDropFormData);
+            const createBloodImportRes = await CreateBloodImportApplication(bloodDropFormData);
+            console.log("createBloodImportRes:", createBloodImportRes);
+
+            if (createBloodImportRes.code === 201) {
+                toast.success("Tạo đơn thành công!");
+                setIsBloodDropModalOpen(false);
+                await fetchRegistrationList();
+            } else {
+                toast.error("Tạo đơn không thành công. Vui lòng thử lại.");
+            }
+        } catch (error) {
+            console.error('Lỗi tạo đơn nhập máu:', error);
             toast.error("Tạo đơn không thành công. Vui lòng thử lại.");
         }
-        setIsBloodDropModalOpen(false);
-        await fetchRegistrationList();
     };
 
     // Hàm mở modal mới
@@ -124,13 +183,22 @@ const RequesterDonorPage = () => {
             newStatus: record.status || "",
             note: ""
         });
+        setError("");
         setIsNewModalOpen(true);
     };
 
     // Hàm submit form modal mới
     const handleNewModalFormSubmit = async () => {
+        setError("");
+
         if (!newModalData.newStatus) {
-            toast.error("Vui lòng chọn trạng thái mới!");
+            setError("Vui lòng chọn trạng thái mới!");
+            return;
+        }
+
+        // Validate note when status is "Từ Chối"
+        if (newModalData.newStatus === 'Từ Chối' && !newModalData.note?.trim()) {
+            setError("Vui lòng nhập lý do từ chối!");
             return;
         }
 
@@ -182,6 +250,14 @@ const RequesterDonorPage = () => {
 
     // Hàm xử lý thay đổi giá trị trong form
     const handleHealthCheckChange = (field, value) => {
+        // Prevent negative values for numeric fields
+        if (['heartRate', 'temperature', 'hemoglobin', 'weight', 'height'].includes(field)) {
+            const numValue = parseFloat(value);
+            if (value !== '' && (isNaN(numValue) || numValue < 0)) {
+                return; // Don't update if negative or invalid
+            }
+        }
+        
         setHealthCheckData(prev => ({ ...prev, [field]: value }));
         // Clear error when user starts typing
         if (healthCheckError) {
@@ -189,76 +265,104 @@ const RequesterDonorPage = () => {
         }
     };
 
+    // Hàm mở modal ghi chú
+    const handleOpenNoteModal = (record) => {
+        const note = record.request || "";
+        setNoteData(note);
+        setIsNoteModalOpen(true);
+    };
+
+    const handleNoteModalCancel = () => {
+        setIsNoteModalOpen(false);
+        setNoteData("");
+    };
+
     // Hàm submit form kiểm tra sức khỏe
     const handleHealthCheckFormSubmit = async () => {
         setHealthCheckError("");
 
-        // Kiểm tra kết quả kiểm tra sức khỏe
+        // Kiểm tra kết quả kiểm tra sức khỏe (bắt buộc)
         if (!healthCheckData.healthCheckResult) {
             setHealthCheckError("Vui lòng chọn kết quả kiểm tra sức khỏe!");
             return;
         }
 
-        // Kiểm tra huyết áp
-        if (healthCheckData.bloodPressure && !/^\d{2,3}\/\d{2,3}$/.test(healthCheckData.bloodPressure)) {
+        // Kiểm tra huyết áp (bắt buộc)
+        if (!healthCheckData.bloodPressure?.trim()) {
+            setHealthCheckError("Vui lòng nhập huyết áp!");
+            return;
+        }
+
+        if (!/^\d{2,3}\/\d{2,3}$/.test(healthCheckData.bloodPressure)) {
             setHealthCheckError("Huyết áp phải có định dạng: số/số (VD: 120/80)");
             return;
         }
 
-        // Kiểm tra nhịp tim
-        if (healthCheckData.heartRate) {
-            const heartRate = parseInt(healthCheckData.heartRate);
-            if (isNaN(heartRate) || heartRate < 40 || heartRate > 200) {
-                setHealthCheckError("Nhịp tim phải từ 40-200 lần/phút");
-                return;
-            }
+        // Kiểm tra nhịp tim (bắt buộc)
+        if (!healthCheckData.heartRate?.trim()) {
+            setHealthCheckError("Vui lòng nhập nhịp tim!");
+            return;
         }
 
-        // Kiểm tra nhiệt độ
-        if (healthCheckData.temperature) {
-            const temperature = parseFloat(healthCheckData.temperature);
-            if (isNaN(temperature) || temperature < 35 || temperature > 42) {
-                setHealthCheckError("Nhiệt độ phải từ 35-42°C");
-                return;
-            }
+        const heartRate = parseInt(healthCheckData.heartRate);
+        if (isNaN(heartRate) || heartRate < 40 || heartRate > 200) {
+            setHealthCheckError("Nhịp tim phải từ 40-200 lần/phút");
+            return;
         }
 
-        // Kiểm tra hemoglobin
-        if (healthCheckData.hemoglobin) {
-            const hemoglobin = parseFloat(healthCheckData.hemoglobin);
-            if (isNaN(hemoglobin) || hemoglobin < 7 || hemoglobin > 20) {
-                setHealthCheckError("Hemoglobin phải từ 7-20 g/dL");
-                return;
-            }
+        // Kiểm tra nhiệt độ (bắt buộc)
+        if (!healthCheckData.temperature?.trim()) {
+            setHealthCheckError("Vui lòng nhập nhiệt độ!");
+            return;
         }
 
-        // Kiểm tra cân nặng
-        if (healthCheckData.weight) {
-            const weight = parseFloat(healthCheckData.weight);
-            if (isNaN(weight) || weight < 30 || weight > 200) {
-                setHealthCheckError("Cân nặng phải từ 30-200 kg");
-                return;
-            }
+        const temperature = parseFloat(healthCheckData.temperature);
+        if (isNaN(temperature) || temperature < 35 || temperature > 42) {
+            setHealthCheckError("Nhiệt độ phải từ 35-42°C");
+            return;
         }
 
-        // Kiểm tra chiều cao
-        if (healthCheckData.height) {
-            const height = parseInt(healthCheckData.height);
-            if (isNaN(height) || height < 100 || height > 250) {
-                setHealthCheckError("Chiều cao phải từ 100-250 cm");
-                return;
-            }
+        // Kiểm tra hemoglobin (bắt buộc)
+        if (!healthCheckData.hemoglobin?.trim()) {
+            setHealthCheckError("Vui lòng nhập hemoglobin!");
+            return;
+        }
+
+        const hemoglobin = parseFloat(healthCheckData.hemoglobin);
+        if (isNaN(hemoglobin) || hemoglobin < 7 || hemoglobin > 20) {
+            setHealthCheckError("Hemoglobin phải từ 7-20 g/dL");
+            return;
+        }
+
+        // Kiểm tra cân nặng (bắt buộc)
+        if (!healthCheckData.weight?.trim()) {
+            setHealthCheckError("Vui lòng nhập cân nặng!");
+            return;
+        }
+
+        const weight = parseFloat(healthCheckData.weight);
+        if (isNaN(weight) || weight < 30 || weight > 200) {
+            setHealthCheckError("Cân nặng phải từ 30-200 kg");
+            return;
+        }
+
+        // Kiểm tra chiều cao (bắt buộc)
+        if (!healthCheckData.height?.trim()) {
+            setHealthCheckError("Vui lòng nhập chiều cao!");
+            return;
+        }
+
+        const height = parseInt(healthCheckData.height);
+        if (isNaN(height) || height < 100 || height > 250) {
+            setHealthCheckError("Chiều cao phải từ 100-250 cm");
+            return;
         }
 
         // Kiểm tra BMI nếu có cả cân nặng và chiều cao
-        if (healthCheckData.weight && healthCheckData.height) {
-            const weight = parseFloat(healthCheckData.weight);
-            const height = parseInt(healthCheckData.height) / 100;
-            const bmi = weight / (height * height);
-            if (bmi < 18.5 || bmi > 35) {
-                setHealthCheckError(`BMI phải từ 18.5-35 (Hiện tại: ${bmi.toFixed(1)})`);
-                return;
-            }
+        const bmi = weight / (height / 100 * height / 100);
+        if (bmi < 18.5 || bmi > 35) {
+            setHealthCheckError(`BMI phải từ 18.5-35 (Hiện tại: ${bmi.toFixed(1)})`);
+            return;
         }
 
         try {
@@ -391,8 +495,10 @@ const RequesterDonorPage = () => {
             
                 // Cập nhật lại danh sách
                 await fetchRegistrationList();
+                toast.success("Cập nhật trạng thái thành công!");
             } catch (e) {
                 console.error('Lỗi cập nhật trạng thái:', e);
+                toast.error("Cập nhật trạng thái thất bại!");
             } finally {
                 setLoading(false);
                 setIsModalOpen(false);
@@ -422,6 +528,18 @@ const RequesterDonorPage = () => {
 
     const handleBloodModalOk = useCallback(async () => {
         if (editingBloodRecord) {
+            // Validate quantity
+            if (!editQuantity || editQuantity < 50 || editQuantity > 500) {
+                toast.error('Số lượng máu phải từ 50-500ml!');
+                return;
+            }
+
+            // Validate quantity is a number
+            if (isNaN(Number(editQuantity))) {
+                toast.error('Số lượng máu phải là số!');
+                return;
+            }
+
             // Map transfer type to its index for API
             const bloodTransferTypeIndex = bloodTransferTypes.indexOf(editingBloodRecord.type);
             try {
@@ -435,6 +553,7 @@ const RequesterDonorPage = () => {
                 toast.success('Cập nhật thành công!');
                 await fetchRegistrationList();
             } catch (error) {
+                console.error('Lỗi cập nhật thông tin máu:', error);
                 toast.error('Cập nhật thất bại!');
             } finally {
                 setLoading(false);
@@ -560,7 +679,7 @@ const RequesterDonorPage = () => {
                                     <AuditOutlined />
                                 </Button>
                             </Tooltip>
-                            <Tooltip title="Sửa số lượng">
+                            <Tooltip title="Số lượng">
                                 <Button
                                     type="dashed"
                                     variant="dashed"
@@ -571,7 +690,7 @@ const RequesterDonorPage = () => {
                                     <EditOutlined rotate={90} />
                                 </Button>
                             </Tooltip>
-                            <Tooltip title="Thao tác mới">
+                            <Tooltip title="Trạng thái">
                                 <Button
                                     type="dashed"
                                     variant="dashed"
@@ -591,6 +710,17 @@ const RequesterDonorPage = () => {
                                     disabled={loading}
                                 >
                                     <AuditOutlined />
+                                </Button>
+                            </Tooltip>
+                            <Tooltip title="Ghi chú">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="cyan"
+                                    onClick={() => handleOpenNoteModal(record)}
+                                    disabled={loading}
+                                >
+                                    <ReadOutlined />
                                 </Button>
                             </Tooltip>
                         </span>
@@ -726,17 +856,22 @@ const RequesterDonorPage = () => {
                 confirmLoading={loading}
             >
                 <div className="mb-2">Nhập số lượng máu hiến (ml):</div>
-                <input
-                    type="number"
-                    min={50}
-                    max={500}
-                    step={50}
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
-                    value={editQuantity}
-                    onChange={e => setEditQuantity(e.target.value)}
-                    placeholder="Nhập số ml (tối đa 500ml)"
-                    disabled={loading}
-                />
+                                 <input
+                     type="number"
+                     min="50"
+                     max="500"
+                     step="50"
+                     className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
+                     value={editQuantity}
+                     onChange={e => setEditQuantity(e.target.value)}
+                     placeholder="Nhập số ml (tối đa 500ml)"
+                     disabled={loading}
+                     onKeyDown={(e) => {
+                         if (e.key === '-' || e.key === 'e') {
+                             e.preventDefault();
+                         }
+                     }}
+                 />
             </Modal>
 
             {/* Modal gửi máu vào kho */}
@@ -785,20 +920,25 @@ const RequesterDonorPage = () => {
                                     ))}
                                 </select>
                             </div>
-                            <div className="flex-1 flex flex-col">
-                                <label className="font-semibold mb-1">Số ml cần</label>
-                                <input
-                                    type="number"
-                                    name="quantity"
-                                    min={0}
-                                    step={50}
-                                    value={bloodDropFormData.quantity}
-                                    onChange={handleBloodDropFormChange}
-                                    className="w-full text-center border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                                    style={{ width: '100%' }}
-                                    disabled={true}
-                                />
-                            </div>
+                                                         <div className="flex-1 flex flex-col">
+                                 <label className="font-semibold mb-1">Số ml cần <span className="text-red-500">*</span></label>
+                                 <input
+                                     type="number"
+                                     name="quantity"
+                                     min="0"
+                                     step={50}
+                                     value={bloodDropFormData.quantity}
+                                     onChange={handleBloodDropFormChange}
+                                     className="w-full text-center border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
+                                     style={{ width: '100%' }}
+                                     disabled={true}
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
+                                 />
+                             </div>
                         </div>
                         {/* Ngày bỏ máu vào kho */}
                         <div className="flex flex-col">
@@ -812,7 +952,6 @@ const RequesterDonorPage = () => {
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                 min={dayjs().format("YYYY-MM-DD")}
                                 style={{ width: '100%' }}
-                                disabled={true}
                             />
                         </div>
                         {/* Loại và số điện thoại trên cùng một dòng */}
@@ -857,10 +996,16 @@ const RequesterDonorPage = () => {
                                 value={bloodDropFormData.note}
                                 onChange={handleBloodDropFormChange}
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                                placeholder="Nhập ghi chú (nếu có)"
+                                placeholder="Bệnh nền, tình trạng sức khỏe, thuốc đang sử dụng..."
                                 style={{ width: '100%' }}
                             />
                         </div>
+
+                        {/* Error display */}
+                        {error && (
+                            <div className="text-red-500 font-semibold text-center mt-2">{error}</div>
+                        )}
+
                         {/* Nút gửi */}
                         <button
                             type="submit"
@@ -905,6 +1050,10 @@ const RequesterDonorPage = () => {
                         />
                     </div>
                 )}
+                
+                {error && (
+                    <div className="text-red-500 font-semibold text-center mt-2">{error}</div>
+                )}
             </Modal>
 
             {/* Modal kiểm tra sức khỏe */}
@@ -945,79 +1094,115 @@ const RequesterDonorPage = () => {
                                                  {/* Các chỉ số sức khỏe */}
                          <div className="grid grid-cols-2 gap-4">
                              <div>
-                                 <label className="block font-semibold mb-1">Huyết áp (mmHg):</label>
+                                 <label className="block font-semibold mb-1">Huyết áp (mmHg): <span className="text-red-500">*</span></label>
                                  <input
                                      type="text"
                                      value={healthCheckData.bloodPressure}
                                      onChange={e => handleHealthCheckChange('bloodPressure', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 120/80"
+                                     required
                                  />
                              </div>
                              <div>
-                                 <label className="block font-semibold mb-1">Nhịp tim (lần/phút):</label>
+                                 <label className="block font-semibold mb-1">Nhịp tim (lần/phút): <span className="text-red-500">*</span></label>
                                  <input
                                      type="number"
+                                     min="0"
                                      value={healthCheckData.heartRate}
                                      onChange={e => handleHealthCheckChange('heartRate', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 72"
+                                     required
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
                                  />
                              </div>
                          </div>
 
                          <div className="grid grid-cols-2 gap-4">
                              <div>
-                                 <label className="block font-semibold mb-1">Nhiệt độ (°C):</label>
+                                 <label className="block font-semibold mb-1">Nhiệt độ (°C): <span className="text-red-500">*</span></label>
                                  <input
                                      type="number"
                                      step="0.1"
+                                     min="0"
                                      value={healthCheckData.temperature}
                                      onChange={e => handleHealthCheckChange('temperature', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 36.5"
+                                     required
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
                                  />
                              </div>
                              <div>
-                                 <label className="block font-semibold mb-1">Hemoglobin (g/dL):</label>
+                                 <label className="block font-semibold mb-1">Hemoglobin (g/dL): <span className="text-red-500">*</span></label>
                                  <input
                                      type="number"
                                      step="0.1"
+                                     min="0"
                                      value={healthCheckData.hemoglobin}
                                      onChange={e => handleHealthCheckChange('hemoglobin', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 13.5"
+                                     required
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
                                  />
                              </div>
                          </div>
 
                          <div className="grid grid-cols-2 gap-4">
                              <div>
-                                 <label className="block font-semibold mb-1">Cân nặng (kg):</label>
+                                 <label className="block font-semibold mb-1">Cân nặng (kg): <span className="text-red-500">*</span></label>
                                  <input
                                      type="number"
                                      step="0.1"
+                                     min="0"
                                      value={healthCheckData.weight}
                                      onChange={e => handleHealthCheckChange('weight', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 65"
+                                     required
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
                                  />
                              </div>
                              <div>
-                                 <label className="block font-semibold mb-1">Chiều cao (cm):</label>
+                                 <label className="block font-semibold mb-1">Chiều cao (cm): <span className="text-red-500">*</span></label>
                                  <input
                                      type="number"
+                                     min="0"
                                      value={healthCheckData.height}
                                      onChange={e => handleHealthCheckChange('height', e.target.value)}
                                      className="w-full border border-gray-300 rounded px-3 py-2"
                                      placeholder="VD: 170"
+                                     required
+                                     onKeyDown={(e) => {
+                                         if (e.key === '-' || e.key === 'e') {
+                                             e.preventDefault();
+                                         }
+                                     }}
                                  />
                              </div>
                          </div>
 
                                                  {/* Kết quả kiểm tra */}
                          <div>
-                             <label className="block font-semibold mb-1">Kết quả kiểm tra sức khỏe:</label>
+                             <label className="block font-semibold mb-1">Kết quả kiểm tra sức khỏe: <span className="text-red-500">*</span></label>
                              <Select
                                  className="w-full"
                                  value={healthCheckData.healthCheckResult}
@@ -1076,6 +1261,30 @@ const RequesterDonorPage = () => {
                      </div>
                  )}
              </Modal>
+
+            {/* Modal ghi chú */}
+            <Modal
+                title="Ghi chú"
+                open={isNoteModalOpen}
+                onCancel={handleNoteModalCancel}
+                footer={[
+                    <Button key="close" onClick={handleNoteModalCancel}>
+                        Đóng
+                    </Button>
+                ]}
+            >
+                <div className="p-4">
+                    {noteData && noteData !== "Hiến máu lần đầu" ? (
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <p className="text-gray-800 whitespace-pre-wrap">{noteData}</p>
+                        </div>
+                    ) : (
+                        <div className="text-center text-gray-500 italic">
+                            Không có ghi chú
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     );
 }

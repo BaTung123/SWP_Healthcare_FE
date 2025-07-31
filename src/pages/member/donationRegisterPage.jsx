@@ -23,6 +23,7 @@ const BLOOD_TYPES = [
 
 const DONATION_TYPES = [
   { value: "Toàn Phần", label: "Toàn Phần" },
+  { value: "Hồng Cầu", label: "Hồng Cầu" },
   { value: "Tiểu Cầu", label: "Tiểu Cầu" },
   { value: "Huyết Tương", label: "Huyết Tương" },
 ];
@@ -37,7 +38,7 @@ const bloodTypes = [
 ];
 
 const DONATION_TYPE_MAP = {
-  "Toàn Phần": 0, "Tiểu Cầu": 1, "Huyết Tương": 2
+  "Toàn Phần": 0, "Hồng Cầu": 1, "Tiểu Cầu": 2, "Huyết Tương": 3
 };
 
 const DonationRegisterPage = () => {
@@ -62,6 +63,7 @@ const DonationRegisterPage = () => {
     toDate: dayjs(),
     phone: "",
     quantity: "",
+    note: "",
   });
 
   useEffect(() => {
@@ -87,6 +89,7 @@ const DonationRegisterPage = () => {
         toDate: dayjs(),
         phone: user.phoneNumber,
         quantity: "",
+        note: "",
       });
     }
   }, [user]);
@@ -111,7 +114,7 @@ const DonationRegisterPage = () => {
     }
 
     const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
-    const today = dayjs().format("YYYY-MM-MM-DD");
+    const today = dayjs().format("YYYY-MM-DD");
 
     // Check if date is in the past
     if (selectedDateStr < today) {
@@ -226,19 +229,19 @@ const DonationRegisterPage = () => {
       setLoading(true);
       console.log("formData:", formData);
 
-      const dataToSend = {
-        userId: formData.userId,
-        eventId: eventId ? Number(eventId) : null,
-        fullName: formData.fullName,
-        dob: formData.birthDate,
-        gender: formData.gender,
-        bloodType: bloodTypes[formData.bloodType],
-        bloodTransferType: DONATION_TYPE_MAP[formData.type],
-        quantity: Number(formData.quantity),
-        note: "Hiến máu lần đầu", // hoặc lấy từ form nếu có
-        phoneNumber: formData.phone,
-        donationEndDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : ""
-      };
+             const dataToSend = {
+         userId: formData.userId,
+         eventId: eventId ? Number(eventId) : null,
+         fullName: formData.fullName,
+         dob: formData.birthDate,
+         gender: formData.gender,
+         bloodType: bloodTypes[formData.bloodType],
+         bloodTransferType: DONATION_TYPE_MAP[formData.type],
+         quantity: Number(formData.quantity),
+         request: formData.note || "Hiến máu lần đầu",
+         phoneNumber: formData.phone,
+         donationEndDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : ""
+       };
       console.log('dataToSend:', dataToSend);
 
       const response = await CreateBloodDonationApplication(dataToSend);
@@ -251,6 +254,7 @@ const DonationRegisterPage = () => {
         type: "",
         toDate: "",
         quantity: "",
+        note: "",
       }));
       setErrors({});
       // Chuyển hướng sang trang danh sách donor để tự động reload
@@ -277,7 +281,7 @@ const DonationRegisterPage = () => {
   return (
     <div className="p-8 max-w-2xl mx-auto bg-[#eaf3fb] min-h-screen flex items-center justify-center">
       <div className="rounded-2xl shadow-2xl bg-white p-10 w-full max-w-2xl transition-shadow hover:shadow-3xl">
-        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm">Đăng ký Hiến Máu</h1>
+        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm"></h1>
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           {/* Họ và tên */}
@@ -366,10 +370,11 @@ const DonationRegisterPage = () => {
                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                 style={{ width: '100%' }}
               >
-                <option value="">-- Chọn loại --</option>
-                <option value="Toàn Phần">Toàn Phần</option>
-                <option value="Tiểu Cầu">Tiểu Cầu</option>
-                <option value="Huyết Tương">Huyết Tương</option>
+                                 <option value="">-- Chọn loại --</option>
+                 <option value="Toàn Phần">Toàn Phần</option>
+                 <option value="Hồng Cầu">Hồng Cầu</option>
+                 <option value="Tiểu Cầu">Tiểu Cầu</option>
+                 <option value="Huyết Tương">Huyết Tương</option>
               </select>
               {errors.type && <span className="text-red-500 text-xs mt-1">{errors.type}</span>}
             </div>
@@ -415,10 +420,9 @@ const DonationRegisterPage = () => {
               />
               {errors.toDate && <span className="text-red-500 text-xs mt-1">{errors.toDate}</span>}
             </div>
-            <span className="text-xs text-gray-500 mt-1">Chỉ chọn ngày từ hôm nay trở đi.</span>
           </div>
 
-          {/* Số điện thoại dưới cùng */}
+          {/* Số điện thoại */}
           <div className="flex flex-col">
             <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Số điện thoại</label>
             <input
@@ -432,6 +436,20 @@ const DonationRegisterPage = () => {
               style={{ width: '100%' }}
             />
             {errors.phone && <span className="text-red-500 text-xs mt-1">{errors.phone}</span>}
+          </div>
+
+          {/* Ghi chú */}
+          <div className="flex flex-col">
+            <label className="mb-1 font-semibold text-[#b30000] tracking-wide">Ghi chú (nếu có)</label>
+            <textarea
+              name="note"
+              value={formData.note}
+              onChange={handleChange}
+              placeholder="Bệnh nền, tình trạng sức khỏe, thuốc đang sử dụng..."
+              className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#b30000] transition resize-none"
+              rows="3"
+              style={{ width: '100%' }}
+            />
           </div>
 
           <button

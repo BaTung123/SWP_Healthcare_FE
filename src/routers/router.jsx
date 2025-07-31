@@ -29,7 +29,6 @@ const RequesterDonorPage = lazy(() => import("../pages/staff/requesterDonorPage"
 const DonationProcessPage = lazy(() => import("../pages/staff/donationProcessPage"));
 const BloodRequestPage = lazy(() => import("../pages/staff/bloodRequestPage"));
 const EventManagementPage = lazy(() => import("../pages/staff/eventManagementPage"));
-const BloodDropPage = lazy(() => import("../pages/staff/bloodDropPage"));
 const SendBloodPage = lazy(() => import("../pages/staff/sendBloodPage"));
 const BlogManagementPage = lazy(() => import("../pages/staff/blogManagementPage"));
 
@@ -41,6 +40,7 @@ const UserManagementPage = lazy(() => import("../pages/admin/userManagementPage"
 const BloodStockManagementPage = lazy(() => import("../pages/stock/bloodStockManagementPage"));
 const AcceptBloodDropPage = lazy(() => import("../pages/stock/acceptBloodDropPage"));
 const ReceiverPage = lazy(() => import("../pages/stock/receiverPage"));
+const BloodDropPage = lazy(() => import("../pages/stock/bloodDropPage"));
 
 // Loading component
 const Loading = () => <div>Loading...</div>;
@@ -214,6 +214,11 @@ export const router = createBrowserRouter([
         path: "receiver", 
         element: <ProtectedRoute roleAccount={["StorageManager"]}><ReceiverPage /></ProtectedRoute>
       },
+      { 
+        path: "blood-drop", 
+        element: <ProtectedRoute roleAccount={["StorageManager"]}><BloodDropPage /></ProtectedRoute>
+      },
+
     ],
   },
 ]);

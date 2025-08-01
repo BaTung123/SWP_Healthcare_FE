@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import RootLayout from "../layout/RootLayout";
 import AuthLayout from "../layout/AuthLayout";
+import SidebarLayout from "../layout/SidebarLayout";
 import AdminPage from "../pages/admin/adminPage";
 import MemberPage from "../pages/member/memberPage";
 
@@ -107,8 +108,16 @@ export const router = createBrowserRouter([
         path: "/member/register-donation", 
         element: <ProtectedRoute roleAccount={["Customer"]}><DonationRegisterPage /></ProtectedRoute>
       },
+    ],
+  },
+
+  // Information page with sidebar layout
+  {
+    path: "/information",
+    element: <SidebarLayout />,
+    children: [
       { 
-        path: "/information", 
+        path: "", 
         element: <Suspense fallback={<Loading />}><InformationPage /></Suspense>
       },
     ],

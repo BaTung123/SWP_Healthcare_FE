@@ -1,8 +1,6 @@
 import { useState, useEffect, useRef, useContext } from "react";
 import { Dropdown, Space } from "antd";
 import { DownOutlined } from "@ant-design/icons";
-import img from "../assets/react.svg";
-import { GetAuthenByUserId } from "../services/authentication";
 import UserContext from "../contexts/UserContext";
 
 const Header = () => {

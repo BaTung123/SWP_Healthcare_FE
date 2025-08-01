@@ -155,7 +155,7 @@ const InformationPage = () => {
 
 
   return (
-    <div className="max-w-[1200px] mx-auto p-8">
+    <div className="w-full">
       <div className="rounded-lg shadow-md bg-white p-6">
         <h2 className="text-4xl font-bold text-indigo-900 mb-6">Thông tin cá nhân</h2>
 
@@ -179,8 +179,8 @@ const InformationPage = () => {
                 />
               </div>
             )}
-            <div className="flex-1 w-full max-w-xl mx-auto">
-              <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
+            <div className="flex-1 w-full">
+              <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full">
                 <div>
                   <div className="flex flex-col gap-1 w-full mb-3">
                     <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">HỌ VÀ TÊN</label>
@@ -188,7 +188,7 @@ const InformationPage = () => {
                       name="name"
                       value={form.name || form.fullName || ''}
                       onChange={handleChange}
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 w-full hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
@@ -197,7 +197,7 @@ const InformationPage = () => {
                       name="phone"
                       value={form.phone || ''}
                       onChange={handleChange}
-                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                      className="py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all flex-1 w-full hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
@@ -206,7 +206,7 @@ const InformationPage = () => {
                       name="bloodType"
                       value={form.bloodType || ''}
                       onChange={handleChange}
-                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
+                      className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 w-full hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
                       {bloodTypes.map(type => (
                         <option key={type} value={type}>{type}</option>

@@ -1,4 +1,21 @@
-import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined, DatabaseOutlined, ExperimentOutlined, UserSwitchOutlined, CalendarOutlined, ReadOutlined, InteractionOutlined, TeamOutlined, InfoCircleOutlined } from "@ant-design/icons";
+import { 
+    DashboardOutlined, 
+    LogoutOutlined, 
+    UserOutlined, 
+    DatabaseOutlined, 
+    ExperimentOutlined, 
+    UserSwitchOutlined, 
+    CalendarOutlined, 
+    ReadOutlined, 
+    InteractionOutlined, 
+    TeamOutlined, 
+    InfoCircleOutlined,
+    DropboxOutlined,
+    HeartOutlined,
+    FileTextOutlined,
+    UserAddOutlined,
+    SettingOutlined
+} from "@ant-design/icons";
 import { Layout, Menu } from "antd"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -37,12 +54,12 @@ const SideBar = () => {
         },
         {
             key: "/stock/accept-blood-drop",
-            icon: <ExperimentOutlined />,
+            icon: <DropboxOutlined />,
             label: <Link to="/stock/accept-blood-drop">Accept Blood Drop</Link>,
         },
         {
             key: "/stock/receiver",
-            icon: <UserSwitchOutlined />,
+            icon: <HeartOutlined />,
             label: <Link to="/stock/receiver">Blood Receiver</Link>,
         },
         {
@@ -61,7 +78,7 @@ const SideBar = () => {
         },
         {
             key: "/staff/blog",
-            icon: <ReadOutlined />,
+            icon: <FileTextOutlined />,
             label: <Link to="/staff/blog">Blog Management</Link>,
         },
         {
@@ -71,7 +88,7 @@ const SideBar = () => {
         },
         {
             key: "/staff/donor",
-            icon: <TeamOutlined />,
+            icon: <UserAddOutlined />,
             label: <Link to="/staff/donor">Blood Donor</Link>,
         },
     ]
@@ -80,8 +97,8 @@ const SideBar = () => {
     const informationMenu = [
         {
             key: "/information",
-            icon: <InfoCircleOutlined />,
-            label: <Link to="/information">Information</Link>,
+            icon: <SettingOutlined />,
+            label: <Link to="/information">Profile</Link>,
         },
     ]
         // --- LOGOUT ---

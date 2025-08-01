@@ -1,17 +1,18 @@
 //Liên hệ, phản hồi, form gửi câu hỏi.
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import "../../styles/contactPage.css";
 import { SendEmailToAdmin } from "../../services/authentication";
 import { toast } from 'react-toastify';
+import UserContext from "../../contexts/UserContext";
 
-function ContactPage() {
+const ContactPage = () => {
   const [formData, setFormData] = useState({
     subject: "",
     body: ""
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState({ type: "", text: "" });
+  const { user } = useContext(UserContext);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -31,10 +32,9 @@ function ContactPage() {
     }
 
     setIsLoading(true);
-    setMessage({ type: "", text: "" });
 
     try {
-      const user = JSON.parse(localStorage.getItem('user'));
+      console.log("user:", user);
       if (!user || !user.id) {
         toast.error("Không xác định được người dùng. Vui lòng đăng nhập lại!");
         setIsLoading(false);
@@ -51,6 +51,7 @@ function ContactPage() {
       toast.success("Tin nhắn đã được gửi thành công! Chúng tôi sẽ phản hồi trong vòng 24 giờ.");
       setFormData({ subject: "", body: "" });
     } catch (error) {
+      console.error("Error sending email:", error);
       toast.error("Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại sau!");
     } finally {
       setIsLoading(false);
@@ -127,6 +128,7 @@ function ContactPage() {
               name="body"
               placeholder="Nội dung liên hệ..." 
               rows={6}
+              style={{ padding: "12px 14px" }}
               value={formData.body}
               onChange={handleInputChange}
               disabled={isLoading}

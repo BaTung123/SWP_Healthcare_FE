@@ -1,13 +1,14 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Table, Button, Tooltip, Modal, Select, Spin, Input } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined, ReadOutlined } from '@ant-design/icons';
 import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus, updateBloodDonationApplicationInfo } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
-import { Input, Form } from 'antd';
 import { CreateBloodImportApplication, GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
 import { UpdateBloodStorageOnImport } from '../../services/bloodStorage';
 import { toast } from 'react-toastify';
+import { GetAllEvents } from '../../services/bloodDonationEvent';
+import { CreateHealthCheck, GetHealthCheckByUserId, UpdateHealthCheck } from '../../services/healthCheck';
 
 // Constants
 const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'Chưa biết'];
@@ -61,6 +62,7 @@ const RequesterDonorPage = () => {
     const [editingBloodRecord, setEditingBloodRecord] = useState(null);
     const [editQuantity, setEditQuantity] = useState('');
     const [editBloodType, setEditBloodType] = useState('');
+    const [existingHealthCheckId, setExistingHealthCheckId] = useState('');
     // State cho modal gửi máu vào kho
     const [isBloodDropModalOpen, setIsBloodDropModalOpen] = useState(false);
     const [bloodDropFormData, setBloodDropFormData] = useState(null);
@@ -250,21 +252,51 @@ const RequesterDonorPage = () => {
     };
 
     // Hàm mở modal kiểm tra sức khỏe
-    const handleOpenHealthCheckModal = (record) => {
-        setHealthCheckData({
-            registrationId: record.registrationId,
-            fullName: record.fullNameRegister || "",
-            bloodType: record.bloodGroup || "",
-            phone: record.phone || "",
-            healthCheckResult: "",
-            bloodPressure: "",
-            heartRate: "",
-            temperature: "",
-            hemoglobin: "",
-            weight: "",
-            height: "",
-            note: ""
-        });
+    const handleOpenHealthCheckModal = async (record) => {
+        const getHealthCheckByUserIdRes = await GetHealthCheckByUserId(record.userId);
+        console.log("getHealthCheckByUserIdRes:", getHealthCheckByUserIdRes.data);
+
+        const matchedHealthCheck = getHealthCheckByUserIdRes.data.find(
+            item => item.bloodDonationApplicationId === record.registrationId
+        );
+ 
+        console.log("matchedHealthCheck:", matchedHealthCheck);
+        if (matchedHealthCheck) {
+            setHealthCheckData({
+                id: matchedHealthCheck.id,
+                userId: matchedHealthCheck.userId,
+                bloodDonationApplicationId: matchedHealthCheck.bloodDonationApplicationId,
+                fullName: matchedHealthCheck.fullName || "",
+                bloodType: matchedHealthCheck.bloodType || "",
+                phone: matchedHealthCheck.phone || "",
+                healthCheckResult: matchedHealthCheck.healthCheckResult || "",
+                bloodPressure: matchedHealthCheck.bloodPressure || "",
+                heartRate: matchedHealthCheck.heartRate || "",
+                temperature: matchedHealthCheck.temperature || "",
+                hemoglobin: matchedHealthCheck.hemoglobin || "",
+                weight: matchedHealthCheck.weight || "",
+                height: matchedHealthCheck.height || "",
+                note: matchedHealthCheck.note || ""
+            });
+            setExistingHealthCheckId(matchedHealthCheck.id);
+        } else {
+            setHealthCheckData({
+                userId: record.userId,
+                bloodDonationApplicationId: record.registrationId,
+                fullName: record.fullNameRegister || "",
+                bloodType: bloodTypes.indexOf(record.bloodGroup) || "",
+                phone: record.phone || "",
+                healthCheckResult: "",
+                bloodPressure: "",
+                heartRate: "",
+                temperature: "",
+                hemoglobin: "",
+                weight: "",
+                height: "",
+                note: ""
+            });
+            setExistingHealthCheckId(null);
+        }
         setHealthCheckError("");
         setIsHealthCheckModalOpen(true);
     };
@@ -408,10 +440,17 @@ const RequesterDonorPage = () => {
             
             // Ở đây có thể thêm API call để lưu thông tin kiểm tra sức khỏe
             console.log("Health check data:", healthCheckData);
-            
-            toast.success("Lưu thông tin kiểm tra sức khỏe thành công!");
+            if (existingHealthCheckId) {
+                const updateHealthCheckRes = await UpdateHealthCheck(healthCheckData);
+                console.log("updateHealthCheckRes:", updateHealthCheckRes);
+                toast.success("Cập nhật thông tin kiểm tra sức khỏe thành công!");
+            } else {
+                const createHealthCheckRes = await CreateHealthCheck(healthCheckData);
+                console.log("createHealthCheckRes:", createHealthCheckRes);
+                toast.success("Lưu thông tin kiểm tra sức khỏe thành công!");
+            }
             setIsHealthCheckModalOpen(false);
-            setHealthCheckError(""); // Clear error after successful save
+            setHealthCheckError("");
         } catch (error) {
             console.error('Lỗi lưu thông tin kiểm tra sức khỏe:', error);
             toast.error("Lưu thông tin kiểm tra sức khỏe thất bại!");
@@ -424,11 +463,20 @@ const RequesterDonorPage = () => {
     const fetchRegistrationList = useCallback(async () => {
         try {
             setLoading(true);
+            const response = await GetAllEvents();
+            const eventList = response.data.events;
+            const map = {};
+            eventList.forEach(event => {
+                map[event.id] = event.name;
+            });
+            
             const res = await getAllBloodDonationApplication();
             console.log("res:", res)
             // Map API data sang format bảng
             const mapped = (res || []).map((item, idx) => ({
                 registrationId: item.id || idx,
+                userId: item.userId,
+                eventName: map[item.eventId],
                 fullNameRegister: item.fullName || "",
                 birthDate: item.dob,
                 bloodGroup: bloodTypes[item.bloodType],
@@ -679,10 +727,18 @@ const RequesterDonorPage = () => {
             align: 'center',
         },
         {
+            title: 'Sự kiện',
+            dataIndex: 'eventName',
+            key: 'eventName',
+            align: 'center',
+            width: 100,
+        },
+        {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             align: 'center',
+            width: 130,   
             render: (status) => {
                 let color;
                 switch (status) {
@@ -731,19 +787,19 @@ const RequesterDonorPage = () => {
                                         <EditOutlined rotate={90} />
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title="Trạng thái">
-                                    <Button
-                                        type="dashed"
-                                        variant="dashed"
-                                        color="blue"
-                                        onClick={() => handleOpenNewModal(record)}
-                                        disabled={loading}
-                                    >
-                                        <AuditOutlined />
-                                    </Button>
-                                </Tooltip>
                             </>
                         )}
+                        <Tooltip title="Trạng thái">
+                            <Button
+                                type="dashed"
+                                variant="dashed"
+                                color="blue"
+                                onClick={() => handleOpenNewModal(record)}
+                                disabled={loading}
+                            >
+                                <AuditOutlined />
+                            </Button>
+                        </Tooltip>
                         <Tooltip title="Thông tin sức khỏe">
                             <Button
                                 type="dashed"
@@ -1144,7 +1200,7 @@ const RequesterDonorPage = () => {
                 confirmLoading={loading}
                 width={600}
             >
-                                 {healthCheckData && (
+                {healthCheckData && (
                      <div className="space-y-4">
                          {/* Thông tin cơ bản */}
                          <div className="grid grid-cols-2 gap-4">

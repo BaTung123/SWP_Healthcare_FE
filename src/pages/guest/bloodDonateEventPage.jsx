@@ -2,8 +2,8 @@ import { useEffect, useState, useContext } from "react";
 import { Card, Badge, Button, Modal, Typography, DatePicker } from "antd";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { GetAllBloodDonationEvents, UpdateBloodDonationEvent, GetAllEvents } from "../../services/bloodDonationEvent";
-import { CreateBloodDonationApplication } from "../../services/donorRegistration";
+import { GetAllEvents, UpdateEventStatus } from "../../services/bloodDonationEvent";
+import { getAllBloodDonationApplication } from "../../services/donorRegistration";
 import dayjs from "dayjs";
 import UserContext from "../../contexts/UserContext";
 
@@ -22,6 +22,7 @@ const donationTypes = [
 const genders = ["Nam", "Nữ", "Khác"];
 
 const BloodDonationEventPage = () => {
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -49,29 +50,49 @@ const BloodDonationEventPage = () => {
   const fetchEvents = async () => {
     try {
       const apiEvents = await GetAllEvents();
-      console.log('apiEvents:', apiEvents); // Debug log
-      // Fix: unwrap data.events or data
-      let eventArray = [];
-      if (Array.isArray(apiEvents)) {
-        eventArray = apiEvents;
-      } else if (apiEvents && Array.isArray(apiEvents.data?.events)) {
-        eventArray = apiEvents.data.events;
-      } else if (apiEvents && Array.isArray(apiEvents.data)) {
-        eventArray = apiEvents.data;
-      }
-      const mappedEvents = eventArray.map(event => ({
-        eventId: event.id,
-        eventName: event.name,
-        eventDate: event.eventStartTime,
-        endDate: event.eventEndTime,
-        type: event.type,
-        locationName: event.locationName,
-        locationAddress: event.locationAddress,
-        targetDonors: event.targetParticipant,
-        status: event.status,
-        description: event.description,
-      }));
-      setEvents(mappedEvents);
+      console.log('apiEvents:', apiEvents); 
+      const eventList = apiEvents.data.events;
+      console.log('eventList:', eventList); 
+      const apiDonateApllication = await getAllBloodDonationApplication();
+      console.log('apiDonateApllication:', apiDonateApllication);
+
+      await Promise.all(
+        eventList.map(async (event) => {
+          const now = dayjs();
+          const start = dayjs(event.eventStartTime);
+          const end = dayjs(event.eventEndTime);
+          const donateApplicationList = apiDonateApllication.filter(app => app.eventId === event.id);
+          const donateApplicationCount = donateApplicationList.length;
+
+          if (now.isAfter(start) && now.isBefore(end)) {
+            const updatedEventData = {
+              ...event,
+              status: 1
+            }
+            const updatedEventRes = await UpdateEventStatus(updatedEventData)
+            console.log("updatedEventRes:", updatedEventRes);
+          }
+          else if (now.isAfter(end)) {
+            const updatedEventData = {
+              ...event,
+              status: 3
+            }
+            const updatedEventRes = await UpdateEventStatus(updatedEventData)
+            console.log("updatedEventRes:", updatedEventRes);
+          } 
+          else if (donateApplicationCount === event.targetParticipant) {
+            const updatedEventData = {
+              ...event,
+              status: 2
+            }
+            const updatedEventRes = await UpdateEventStatus(updatedEventData)
+            console.log("updatedEventRes:", updatedEventRes);
+          }
+        })
+      )
+
+      const refreshedEvents = await GetAllEvents();
+      setEvents(refreshedEvents.data.events);
     } catch (error) {
       setEvents([]);
       toast.error("Không thể tải danh sách sự kiện");
@@ -203,19 +224,19 @@ const BloodDonationEventPage = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...events].sort((a,b) => {
-            if (a.isActive === b.isActive) 
+            if (a.status === b.status) 
               return 0;
-            return a.isActive ? -1 : 1;
+            return a.status - b.status;
           })
           .map((event) => (
-            <div className="group" key={event.eventId}>
+            <div className="group" key={event.id}>
               <Card
                 className="transition-transform duration-300 hover:scale-105 hover:shadow-xl relative"
-                title={event.eventName}
+                title={event.name}
                 extra={(() => {
                   const now = dayjs();
-                  const start = dayjs(event.eventDate);
-                  const end = dayjs(event.endDate);
+                  const start = dayjs(event.eventStartTime);
+                  const end = dayjs(event.eventEndTime);
 
                   let badgeProps = {
                     status: "processing",
@@ -235,7 +256,6 @@ const BloodDonationEventPage = () => {
                       text: <span style={{ fontSize: 16, color: "#faad14" }}>Đã đầy</span>,
                     };
                   } else {
-                    // Trạng thái theo thời gian
                     if (now.isBefore(start)) {
                       badgeProps = {
                         status: "processing",

@@ -7,6 +7,7 @@ import { GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloo
 import { UpdateBloodStorageOnImport } from '../../services/bloodStorage';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
+import { GetHealthCheckByUserId } from '../../services/healthCheck';
 
 const bloodTypes = [
   'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
@@ -178,19 +179,27 @@ const ReceiverPage = () => {
   };
 
   // Hàm mở modal kiểm tra sức khỏe
-  const handleOpenHealthCheckModal = (record) => {
+  const handleOpenHealthCheckModal = async (record) => {
+    const getHealthCheckByUserIdRes = await GetHealthCheckByUserId(record.userId);
+    console.log("getHealthCheckByUserIdRes:", getHealthCheckByUserIdRes.data);
+
+    const matchedHealthCheck = getHealthCheckByUserIdRes.data.find(
+      item => item.bloodDonationApplicationId === record.id
+    );
     setHealthCheckData({
-      fullName: record.fullName || "",
-      bloodType: record.bloodType || "",
-      phone: record.phoneNumber || "",
-      healthCheckResult: "",
-      bloodPressure: "",
-      heartRate: "",
-      temperature: "",
-      hemoglobin: "",
-      weight: "",
-      height: "",
-      note: ""
+      userId: matchedHealthCheck.userId,
+      bloodDonationApplicationId: matchedHealthCheck.bloodDonationApplicationId,
+      fullName: matchedHealthCheck.fullName || "",
+      bloodType: matchedHealthCheck.bloodType || "",
+      phone: matchedHealthCheck.phone || "",
+      healthCheckResult: matchedHealthCheck.healthCheckResult || "",
+      bloodPressure: matchedHealthCheck.bloodPressure || "",
+      heartRate: matchedHealthCheck.heartRate || "",
+      temperature: matchedHealthCheck.temperature || "",
+      hemoglobin: matchedHealthCheck.hemoglobin || "",
+      weight: matchedHealthCheck.weight || "",
+      height: matchedHealthCheck.height || "",
+      note: matchedHealthCheck.note || ""
     });
     setHealthCheckError("");
     setIsHealthCheckModalOpen(true);
@@ -503,12 +512,10 @@ const ReceiverPage = () => {
       <Modal
         title="Thông tin Kiểm Tra Sức Khỏe"
         open={isHealthCheckModalOpen}
-        onOk={handleHealthCheckFormSubmit}
         onCancel={() => setIsHealthCheckModalOpen(false)}
-        okText="Lưu"
-        cancelText="Huỷ"
         width={600}
         destroyOnClose={true}
+        footer={null}
       >
         {healthCheckData && (
           <div className="space-y-4">

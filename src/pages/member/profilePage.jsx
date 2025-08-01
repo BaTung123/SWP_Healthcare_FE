@@ -1,10 +1,8 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
-import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
+import { getAllBloodDonationApplication } from '../../services/donorRegistration';
 import { Button, DatePicker, Modal, Table, Tooltip } from 'antd';
 import { ReadOutlined } from '@ant-design/icons';
-import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
-import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
@@ -23,7 +21,7 @@ const bloodTransferTypes = [
 ];
 
 const statusList = [
-  'Đang Chờ', 'Hoàn Thành', 'Đã Xuất', 'Từ Chối'
+  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
 ];
 
 function normalizeGender(gender) {
@@ -145,7 +143,7 @@ const ProfilePage = () => {
         const text = statusList[status];
         switch (text) {
           case 'Đang Chờ': color = 'text-orange-500'; break;
-          case 'Hoàn Thành': color = 'text-green-500'; break;
+          case 'Chấp Nhận': color = 'text-green-500'; break;
           case 'Từ Chối': color = 'text-red-500'; break;
           default: color = 'text-blue-500';
         }

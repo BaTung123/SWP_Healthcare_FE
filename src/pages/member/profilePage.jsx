@@ -1,9 +1,7 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
-import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
+import { getAllBloodDonationApplication } from '../../services/donorRegistration';
 import { Button, DatePicker, Modal, Table } from 'antd';
-import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
-import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';

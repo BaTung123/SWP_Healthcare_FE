@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { Table, Button, Tooltip, Modal, Select, Spin } from 'antd';
 import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@ant-design/icons';
 import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus, updateBloodDonationApplicationInfo } from '../../services/donorRegistration';
 import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
-import { Input, Form } from 'antd';
 import { CreateBloodImportApplication, GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
 import { toast } from 'react-toastify';
+import { GetAllEvents } from '../../services/bloodDonationEvent';
 
 // Constants
 const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
@@ -103,11 +103,19 @@ const RequesterDonorPage = () => {
     const fetchRegistrationList = useCallback(async () => {
         try {
             setLoading(true);
+            const response = await GetAllEvents();
+            const eventList = response.data.events;
+            const map = {};
+            eventList.forEach(event => {
+                map[event.id] = event.name;
+            });
+            
             const res = await getAllBloodDonationApplication();
             console.log("res:", res)
             // Map API data sang format bảng
             const mapped = (res || []).map((item, idx) => ({
                 registrationId: item.id || idx,
+                eventName: map[item.eventId],
                 fullNameRegister: item.fullName || "",
                 birthDate: item.dob,
                 bloodGroup: bloodTypes[item.bloodType],
@@ -327,10 +335,18 @@ const RequesterDonorPage = () => {
             align: 'center',
         },
         {
+            title: 'Sự kiện',
+            dataIndex: 'eventName',
+            key: 'eventName',
+            align: 'center',
+            width: 100,
+        },
+        {
             title: 'Trạng thái',
             dataIndex: 'status',
             key: 'status',
             align: 'center',
+            width: 130,   
             render: (status) => {
                 let color;
                 switch (status) {
@@ -350,7 +366,6 @@ const RequesterDonorPage = () => {
             title: 'Thao tác',
             key: 'actions',
             align: 'center',
-            width: 220,
             render: (_, record) => {
                 if (record.status === "Đang Chờ") {
                     return (
@@ -382,7 +397,7 @@ const RequesterDonorPage = () => {
                 }
             },
         },
-    ], [handleEdit, handleEditBlood, handleDelete, loading]);
+    ], [handleEditBlood, loading]);
 
     return (
         <div className="flex flex-col">

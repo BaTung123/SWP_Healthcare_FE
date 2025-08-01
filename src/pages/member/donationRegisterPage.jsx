@@ -3,34 +3,9 @@ import dayjs from "dayjs";
 import { useState, useEffect, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { GetUserProfileByUserId } from "../../services/userProfile";
-import { GetBloodDonationEventById } from "../../services/bloodDonationEvent";
 import { CreateBloodDonationApplication } from "../../services/donorRegistration";
 import { DatePicker } from "antd";
 import UserContext from "../../contexts/UserContext";
-
-// Constants
-const BLOOD_TYPES = [
-  { value: "A+", label: "A+" },
-  { value: "A-", label: "A-" },
-  { value: "B+", label: "B+" },
-  { value: "B-", label: "B-" },
-  { value: "AB+", label: "AB+" },
-  { value: "AB-", label: "AB-" },
-  { value: "O+", label: "O+" },
-  { value: "O-", label: "O-" },
-];
-
-const DONATION_TYPES = [
-  { value: "Toàn Phần", label: "Toàn Phần" },
-  { value: "Tiểu Cầu", label: "Tiểu Cầu" },
-  { value: "Huyết Tương", label: "Huyết Tương" },
-];
-
-// Mapping blood type string to number
-const BLOOD_TYPE_MAP = {
-  "A+": 0, "A-": 1, "B+": 2, "B-": 3, "AB+": 4, "AB-": 5, "O+": 6, "O-": 7
-};
 
 const bloodTypes = [
   'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
@@ -41,14 +16,11 @@ const DONATION_TYPE_MAP = {
 };
 
 const DonationRegisterPage = () => {
-  const [donateEvent, setDonateEvent] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [userProfile, setUserProfile] = useState(null);
   
   const { user } = useContext(UserContext);
-  
-  const location = useLocation();
   const navigate = useNavigate();
+  const location = useLocation();
   const params = new URLSearchParams(location.search);
   const eventId = params.get("eventId");
 
@@ -81,44 +53,12 @@ const DonationRegisterPage = () => {
   }, [user]);
   const [errors, setErrors] = useState({});
   console.log("formData:", formData);
-  // Mock: các ngày đã đăng ký trước đó (giả lập, thực tế lấy từ API)
-  const registeredDates = [
-    '2024-06-01',
-    '2024-07-10',
-    '2024-08-15',
-  ];
 
   // Date validation
   const disabledDate = useCallback((current) => {
     // Không cho chọn ngày trước hôm nay
     return current && current < dayjs().startOf('day');
   }, []);
-
-  const validateDate = useCallback((selectedDate) => {
-    if (!selectedDate) {
-      return false;
-    }
-
-    const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
-    const today = dayjs().format("YYYY-MM-MM-DD");
-
-    // Check if date is in the past
-    if (selectedDateStr < today) {
-      return false;
-    }
-
-    // Check event date range if event exists
-    if (donateEvent) {
-      const eventStartDate = dayjs(donateEvent.eventDate).format("YYYY-MM-DD");
-      const eventEndDate = dayjs(donateEvent.endDate).format("YYYY-MM-DD");
-
-      if (selectedDateStr < eventStartDate || selectedDateStr > eventEndDate) {
-        return false;
-      }
-    }
-
-    return true;
-  }, [donateEvent]);
 
   // Form handlers
   const handleToDateChange = useCallback((date) => {
@@ -181,23 +121,14 @@ const DonationRegisterPage = () => {
     } else if (quantity % 50 !== 0) {
       newErrors.quantity = "Số lượng máu phải là bội số của 50ml (0, 50, 100, ..., 500).";
     }
-    // Validate ngày đăng ký hiến
-    if (!validateDate(formData.toDate)) {
-      newErrors.toDate = "Vui lòng chọn ngày hợp lệ.";
-    }
-    // Không cho phép đăng ký trùng ngày (giả lập)
-    const selectedDateStr = dayjs(formData.toDate).format('YYYY-MM-DD');
-    if (registeredDates.includes(selectedDateStr)) {
-      newErrors.toDate = "Bạn đã đăng ký hiến máu vào ngày này rồi. Vui lòng chọn ngày khác.";
-    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [formData, validateDate]);
+  }, [formData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Kiểm tra userId và eventId hợp lệ trước khi gửi API
     if (!formData.userId || isNaN(Number(formData.userId))) {
       toast.error("Không xác định được userId. Vui lòng đăng nhập lại.");
       return;
@@ -242,7 +173,6 @@ const DonationRegisterPage = () => {
         quantity: "",
       }));
       setErrors({});
-      // Chuyển hướng sang trang danh sách donor để tự động reload
 
     } catch (error) {
       console.error("Registration error:", error);
@@ -253,7 +183,7 @@ const DonationRegisterPage = () => {
     }
   };
 
-  if (loading && !userProfile) {
+  if (loading) {
     return (
       <div className="p-8 max-w-xl mx-auto bg-[#eaf3fb]">
         <div className="rounded-lg shadow-md bg-[#fffafa] p-6">

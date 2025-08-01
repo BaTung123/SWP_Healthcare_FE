@@ -4,6 +4,7 @@ import { SearchOutlined, EditOutlined, DeleteOutlined, AuditOutlined } from '@an
 import { FileTextOutlined } from '@ant-design/icons';
 import { getAllBloodDonationApplication, updateBloodDonationApplicationStatus } from '../../services/donorRegistration';
 import { GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
+import { UpdateBloodStorageOnImport } from '../../services/bloodStorage';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 
@@ -140,6 +141,25 @@ const ReceiverPage = () => {
       console.log("bloodImportSend", bloodImportSend);
       const updateBloodImportStatus = await updateBloodImportApplication(bloodImportSend);
       console.log("updateBloodImportStatus", updateBloodImportStatus);
+      
+      // Tự động cập nhật blood storage khi duyệt đơn nhập máu
+      if (newStatus === 'Chấp Nhận') {
+        try {
+          // Lấy thông tin chi tiết của blood import để có quantity
+          const bloodImportDetail = await GetBloodImportApplicationById(importObj.id);
+          const quantity = bloodImportDetail.data.quantity || 0;
+          const bloodType = bloodTypes[editingRecord.bloodType];
+          
+          if (quantity > 0) {
+            await UpdateBloodStorageOnImport(editingRecord.bloodType, quantity);
+            console.log(`Đã cập nhật blood storage khi duyệt: ${bloodType} +${quantity}ml`);
+          }
+        } catch (storageError) {
+          console.error('Lỗi cập nhật blood storage khi duyệt:', storageError);
+          // Không throw error vì duyệt đơn đã thành công
+        }
+      }
+      
       toast.success('Cập nhật trạng thái thành công!');
     }
     setIsModalOpen(false);

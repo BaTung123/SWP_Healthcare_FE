@@ -61,7 +61,7 @@ const DonationRegisterPage = () => {
     gender: "",
     bloodType: "",
     type: "",
-    toDate: dayjs(),
+    toDate: dayjs().add(1, 'day'),
     phone: "",
     quantity: "",
     note: "",
@@ -80,18 +80,18 @@ const DonationRegisterPage = () => {
       } else if (typeof user.bloodType === "string") {
         bloodType = user.bloodType;
       }
-      setFormData({
-        userId: user.id,
-        fullName: user.name,
-        birthDate: user.dob ? dayjs(user.dob, "DD-MM-YYYY") : null,
-        gender: gender,
-        bloodType: bloodType,
-        type: "",
-        toDate: dayjs(),
-        phone: user.phoneNumber,
-        quantity: "",
-        note: "",
-      });
+             setFormData({
+         userId: user.id,
+         fullName: user.name,
+         birthDate: user.dob ? dayjs(user.dob, "DD-MM-YYYY") : null,
+         gender: gender,
+         bloodType: bloodType,
+         type: "",
+         toDate: dayjs().add(1, 'day'),
+         phone: user.phoneNumber,
+         quantity: "",
+         note: "",
+       });
     }
   }, [user]);
   const [errors, setErrors] = useState({});
@@ -105,8 +105,8 @@ const DonationRegisterPage = () => {
 
   // Date validation
   const disabledDate = useCallback((current) => {
-    // Không cho chọn ngày trước hôm nay
-    return current && current < dayjs().startOf('day');
+    // Không cho chọn ngày trước hôm nay và cả hôm nay
+    return current && current <= dayjs().startOf('day');
   }, []);
 
   const validateDate = useCallback((selectedDate) => {
@@ -117,8 +117,8 @@ const DonationRegisterPage = () => {
     const selectedDateStr = dayjs(selectedDate).format("YYYY-MM-DD");
     const today = dayjs().format("YYYY-MM-DD");
 
-    // Check if date is in the past
-    if (selectedDateStr < today) {
+    // Check if date is in the past or today (before tomorrow)
+    if (selectedDateStr <= today) {
       return false;
     }
 

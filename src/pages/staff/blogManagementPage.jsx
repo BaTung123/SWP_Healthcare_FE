@@ -34,6 +34,11 @@ const BlogManagementPage = () => {
   const [addDescription, setAddDescription] = useState("");
   const [addImage, setAddImage] = useState("");
 
+  // Validation states for add modal
+  const [addTitleError, setAddTitleError] = useState("");
+  const [addDescriptionError, setAddDescriptionError] = useState("");
+  const [addImageError, setAddImageError] = useState("");
+
   // State cho modal sửa blog
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
@@ -54,24 +59,99 @@ const BlogManagementPage = () => {
     getAllBlog();
   }, [])
 
+  // Validation function for add modal
+  const validateAddForm = () => {
+    let isValid = true;
+    
+    // Validate title
+    if (!addTitle.trim()) {
+      setAddTitleError("Tiêu đề không được để trống");
+      isValid = false;
+    } else if (addTitle.trim().length < 5) {
+      setAddTitleError("Tiêu đề phải có ít nhất 5 ký tự");
+      isValid = false;
+    } else if (addTitle.trim().length > 100) {
+      setAddTitleError("Tiêu đề không được quá 100 ký tự");
+      isValid = false;
+    } else {
+      setAddTitleError("");
+    }
+
+    // Validate description
+    if (!addDescription.trim()) {
+      setAddDescriptionError("Mô tả không được để trống");
+      isValid = false;
+    } else if (addDescription.trim().length < 10) {
+      setAddDescriptionError("Mô tả phải có ít nhất 10 ký tự");
+      isValid = false;
+    } else if (addDescription.trim().length > 500) {
+      setAddDescriptionError("Mô tả không được quá 500 ký tự");
+      isValid = false;
+    } else {
+      setAddDescriptionError("");
+    }
+
+    // Validate image
+    if (!addImage) {
+      setAddImageError("Hình ảnh không được để trống");
+      isValid = false;
+    } else {
+      setAddImageError("");
+    }
+
+    return isValid;
+  };
+
+  // Handle input changes with validation
+  const handleAddTitleChange = (e) => {
+    const value = e.target.value;
+    setAddTitle(value);
+    
+    // Clear error when user starts typing
+    if (value.trim()) {
+      setAddTitleError("");
+    }
+  };
+
+  const handleAddDescriptionChange = (e) => {
+    const value = e.target.value;
+    setAddDescription(value);
+    
+    // Clear error when user starts typing
+    if (value.trim()) {
+      setAddDescriptionError("");
+    }
+  };
+
   const showAddModal = () => {
     setAddTitle("");
     setAddDescription("");
     setAddImage("");
+    setAddTitleError("");
+    setAddDescriptionError("");
+    setAddImageError("");
     setIsAddModalOpen(true);
   };
+  
   const handleAddModalCancel = () => {
     setIsAddModalOpen(false);
     setAddTitle("");
     setAddDescription("");
     setAddImage("");
+    setAddTitleError("");
+    setAddDescriptionError("");
+    setAddImageError("");
   };
+  
   const handleAddModalOk = async () => {
-    if (!addTitle.trim()) return;
+    // Validate form before submission
+    if (!validateAddForm()) {
+      return;
+    }
     
     const newBlog = {
-      title: addTitle,
-      description: addDescription,
+      title: addTitle.trim(),
+      description: addDescription.trim(),
       imageUrl: addImage || 'https://i.imgur.com/1Q9Z1Zm.png',
     };
 
@@ -84,9 +164,13 @@ const BlogManagementPage = () => {
       setAddTitle("");
       setAddDescription("");
       setAddImage("");
+      setAddTitleError("");
+      setAddDescriptionError("");
+      setAddImageError("");
       toast.success("Tạo bài viết thành công!");
     } catch (err) {
       console.error("Lỗi khi tạo blog:", err);
+      toast.error("Có lỗi xảy ra khi tạo bài viết!");
     }
   };
 
@@ -218,6 +302,7 @@ const BlogManagementPage = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setAddImage(reader.result);
+        setAddImageError(""); // Clear error when image is selected
       };
       reader.readAsDataURL(file);
     }
@@ -262,25 +347,28 @@ const BlogManagementPage = () => {
       >
         <Form layout="vertical">
           <Form.Item label="Tiêu đề" required>
-            <Input value={addTitle} onChange={e => setAddTitle(e.target.value)} placeholder="Nhập tiêu đề" />
+            <Input value={addTitle} onChange={handleAddTitleChange} placeholder="Nhập tiêu đề" />
+            {addTitleError && <p style={{ color: 'red', fontSize: '0.875rem' }}>{addTitleError}</p>}
           </Form.Item>
           <Form.Item label="Mô tả">
-            <Input.TextArea value={addDescription} onChange={e => setAddDescription(e.target.value)} placeholder="Nhập mô tả" rows={4} />
+            <Input.TextArea value={addDescription} onChange={handleAddDescriptionChange} placeholder="Nhập mô tả" rows={4} />
+            {addDescriptionError && <p style={{ color: 'red', fontSize: '0.875rem' }}>{addDescriptionError}</p>}
           </Form.Item>
-          <Form.Item label="Hình ảnh">
-            {!addImage && (
-              <input type="file" accept="image/*" onChange={handleAddImageChange} ref={addImageInputRef} />
-            )}
-            {addImage && (
-              <img
-                src={addImage}
-                alt="preview"
-                style={{ marginTop: 10, width: 120, height: 80, objectFit: 'cover', borderRadius: 6, boxShadow: '0 1px 4px #ccc', cursor: 'pointer' }}
-                title="Nhấn để đổi ảnh"
-                onClick={handleAddImageClick}
-              />
-            )}
-          </Form.Item>
+                     <Form.Item label="Hình ảnh" required>
+             {!addImage && (
+               <input type="file" accept="image/*" onChange={handleAddImageChange} ref={addImageInputRef} />
+             )}
+             {addImage && (
+               <img
+                 src={addImage}
+                 alt="preview"
+                 style={{ marginTop: 10, width: 120, height: 80, objectFit: 'cover', borderRadius: 6, boxShadow: '0 1px 4px #ccc', cursor: 'pointer' }}
+                 title="Nhấn để đổi ảnh"
+                 onClick={handleAddImageClick}
+               />
+             )}
+             {addImageError && <p style={{ color: 'red', fontSize: '0.875rem' }}>{addImageError}</p>}
+           </Form.Item>
         </Form>
       </Modal>
       <Modal

@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 // Thêm import Modal, Input cho form
 import { Input, Form } from 'antd';
 import { CreateBloodImportApplication, GetAllBloodImportApplication, GetBloodImportApplicationById, updateBloodImportApplication } from '../../services/bloodImport';
+import { UpdateBloodStorageOnImport } from '../../services/bloodStorage';
 import { toast } from 'react-toastify';
 
 // Constants
@@ -78,6 +79,10 @@ const RequesterDonorPage = () => {
     const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
     const [noteData, setNoteData] = useState("");
 
+    // State cho modal hiển thị lý do từ chối
+    const [isRejectionReasonModalOpen, setIsRejectionReasonModalOpen] = useState(false);
+    const [rejectionReasonData, setRejectionReasonData] = useState(null);
+
     // Hàm mở modal gửi máu vào kho
     const handleOpenBloodDropModal = (record) => {
         // Lấy ngày từ cột thời gian, nếu không có thì dùng ngày hiện tại
@@ -94,7 +99,6 @@ const RequesterDonorPage = () => {
             phone: record.phone || "",
             type: record.type || "",
             needDate: availableDate.format("YYYY-MM-DD"),
-            note: "",
         });
         setEditingRecord(record);
         setError("");
@@ -165,7 +169,20 @@ const RequesterDonorPage = () => {
             console.log("createBloodImportRes:", createBloodImportRes);
 
             if (createBloodImportRes.code === 201) {
-                toast.success("Tạo đơn thành công!");
+                // Tự động cập nhật blood storage khi tạo đơn nhập máu thành công
+                try {
+                    // Map blood type string về index để tìm trong blood storage
+                    const bloodTypeIndex = bloodTypes.indexOf(bloodDropFormData.bloodType);
+                    if (bloodTypeIndex !== -1) {
+                        await UpdateBloodStorageOnImport(bloodTypeIndex, bloodDropFormData.quantity);
+                        console.log(`Đã cập nhật blood storage: ${bloodDropFormData.bloodType} +${bloodDropFormData.quantity}ml`);
+                    }
+                } catch (storageError) {
+                    console.error('Lỗi cập nhật blood storage:', storageError);
+                    // Không throw error vì đơn nhập máu đã thành công
+                }
+
+                toast.success("Tạo đơn thành công và đã cập nhật kho máu!");
                 setIsBloodDropModalOpen(false);
                 await fetchRegistrationList();
             } else {
@@ -212,7 +229,7 @@ const RequesterDonorPage = () => {
             // Map status text về số
             let statusNumber = 0;
             if (newModalData.newStatus === 'Chấp Nhận') statusNumber = 1;
-            else if (newModalData.newStatus === 'Từ Chối') statusNumber = 2;
+            else if (newModalData.newStatus === 'Từ Chối') statusNumber = 3;
 
             // Cập nhật trạng thái đơn hiến máu
             await updateBloodDonationApplicationStatus({
@@ -279,6 +296,23 @@ const RequesterDonorPage = () => {
     const handleNoteModalCancel = useCallback(() => {
         setIsNoteModalOpen(false);
         setNoteData("");
+    }, []);
+
+    // Hàm mở modal hiển thị lý do từ chối
+    const handleOpenRejectionReasonModal = useCallback((record) => {
+        setRejectionReasonData({
+            registrationId: record.registrationId,
+            fullName: record.fullNameRegister || "",
+            bloodType: record.bloodGroup || "",
+            status: record.status || "",
+            note: record.note || ""
+        });
+        setIsRejectionReasonModalOpen(true);
+    }, []);
+
+    const handleRejectionReasonModalCancel = useCallback(() => {
+        setIsRejectionReasonModalOpen(false);
+        setRejectionReasonData(null);
     }, []);
 
     // Hàm submit form kiểm tra sức khỏe
@@ -481,7 +515,7 @@ const RequesterDonorPage = () => {
                 
                 let statusNumber = 0;
                 if (newStatus === 'Đã duyệt') statusNumber = 1;
-                else if (newStatus === 'Từ chối') statusNumber = 2;
+                else if (newStatus === 'Từ chối') statusNumber = 3;
                 await updateBloodDonationApplicationStatus({
                     id: editingRecord.registrationId,
                     status: statusNumber,
@@ -669,21 +703,23 @@ const RequesterDonorPage = () => {
                 key: 'actions',
                 align: 'center',
                 width: 280,
-                render: (_, record) => {
-                    if (record.status === "Đang Chờ") {
-                        return (
-                            <span className="flex items-center justify-center gap-2">
-                                <Tooltip title="Gửi máu vào kho">
-                                    <Button
-                                        type="dashed"
-                                        variant="dashed"
-                                        color="danger"
-                                        onClick={() => handleOpenBloodDropModal(record)}
-                                        disabled={loading}
-                                    >
-                                        <AuditOutlined />
-                                    </Button>
-                                </Tooltip>
+                render: (_, record) => (
+                    <span className="flex items-center justify-center gap-2">
+                        {record.status !== "Từ Chối" && (
+                            <Tooltip title="Gửi máu vào kho">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="danger"
+                                    onClick={() => handleOpenBloodDropModal(record)}
+                                    disabled={loading}
+                                >
+                                    <AuditOutlined />
+                                </Button>
+                            </Tooltip>
+                        )}
+                        {record.status === "Đang Chờ" && (
+                            <>
                                 <Tooltip title="Thông tin máu">
                                     <Button
                                         type="dashed"
@@ -706,34 +742,47 @@ const RequesterDonorPage = () => {
                                         <AuditOutlined />
                                     </Button>
                                 </Tooltip>
-                                <Tooltip title="Thông tin sức khỏe">
-                                    <Button
-                                        type="dashed"
-                                        variant="dashed"
-                                        color="purple"
-                                        onClick={() => handleOpenHealthCheckModal(record)}
-                                        disabled={loading}
-                                    >
-                                        <AuditOutlined />
-                                    </Button>
-                                </Tooltip>
-                                <Tooltip title="Ghi chú">
-                                    <Button
-                                        type="dashed"
-                                        variant="dashed"
-                                        color="cyan"
-                                        onClick={() => handleOpenNoteModal(record)}
-                                        disabled={loading}
-                                    >
-                                        <ReadOutlined />
-                                    </Button>
-                                </Tooltip>
-                            </span>
-                        )
-                    }
-                },
+                            </>
+                        )}
+                        <Tooltip title="Thông tin sức khỏe">
+                            <Button
+                                type="dashed"
+                                variant="dashed"
+                                color="purple"
+                                onClick={() => handleOpenHealthCheckModal(record)}
+                                disabled={loading}
+                            >
+                                <AuditOutlined />
+                            </Button>
+                        </Tooltip>
+                        <Tooltip title="Ghi chú">
+                            <Button
+                                type="dashed"
+                                variant="dashed"
+                                color="cyan"
+                                onClick={() => handleOpenNoteModal(record)}
+                                disabled={loading}
+                            >
+                                <ReadOutlined />
+                            </Button>
+                        </Tooltip>
+                        {record.status === "Từ Chối" && (
+                            <Tooltip title="Xem lý do từ chối">
+                                <Button
+                                    type="dashed"
+                                    variant="dashed"
+                                    color="red"
+                                    onClick={() => handleOpenRejectionReasonModal(record)}
+                                    disabled={loading}
+                                >
+                                    <ReadOutlined />
+                                </Button>
+                            </Tooltip>
+                        )}
+                    </span>
+                ),
             },
-    ], [handleEdit, handleEditBlood, handleDelete, loading, handleOpenNoteModal]);
+    ], [handleEdit, handleEditBlood, handleDelete, loading, handleOpenNoteModal, handleOpenRejectionReasonModal]);
 
     return (
         <div className="flex flex-col">
@@ -1017,7 +1066,7 @@ const RequesterDonorPage = () => {
                             </div>
                         </div>
                         {/* Ghi chú */}
-                        <div className="flex flex-col">
+                        {/* <div className="flex flex-col">
                             <label className="font-semibold mb-1">Ghi chú</label>
                             <textarea
                                 name="note"
@@ -1027,7 +1076,7 @@ const RequesterDonorPage = () => {
                                 placeholder="Bệnh nền, tình trạng sức khỏe, thuốc đang sử dụng..."
                                 style={{ width: '100%' }}
                             />
-                        </div>
+                        </div> */}
 
                         {/* Error display */}
                         {error && (
@@ -1309,6 +1358,60 @@ const RequesterDonorPage = () => {
                     ) : (
                         <div className="text-center text-gray-500 italic">
                             Không có ghi chú
+                        </div>
+                    )}
+                </div>
+            </Modal>
+
+            {/* Modal hiển thị lý do từ chối */}
+            <Modal
+                title="Lý do từ chối"
+                open={isRejectionReasonModalOpen}
+                onCancel={handleRejectionReasonModalCancel}
+                footer={[
+                    <Button key="close" onClick={handleRejectionReasonModalCancel}>
+                        Đóng
+                    </Button>
+                ]}
+            >
+                <div className="p-4">
+                    {rejectionReasonData && (
+                        <div className="space-y-4">
+                            {/* Thông tin cơ bản */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block font-semibold mb-1">Họ và tên:</label>
+                                    <input
+                                        type="text"
+                                        value={rejectionReasonData.fullName}
+                                        className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50"
+                                        disabled
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block font-semibold mb-1">Nhóm máu:</label>
+                                    <input
+                                        type="text"
+                                        value={rejectionReasonData.bloodType}
+                                        className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50"
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+                            
+                            {/* Lý do từ chối */}
+                            <div>
+                                <label className="block font-semibold mb-1">Lý do từ chối:</label>
+                                {rejectionReasonData.note?.trim() ? (
+                                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                                        <p className="text-red-800 whitespace-pre-wrap">{rejectionReasonData.note}</p>
+                                    </div>
+                                ) : (
+                                    <div className="text-center text-gray-500 italic bg-gray-50 p-4 rounded-lg">
+                                        Không có lý do từ chối được ghi nhận
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>

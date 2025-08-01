@@ -7,7 +7,7 @@ import { GetAllBlood, UpdateBloodStorage } from '../../services/bloodStorage';
 import { toast } from 'react-toastify';
 
 const bloodTypeList = [
-  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
 ];
 
 // const initialBloodTypes = [

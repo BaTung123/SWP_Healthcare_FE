@@ -13,6 +13,7 @@ const ContactPage = lazy(() => import("../pages/guest/contactPage"));
 const NewsPage = lazy(() => import("../pages/guest/newsPage"));
 const BlogDetailPage = lazy(() => import("../pages/guest/blogDetailPage"));
 const BloodSearchPage = lazy(() => import("../pages/guest/bloodSearchPage"));
+const InformationPage = lazy(() => import("../pages/guest/informationPage"));
 const LoginPage = lazy(() => import("../pages/guest/loginPage"));
 const RegisterPage = lazy(() => import("../pages/guest/registerPage"));
 const BloodDonationHistoryPage = lazy(() => import("../pages/guest/bloodDonationHistoryPage"));
@@ -105,6 +106,10 @@ export const router = createBrowserRouter([
       { 
         path: "/member/register-donation", 
         element: <ProtectedRoute roleAccount={["Customer"]}><DonationRegisterPage /></ProtectedRoute>
+      },
+      { 
+        path: "/information", 
+        element: <Suspense fallback={<Loading />}><InformationPage /></Suspense>
       },
     ],
   },

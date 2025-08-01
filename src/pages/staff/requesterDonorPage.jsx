@@ -9,9 +9,9 @@ import { CreateBloodImportApplication, GetAllBloodImportApplication, GetBloodImp
 import { toast } from 'react-toastify';
 
 // Constants
-const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
+const BLOOD_TYPES = ['', 'A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-', 'Chưa biết'];
 const bloodTypes = [
-  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
 ];
 
 const bloodTransferTypes = [
@@ -59,6 +59,7 @@ const RequesterDonorPage = () => {
     const [editBloodModalOpen, setEditBloodModalOpen] = useState(false);
     const [editingBloodRecord, setEditingBloodRecord] = useState(null);
     const [editQuantity, setEditQuantity] = useState('');
+    const [editBloodType, setEditBloodType] = useState('');
     // State cho modal gửi máu vào kho
     const [isBloodDropModalOpen, setIsBloodDropModalOpen] = useState(false);
     const [bloodDropFormData, setBloodDropFormData] = useState(null);
@@ -266,16 +267,16 @@ const RequesterDonorPage = () => {
     };
 
     // Hàm mở modal ghi chú
-    const handleOpenNoteModal = (record) => {
-        const note = record.request || "";
+    const handleOpenNoteModal = useCallback((record) => {
+        const note = record.note || "";
         setNoteData(note);
         setIsNoteModalOpen(true);
-    };
+    }, []);
 
-    const handleNoteModalCancel = () => {
+    const handleNoteModalCancel = useCallback(() => {
         setIsNoteModalOpen(false);
         setNoteData("");
-    };
+    }, []);
 
     // Hàm submit form kiểm tra sức khỏe
     const handleHealthCheckFormSubmit = async () => {
@@ -399,7 +400,8 @@ const RequesterDonorPage = () => {
                 phone: item.phoneNumber || "",
                 status: statusList[item.status],
                 quantity: item.quantity || "",
-                isEvent: !!item.eventId
+                isEvent: !!item.eventId,
+                note: item.note || ""
             }));
             setOriginalList(mapped);
             setFilteredList(mapped);
@@ -523,6 +525,7 @@ const RequesterDonorPage = () => {
     const handleEditBlood = useCallback((record) => {
         setEditingBloodRecord(record);
         setEditQuantity(record.quantity || '');
+        setEditBloodType(record.bloodGroup || '');
         setEditBloodModalOpen(true);
     }, []);
 
@@ -540,13 +543,19 @@ const RequesterDonorPage = () => {
                 return;
             }
 
+            // Validate blood type
+            if (!editBloodType) {
+                toast.error('Vui lòng chọn nhóm máu!');
+                return;
+            }
+
             // Map transfer type to its index for API
             const bloodTransferTypeIndex = bloodTransferTypes.indexOf(editingBloodRecord.type);
             try {
                 setLoading(true);
                 await updateBloodDonationApplicationInfo({
                     id: editingBloodRecord.registrationId,
-                    bloodType: bloodTypes.indexOf(editingBloodRecord.bloodGroup),
+                    bloodType: bloodTypes.indexOf(editBloodType),
                     bloodTransferType: bloodTransferTypeIndex,
                     quantity: Number(editQuantity)
                 });
@@ -564,7 +573,7 @@ const RequesterDonorPage = () => {
             setEditBloodModalOpen(false);
             setEditingBloodRecord(null);
         }
-    }, [editingBloodRecord, editQuantity, fetchRegistrationList]);
+    }, [editingBloodRecord, editQuantity, editBloodType, fetchRegistrationList]);
 
     const handleBloodModalCancel = useCallback(() => {
         setEditBloodModalOpen(false);
@@ -585,13 +594,6 @@ const RequesterDonorPage = () => {
             dataIndex: 'fullNameRegister',
             key: 'fullNameRegister',
             align: 'center',
-        },
-        {
-            title: 'Ngày sinh',
-            dataIndex: 'birthDate',
-            key: 'birthDate',
-            align: 'center',
-            render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
         },
         {
             title: 'Phân loại',
@@ -658,77 +660,77 @@ const RequesterDonorPage = () => {
                     </span>
                 );
             },
-        },
-        {
-            title: 'Thao tác',
-            key: 'actions',
-            align: 'center',
-            width: 280,
-            render: (_, record) => {
-                if (record.status === "Đang Chờ") {
-                    return (
-                        <span className="flex items-center justify-center gap-2">
-                            <Tooltip title="Gửi máu vào kho">
-                                <Button
-                                    type="dashed"
-                                    variant="dashed"
-                                    color="danger"
-                                    onClick={() => handleOpenBloodDropModal(record)}
-                                    disabled={loading}
-                                >
-                                    <AuditOutlined />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip title="Số lượng">
-                                <Button
-                                    type="dashed"
-                                    variant="dashed"
-                                    color="orange"
-                                    onClick={() => handleEditBlood(record)}
-                                    disabled={loading}
-                                >
-                                    <EditOutlined rotate={90} />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip title="Trạng thái">
-                                <Button
-                                    type="dashed"
-                                    variant="dashed"
-                                    color="blue"
-                                    onClick={() => handleOpenNewModal(record)}
-                                    disabled={loading}
-                                >
-                                    <AuditOutlined />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip title="Kiểm tra sức khỏe">
-                                <Button
-                                    type="dashed"
-                                    variant="dashed"
-                                    color="purple"
-                                    onClick={() => handleOpenHealthCheckModal(record)}
-                                    disabled={loading}
-                                >
-                                    <AuditOutlined />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip title="Ghi chú">
-                                <Button
-                                    type="dashed"
-                                    variant="dashed"
-                                    color="cyan"
-                                    onClick={() => handleOpenNoteModal(record)}
-                                    disabled={loading}
-                                >
-                                    <ReadOutlined />
-                                </Button>
-                            </Tooltip>
-                        </span>
-                    )
-                }
+                    },
+            {
+                title: 'Thao tác',
+                key: 'actions',
+                align: 'center',
+                width: 280,
+                render: (_, record) => {
+                    if (record.status === "Đang Chờ") {
+                        return (
+                            <span className="flex items-center justify-center gap-2">
+                                <Tooltip title="Gửi máu vào kho">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="danger"
+                                        onClick={() => handleOpenBloodDropModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <AuditOutlined />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Thông tin máu">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="orange"
+                                        onClick={() => handleEditBlood(record)}
+                                        disabled={loading}
+                                    >
+                                        <EditOutlined rotate={90} />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Trạng thái">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="blue"
+                                        onClick={() => handleOpenNewModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <AuditOutlined />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Thông tin sức khỏe">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="purple"
+                                        onClick={() => handleOpenHealthCheckModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <AuditOutlined />
+                                    </Button>
+                                </Tooltip>
+                                <Tooltip title="Ghi chú">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="cyan"
+                                        onClick={() => handleOpenNoteModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <ReadOutlined />
+                                    </Button>
+                                </Tooltip>
+                            </span>
+                        )
+                    }
+                },
             },
-        },
-    ], [handleEdit, handleEditBlood, handleDelete, loading]);
+    ], [handleEdit, handleEditBlood, handleDelete, loading, handleOpenNoteModal]);
 
     return (
         <div className="flex flex-col">
@@ -847,7 +849,7 @@ const RequesterDonorPage = () => {
 
             {/* Modal chỉnh sửa số lượng */}
             <Modal
-                title="Chỉnh sửa số lượng"
+                title="Chỉnh sửa thông tin máu"
                 open={editBloodModalOpen}
                 onOk={handleBloodModalOk}
                 onCancel={handleBloodModalCancel}
@@ -855,23 +857,43 @@ const RequesterDonorPage = () => {
                 cancelText="Huỷ"
                 confirmLoading={loading}
             >
-                <div className="mb-2">Nhập số lượng máu hiến (ml):</div>
-                                 <input
-                     type="number"
-                     min="50"
-                     max="500"
-                     step="50"
-                     className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
-                     value={editQuantity}
-                     onChange={e => setEditQuantity(e.target.value)}
-                     placeholder="Nhập số ml (tối đa 500ml)"
-                     disabled={loading}
-                     onKeyDown={(e) => {
-                         if (e.key === '-' || e.key === 'e') {
-                             e.preventDefault();
-                         }
-                     }}
-                 />
+                <div className="space-y-4">
+                    {/* Blood Type Selection */}
+                    <div>
+                        <div className="mb-2">Chọn nhóm máu:</div>
+                        <select
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
+                            value={editBloodType}
+                            onChange={e => setEditBloodType(e.target.value)}
+                            disabled={loading}
+                        >
+                            {bloodTypes.map(type => (
+                                <option key={type} value={type}>{type}</option>
+                            ))}
+                        </select>
+                    </div>
+                    
+                    {/* Quantity Input */}
+                    <div>
+                        <div className="mb-2">Nhập số lượng máu hiến (ml):</div>
+                        <input
+                            type="number"
+                            min="50"
+                            max="500"
+                            step="50"
+                            className="w-full border border-gray-300 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000]"
+                            value={editQuantity}
+                            onChange={e => setEditQuantity(e.target.value)}
+                            placeholder="Nhập số ml (tối đa 500ml)"
+                            disabled={loading}
+                            onKeyDown={(e) => {
+                                if (e.key === '-' || e.key === 'e') {
+                                    e.preventDefault();
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
             </Modal>
 
             {/* Modal gửi máu vào kho */}
@@ -1274,7 +1296,7 @@ const RequesterDonorPage = () => {
                 ]}
             >
                 <div className="p-4">
-                    {noteData && noteData !== "Hiến máu lần đầu" ? (
+                    {noteData?.trim() ? (
                         <div className="bg-gray-50 p-4 rounded-lg">
                             <p className="text-gray-800 whitespace-pre-wrap">{noteData}</p>
                         </div>

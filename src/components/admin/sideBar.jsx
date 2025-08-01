@@ -1,4 +1,4 @@
-import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined, DatabaseOutlined, ExperimentOutlined, UserSwitchOutlined, CalendarOutlined, ReadOutlined, InteractionOutlined, TeamOutlined } from "@ant-design/icons";
+import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined, DatabaseOutlined, ExperimentOutlined, UserSwitchOutlined, CalendarOutlined, ReadOutlined, InteractionOutlined, TeamOutlined, InfoCircleOutlined } from "@ant-design/icons";
 import { Layout, Menu } from "antd"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -76,6 +76,14 @@ const SideBar = () => {
         },
     ]
 
+        // --- INFORMATION ---
+    const informationMenu = [
+        {
+            key: "/information",
+            icon: <InfoCircleOutlined />,
+            label: <Link to="/information">Information</Link>,
+        },
+    ]
         // --- LOGOUT ---
     const logoutItem = {
         key: "logout",
@@ -104,6 +112,7 @@ const SideBar = () => {
 
     const allMenuItems = [
         ...roleMenus,
+        ...informationMenu,
         logoutItem
     ]
     

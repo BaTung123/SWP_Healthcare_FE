@@ -9,9 +9,9 @@ import UserContext from "../../contexts/UserContext";
 
 const { Title, Text } = Typography;
 const bloodGroups = [
-  "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"
+  "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+", "Chưa biết"
 ];
-const bloodGroupMap = {"O-":0,"O+":1,"A-":2,"A+":3,"B-":4,"B+":5,"AB-":6,"AB+":7};
+const bloodGroupMap = {"O-":0,"O+":1,"A-":2,"A+":3,"B-":4,"B+":5,"AB-":6,"AB+":7,"Chưa biết":8};
 function getBloodGroupStringFromType(type) {
   if (typeof type === 'number' && type >= 0 && type < bloodGroups.length) return bloodGroups[type];
   return "";

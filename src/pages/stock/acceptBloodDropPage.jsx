@@ -5,7 +5,7 @@ import { GetAllBloodRequestApplication, UpdateBloodRequestStatus } from '../../s
 import dayjs from 'dayjs';
 
 const bloodTypes = [
-  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
 ];
 
 const statusList = [

@@ -10,7 +10,7 @@ import { CreateBloodExportApplication } from '../../services/bloodExport';
 import { toast } from 'react-toastify';
 
 const bloodTypes = [
-  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
 ];
 
 const statusList = [

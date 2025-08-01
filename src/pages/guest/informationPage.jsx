@@ -1,10 +1,6 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
-import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
-import { Button, DatePicker, Modal, Table, Tooltip } from 'antd';
-import { ReadOutlined } from '@ant-design/icons';
-import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
-import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
+import { Button, Modal } from 'antd';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
@@ -18,13 +14,7 @@ const BLOOD_TYPE_REVERSE_MAP = [
   "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+", "Chưa biết"
 ];
 
-const bloodTransferTypes = [
-  'Toàn Phần', 'Hồng Cầu', 'Huyết Tương', 'Tiểu Cầu'
-];
 
-const statusList = [
-  'Đang Chờ', 'Hoàn Thành', 'Đã Xuất', 'Từ Chối'
-];
 
 function normalizeGender(gender) {
   if (!gender) return 'male';
@@ -56,159 +46,22 @@ function validateAge(dob) {
   return age >= 18;
 }
 
-const ProfilePage = () => {
+const InformationPage = () => {
   const fileInputRef = useRef(null);
 
-  const [activeTab, setActiveTab] = useState('profile');
-  const [registrationList, setRegistrationList] = useState([]);
-  // const [registration, setRegistration] = useState(null);
-  // const [appointmentList, setAppointmentList] = useState([]);
-  // const [appointment, setAppointment] = useState(null);
-  // const [event, setEvent] = useState(null);
-  // const [newDate, setNewDate] = useState(null);
-  // const [showChangeDate, setShowChangeDate] = useState(false);
-  // const [showAppointList, setShowAppointList] = useState(false);
   const [showAppointForRegister, setShowAppointForRegister] = useState(null);
 
   const [userItem, setUserItem] = useState();
   const [form, setForm] = useState({});
 
-  // State cho modal ghi chú
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [noteData, setNoteData] = useState('');
+
 
   // Thêm khai báo bloodTypes
   const bloodTypes = [
     'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
   ];
 
-  const columns = [
-    {
-      title: 'Họ và Tên',
-      dataIndex: 'fullName',
-      key: 'fullName',
-      width: 200,
-      align: 'center',
-    },
-    {
-      title: 'Phân loại',
-      key: 'type',
-      align: 'center',
-      width: 160,
-      render: (record) => {
-        if (record.eventId) {
-          return <span className="font-bold text-blue-500 border-2 rounded-md p-1">Sự kiện</span>;
-        }
-        return <span className="font-bold text-purple-500 border-2 rounded-md p-1">Thường</span>;
-      }
-    },
-    {
-      title: 'Nhóm Máu',
-      dataIndex: 'bloodType',
-      key: 'bloodType',
-      width: 100,
-      align: 'center',
-      render: (bloodType) => bloodTypes[bloodType]
-    },
-    {
-      title: 'Loại',
-      dataIndex: 'bloodTransferType',
-      key: 'bloodTransferType',
-      width: 120,
-      align: 'center',
-      render: (type) => bloodTransferTypes[type]
-    },
-    {
-      title: 'Số lượng (ml)',
-      dataIndex: 'quantity',
-      key: 'quantity',
-      width: 120,
-      align: 'center',
-      render: (quantity) => quantity ? `${quantity} ml` : '-',
-    },
-    {
-      title: 'Ngày đã chọn',
-      dataIndex: 'donationEndDate',
-      key: 'donationEndDate',
-      width: 200,
-      align: 'center',
-      render: (record) => record ? dayjs(record).format('DD/MM/YYYY') : '',
-    },
-    {
-      title: 'Trạng Thái',
-      dataIndex: 'status',
-      key: 'status',
-      width: 150,
-      align: 'center',
-      render: (status) => {
-        let color;
-        const text = statusList[status];
-        switch (text) {
-          case 'Đang Chờ': color = 'text-orange-500'; break;
-          case 'Hoàn Thành': color = 'text-green-500'; break;
-          case 'Từ Chối': color = 'text-red-500'; break;
-          default: color = 'text-blue-500';
-        }
-        return (
-          <span className={`font-bold ${color} border-2 rounded-md p-1`} >
-            {text}
-          </span>
-        );
-      },
-    },
-    {
-      title: 'Ghi chú',
-      dataIndex: 'note',
-      key: 'note',
-      width: 150,
-      align: 'center',
-      render: (note, record) => {
-        if (note && note.trim() !== '') {
-          return (
-            <Tooltip title="Xem ghi chú">
-              <Button
-                type="dashed"
-                variant="dashed"
-                color="cyan"
-                onClick={() => handleOpenNoteModal(record)}
-              >
-                <ReadOutlined />
-              </Button>
-            </Tooltip>
-          );
-        }
-        return <span className="text-gray-400">-</span>;
-      },
-    },
-  ]
 
-  // Thêm columns cho bảng lịch sử hiến máu
-  const historyColumns = [
-    {
-      title: 'STT',
-      dataIndex: 'stt',
-      key: 'stt',
-      align: 'center',
-    },
-    {
-      title: 'Số lượng (ml)',
-      dataIndex: 'volume',
-      key: 'volume',
-      align: 'center',
-    },
-    {
-      title: 'Loại hiến',
-      dataIndex: 'type',
-      key: 'type',
-      align: 'center',
-    },
-    {
-      title: 'Ngày hiến',
-      dataIndex: 'date',
-      key: 'date',
-      align: 'center',
-    },
-  ];
 
   // Đưa fetchUser ra ngoài useEffect để có thể gọi lại
   const fetchUser = async () => {
@@ -232,27 +85,6 @@ const ProfilePage = () => {
   }, []);
 
   const { user } = useContext(UserContext);
-  console.log("user:", user);
-  useEffect(() => {
-    const fetchDonateApplication = async () => {
-      try {
-        const donateApplicationRes = await getAllBloodDonationApplication();
-        console.log("donateApplicationRes:", donateApplicationRes);
-
-        // Filter by current user's name
-        const donateList = donateApplicationRes.filter(app => app.fullName === user.name);
-        console.log("donateList:", donateList);
-        setRegistrationList(donateList);
-      } catch (error) {
-        console.error("Error fetching donation applications:", error);
-        toast.error("Không thể tải danh sách đơn đăng ký hiến máu");
-      }
-    }
-    
-    if (user && user.name) {
-      fetchDonateApplication();
-    }
-  }, [user])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -319,16 +151,7 @@ const ProfilePage = () => {
     }
   };
 
-  // Handler cho modal ghi chú
-  const handleOpenNoteModal = (record) => {
-    setNoteData(record.note || '');
-    setIsNoteModalOpen(true);
-  };
 
-  const handleNoteModalCancel = () => {
-    setIsNoteModalOpen(false);
-    setNoteData('');
-  };
 
 
   return (
@@ -338,20 +161,13 @@ const ProfilePage = () => {
 
         <div className="flex border-b-2 border-indigo-100 mb-10">
           <div
-            className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'profile' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
-            onClick={() => setActiveTab('profile')}
+            className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all text-indigo-900 border-b-3 border-indigo-900`}
           >
             HỒ SƠ
           </div>
-          <div
-            className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'registration' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
-            onClick={() => setActiveTab('registration')}
-          >
-            LỊCH SỬ HIẾN MÁU
-          </div>
         </div>
 
-        {activeTab === 'profile' && user && (
+        {user && (
           <div className="flex items-start mb-8">
             {/* Hiển thị avatar nếu có */}
             {user.avatarImageUrl && (
@@ -436,7 +252,7 @@ const ProfilePage = () => {
           </div>
         )}
 
-        {activeTab === 'profile' && (
+        {(
           <div className="flex justify-center mt-10 gap-4">
             <button
               className="!bg-indigo-900 !text-white border-none font-semibold text-lg py-3 px-12 rounded-lg shadow-md transition-all hover:!bg-indigo-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
@@ -446,89 +262,12 @@ const ProfilePage = () => {
             </button>
           </div>
         )}
-        {console.log("registrationList:", registrationList)}
-        {activeTab === 'registration' && registrationList && (
-          <>
-            <h3 className="text-2xl font-semibold mb-4">Đơn đăng ký hiến máu</h3>
-            <Table
-              className="rounded-2xl shadow-lg bg-white custom-table-user"
-              dataSource={registrationList}
-              columns={columns}
-              rowKey="registrationId"
-              pagination={{
-                pageSize: 5,
-                position: ['bottomCenter'],
-              }}
-            />
-            {/* {registrationList.map((registration) => (
-              <div key={registration.registrationId}>
-                <div className="border border-indigo-200 p-6 rounded-lg">
-                  <p><strong>Họ tên:</strong> {registration.fullNameRegister}</p>
-                  <p>
-                    <strong>Thời gian: </strong>
-                    {
-                      registration.availableFromDate !== registration.availableToDate 
-                        ? `${dayjs(registration.availableFromDate).format("DD/MM/YYYY")} - ${dayjs(registration.availableToDate).format("DD/MM/YYYY")}`
-                        : dayjs(registration.availableFromDate).format("DD/MM/YYYY")
-                    }
-                  </p>
-                  <p><strong>Nhóm máu:</strong> {registration.bloodGroup}</p>
-                  <p>
-                    <strong>Trạng thái lịch hẹn:</strong>
-                    <span className="text-red-600 font-semibold">
-                      {registration.status === 'Cancelled' ? 'Đã huỷ' : registration.status}
-                    </span>
-                  </p>
-                </div>
 
-                {console.log("showAppointList", showAppointList)}
-                <Modal
-                  title="Danh sách lịch hẹn"
-                  open={showAppointList}
-                  onCancel={() => setShowAppointList(false)}
-                  footer={[
-                    <Button key="cancel" onClick={() => setShowAppointList(false)}>
-                      Thoát
-                    </Button>
-                  ]}
-                >
-                  <div className="mt-4">
-                    {appointmentList.map((appointment) => (
-                      <div key={appointment.appointmentId} className="border border-indigo-200 p-4 rounded-lg mb-2">
-                        <p><strong>Ngày hẹn:</strong> {dayjs(appointment.appointmentDate).format("DD/MM/YYYY")}</p>
-                        <p><strong>Địa điểm:</strong> {appointment.facilityName}</p>
-                        <p><strong>Trạng thái:</strong> {appointment.status}</p>
-                      </div>
-                    ))}
-                  </div>
-                </Modal>
-              </div>
-            ))} */}
-          </>
-        )}
 
-        {/* Modal ghi chú */}
-          <Modal
-            title="Ghi chú"
-            open={isNoteModalOpen}
-            onCancel={handleNoteModalCancel}
-            footer={[]}
-          >
-            <div className="p-4">
-              {noteData?.trim() ? (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                  <p className="text-gray-800 whitespace-pre-wrap">{noteData}</p>
-                </div>
-              ) : (
-                <div className="text-center text-gray-500 italic">
-                  Không có ghi chú
-                </div>
-              )}
-            </div>
-          </Modal>
+
       </div>
     </div>
   )
 }
 
-export default ProfilePage
+export default InformationPage

@@ -19,6 +19,7 @@ const BLOOD_TYPES = [
   { value: "AB-", label: "AB-" },
   { value: "O+", label: "O+" },
   { value: "O-", label: "O-" },
+  { value: "Chưa biết", label: "Chưa biết" },
 ];
 
 const DONATION_TYPES = [
@@ -30,11 +31,11 @@ const DONATION_TYPES = [
 
 // Mapping blood type string to number
 const BLOOD_TYPE_MAP = {
-  "A+": 0, "A-": 1, "B+": 2, "B-": 3, "AB+": 4, "AB-": 5, "O+": 6, "O-": 7
+  "A+": 0, "A-": 1, "B+": 2, "B-": 3, "AB+": 4, "AB-": 5, "O+": 6, "O-": 7, "Chưa biết": 8
 };
 
 const bloodTypes = [
-  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+  'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
 ];
 
 const DONATION_TYPE_MAP = {
@@ -238,7 +239,7 @@ const DonationRegisterPage = () => {
          bloodType: bloodTypes[formData.bloodType],
          bloodTransferType: DONATION_TYPE_MAP[formData.type],
          quantity: Number(formData.quantity),
-         request: formData.note || "Hiến máu lần đầu",
+         note: formData.note || "Hiến máu lần đầu",
          phoneNumber: formData.phone,
          donationEndDate: formData.toDate ? dayjs(formData.toDate).format("YYYY-MM-DD") : ""
        };
@@ -281,7 +282,7 @@ const DonationRegisterPage = () => {
   return (
     <div className="p-8 max-w-2xl mx-auto bg-[#eaf3fb] min-h-screen flex items-center justify-center">
       <div className="rounded-2xl shadow-2xl bg-white p-10 w-full max-w-2xl transition-shadow hover:shadow-3xl">
-        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm"></h1>
+        <h1 className="text-[32px] font-bold text-[#b30000] text-center mb-8 tracking-wide drop-shadow-sm">thông tin hiến máu</h1>
 
         <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
           {/* Họ và tên */}

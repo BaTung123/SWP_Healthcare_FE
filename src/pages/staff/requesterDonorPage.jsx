@@ -80,6 +80,9 @@ const RequesterDonorPage = () => {
 
     // Hàm mở modal gửi máu vào kho
     const handleOpenBloodDropModal = (record) => {
+        // Lấy ngày từ cột thời gian, nếu không có thì dùng ngày hiện tại
+        const availableDate = record.availableDate ? dayjs(record.availableDate) : dayjs();
+        
         setBloodDropFormData({
             bloodDonationApplicationId: record.registrationId,
             fullName: record.fullNameRegister || "",
@@ -90,7 +93,7 @@ const RequesterDonorPage = () => {
             hospital: "",
             phone: record.phone || "",
             type: record.type || "",
-            needDate: dayjs().format("YYYY-MM-DD"),
+            needDate: availableDate.format("YYYY-MM-DD"),
             note: "",
         });
         setEditingRecord(record);
@@ -972,9 +975,12 @@ const RequesterDonorPage = () => {
                                 onChange={handleBloodDropFormChange}
                                 required
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
-                                min={dayjs().format("YYYY-MM-DD")}
+                                min={bloodDropFormData.needDate}
                                 style={{ width: '100%' }}
                             />
+                            <small className="text-gray-500 mt-1">
+                                Ngày được đề xuất từ thời gian hiến máu: {dayjs(bloodDropFormData.needDate).format('DD/MM/YYYY')}
+                            </small>
                         </div>
                         {/* Loại và số điện thoại trên cùng một dòng */}
                         <div className="flex flex-col md:flex-row gap-4 md:gap-8">

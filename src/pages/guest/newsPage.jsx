@@ -34,7 +34,7 @@ function NewsPage() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await axios.get("https://localhost:7293/api/Blog");        
+        const response = await axios.get("https://localhost:7293/api/Blog");
         // Đảm bảo posts luôn là array
         
         const data = Array.isArray(response.data.data.blogs) ? response.data.data.blogs : [];

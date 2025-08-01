@@ -57,19 +57,28 @@ const BlogDetailPage = () => {
 
   return (
     <div className="w-full min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-2 md:px-0 flex flex-col items-center">
-      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-10 flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-2/5 flex justify-center items-start">
-          <img 
-            src={blog.imageUrl} 
-            alt={blog.title} 
-            className="w-full max-h-96 object-cover rounded-lg shadow-md border border-gray-100"
-          />
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-lg p-6 md:p-10 flex flex-col gap-6">
+        {/* Hàng trên: ảnh + title/time */}
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Ảnh bên trái */}
+          <div className="w-full md:w-2/5 flex justify-center items-start">
+            <img 
+              src={blog.imageUrl} 
+              alt={blog.title} 
+              className="w-full max-h-[600px] object-cover rounded-lg shadow-md border border-gray-100"
+              style={{ maxHeight: '600px', minHeight: '350px' }}
+            />
+          </div>
+          {/* Title và thời gian bên phải */}
+          <div className="w-full md:w-3/5 flex flex-col">
+            <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">{blog.title}</h1>
+            <div className="text-sm text-gray-500 mb-2">{formatDate(blog.createdAt)}</div>
+          </div>
         </div>
-        <article className="w-full md:w-3/5 flex flex-col gap-4 justify-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-blue-900 mb-2">{blog.title}</h1>
-          <div className="text-sm text-gray-500 mb-2">{formatDate(blog.createdAt)}</div>
-          <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">{blog.description}</p>
-        </article>
+        {/* Description bên dưới */}
+        <div className="w-full mt-2">
+          <p className="text-xl md:text-2xl text-gray-700 leading-relaxed whitespace-pre-line">{blog.description}</p>
+        </div>
       </div>
     </div>
   );

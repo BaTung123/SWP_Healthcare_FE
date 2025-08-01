@@ -2,6 +2,7 @@ import { createBrowserRouter, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import RootLayout from "../layout/RootLayout";
 import AuthLayout from "../layout/AuthLayout";
+import SidebarLayout from "../layout/SidebarLayout";
 import AdminPage from "../pages/admin/adminPage";
 import MemberPage from "../pages/member/memberPage";
 
@@ -13,6 +14,7 @@ const ContactPage = lazy(() => import("../pages/guest/contactPage"));
 const NewsPage = lazy(() => import("../pages/guest/newsPage"));
 const BlogDetailPage = lazy(() => import("../pages/guest/blogDetailPage"));
 const BloodSearchPage = lazy(() => import("../pages/guest/bloodSearchPage"));
+const InformationPage = lazy(() => import("../pages/guest/informationPage"));
 const LoginPage = lazy(() => import("../pages/guest/loginPage"));
 const RegisterPage = lazy(() => import("../pages/guest/registerPage"));
 const BloodDonationHistoryPage = lazy(() => import("../pages/guest/bloodDonationHistoryPage"));
@@ -29,7 +31,6 @@ const RequesterDonorPage = lazy(() => import("../pages/staff/requesterDonorPage"
 const DonationProcessPage = lazy(() => import("../pages/staff/donationProcessPage"));
 const BloodRequestPage = lazy(() => import("../pages/staff/bloodRequestPage"));
 const EventManagementPage = lazy(() => import("../pages/staff/eventManagementPage"));
-const BloodDropPage = lazy(() => import("../pages/staff/bloodDropPage"));
 const SendBloodPage = lazy(() => import("../pages/staff/sendBloodPage"));
 const BlogManagementPage = lazy(() => import("../pages/staff/blogManagementPage"));
 
@@ -41,6 +42,7 @@ const UserManagementPage = lazy(() => import("../pages/admin/userManagementPage"
 const BloodStockManagementPage = lazy(() => import("../pages/stock/bloodStockManagementPage"));
 const AcceptBloodDropPage = lazy(() => import("../pages/stock/acceptBloodDropPage"));
 const ReceiverPage = lazy(() => import("../pages/stock/receiverPage"));
+const BloodDropPage = lazy(() => import("../pages/stock/bloodDropPage"));
 
 // Loading component
 const Loading = () => <div>Loading...</div>;
@@ -105,6 +107,18 @@ export const router = createBrowserRouter([
       { 
         path: "/member/register-donation", 
         element: <ProtectedRoute roleAccount={["Customer"]}><DonationRegisterPage /></ProtectedRoute>
+      },
+    ],
+  },
+
+  // Information page with sidebar layout
+  {
+    path: "/information",
+    element: <SidebarLayout />,
+    children: [
+      { 
+        path: "", 
+        element: <Suspense fallback={<Loading />}><InformationPage /></Suspense>
       },
     ],
   },
@@ -214,6 +228,11 @@ export const router = createBrowserRouter([
         path: "receiver", 
         element: <ProtectedRoute roleAccount={["StorageManager"]}><ReceiverPage /></ProtectedRoute>
       },
+      { 
+        path: "blood-drop", 
+        element: <ProtectedRoute roleAccount={["StorageManager"]}><BloodDropPage /></ProtectedRoute>
+      },
+
     ],
   },
 ]);

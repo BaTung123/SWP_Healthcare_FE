@@ -1,4 +1,21 @@
-import { AuditOutlined, BarChartOutlined, BookOutlined, DashboardOutlined, LogoutOutlined, ProductOutlined, UserOutlined, DatabaseOutlined, ExperimentOutlined, UserSwitchOutlined, CalendarOutlined, ReadOutlined, InteractionOutlined, TeamOutlined } from "@ant-design/icons";
+import { 
+    DashboardOutlined, 
+    LogoutOutlined, 
+    UserOutlined, 
+    DatabaseOutlined, 
+    ExperimentOutlined, 
+    UserSwitchOutlined, 
+    CalendarOutlined, 
+    ReadOutlined, 
+    InteractionOutlined, 
+    TeamOutlined, 
+    InfoCircleOutlined,
+    DropboxOutlined,
+    HeartOutlined,
+    FileTextOutlined,
+    UserAddOutlined,
+    SettingOutlined
+} from "@ant-design/icons";
 import { Layout, Menu } from "antd"
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -37,13 +54,18 @@ const SideBar = () => {
         },
         {
             key: "/stock/accept-blood-drop",
-            icon: <ExperimentOutlined />,
+            icon: <DropboxOutlined />,
             label: <Link to="/stock/accept-blood-drop">Accept Blood Drop</Link>,
         },
         {
             key: "/stock/receiver",
-            icon: <UserSwitchOutlined />,
+            icon: <HeartOutlined />,
             label: <Link to="/stock/receiver">Blood Receiver</Link>,
+        },
+        {
+            key: "/stock/blood-drop",
+            icon: <ExperimentOutlined />,
+            label: <Link to="/stock/blood-drop">Blood Drop</Link>,
         },
     ]
 
@@ -56,7 +78,7 @@ const SideBar = () => {
         },
         {
             key: "/staff/blog",
-            icon: <ReadOutlined />,
+            icon: <FileTextOutlined />,
             label: <Link to="/staff/blog">Blog Management</Link>,
         },
         {
@@ -66,11 +88,19 @@ const SideBar = () => {
         },
         {
             key: "/staff/donor",
-            icon: <TeamOutlined />,
+            icon: <UserAddOutlined />,
             label: <Link to="/staff/donor">Blood Donor</Link>,
         },
     ]
 
+        // --- INFORMATION ---
+    const informationMenu = [
+        {
+            key: "/information",
+            icon: <SettingOutlined />,
+            label: <Link to="/information">Profile</Link>,
+        },
+    ]
         // --- LOGOUT ---
     const logoutItem = {
         key: "logout",
@@ -99,6 +129,7 @@ const SideBar = () => {
 
     const allMenuItems = [
         ...roleMenus,
+        ...informationMenu,
         logoutItem
     ]
     
@@ -116,8 +147,9 @@ const SideBar = () => {
         >
             <div className="p-2 flex items-center justify-center">
                 <div className="w-full">
-                    <div className="flex items-center justify-center h-[60px]">
+                    <div className="flex flex-col items-center justify-center h-[60px]">
                         <span className="text-2xl font-bold text-white text-center">HealthCare</span>
+                        <span className="text-sm text-gray-300 text-center mt-1">{role}</span>
                     </div>
                 </div>
             </div>

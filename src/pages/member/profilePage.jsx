@@ -1,7 +1,10 @@
 // Hồ sơ người dùng, thông tin cá nhân.
 import { useState, useRef, useEffect, useContext } from 'react';
-import { getAllBloodDonationApplication } from '../../services/donorRegistration';
-import { Button, DatePicker, Modal, Table } from 'antd';
+import { getAllBloodDonationApplication, GetAllDonorRegistrationWithUserId, GetDonorRegistrationByUserId } from '../../services/donorRegistration';
+import { Button, DatePicker, Modal, Table, Tooltip } from 'antd';
+import { ReadOutlined } from '@ant-design/icons';
+import { CreateDonationAppointmentWithDate, GetAllAppointmentWithRegistrationId, GetAllDonationAppointments, GetAppointmentsByRegistrationId } from '../../services/donationAppointment';
+import { GetEventByFacilityId } from '../../services/bloodDonationEvent';
 import { toast } from 'react-toastify';
 import dayjs from 'dayjs';
 import { GetAuthenByUserId, updateUserInfo } from '../../services/authentication';
@@ -9,10 +12,10 @@ import UserContext from '../../contexts/UserContext';
 
 // Constants và helper functions để ngoài component
 const BLOOD_TYPE_MAP = {
-  "O-": 0, "O+": 1, "A-": 2, "A+": 3, "B-": 4, "B+": 5, "AB-": 6, "AB+": 7
+  "O-": 0, "O+": 1, "A-": 2, "A+": 3, "B-": 4, "B+": 5, "AB-": 6, "AB+": 7, "Chưa biết": 8
 };
 const BLOOD_TYPE_REVERSE_MAP = [
-  "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+"
+  "O-", "O+", "A-", "A+", "B-", "B+", "AB-", "AB+", "Chưa biết"
 ];
 
 const bloodTransferTypes = [
@@ -20,12 +23,12 @@ const bloodTransferTypes = [
 ];
 
 const statusList = [
-  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
+  'Đang Chờ', 'Hoàn Thành', 'Đã Xuất', 'Từ Chối'
 ];
 
 function normalizeGender(gender) {
   if (!gender) return 'male';
-  if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Male';
+  if (["Nam", "Male", "male", "nam"].includes(gender)) return 'Males';
   if (["Nữ", "Female", "female", "nữ"].includes(gender)) return 'Female';
   return 'Other';
 }
@@ -70,9 +73,13 @@ const ProfilePage = () => {
   const [userItem, setUserItem] = useState();
   const [form, setForm] = useState({});
 
+  // State cho modal ghi chú
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [noteData, setNoteData] = useState('');
+
   // Thêm khai báo bloodTypes
   const bloodTypes = [
-    'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+'
+    'O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+', 'Chưa biết'
   ];
 
   const columns = [
@@ -84,25 +91,16 @@ const ProfilePage = () => {
       align: 'center',
     },
     {
-      title: 'Ngày sinh',
-      dataIndex: 'dob',
-      key: 'dob',
-      width: 130,
+      title: 'Phân loại',
+      key: 'type',
       align: 'center',
-      render: (birthDate) => birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '',
-    },
-    {
-      title: 'Giới tính',
-      dataIndex: 'gender',
-      key: 'gender',
-      width: 100,
-      align: 'center',
-      render: (gender) => {
-        if (!gender) return '';
-        if (gender === 'Male' || gender === 'Nam' || gender === 'male' || gender === 'nam') return 'Male';
-        if (gender === 'Female' || gender === 'Nữ' || gender === 'female' || gender === 'nữ') return 'Female';
-        return 'Other';
-      },
+      width: 160,
+      render: (record) => {
+        if (record.eventId) {
+          return <span className="font-bold text-blue-500 border-2 rounded-md p-1">Sự kiện</span>;
+        }
+        return <span className="font-bold text-purple-500 border-2 rounded-md p-1">Thường</span>;
+      }
     },
     {
       title: 'Nhóm Máu',
@@ -119,6 +117,14 @@ const ProfilePage = () => {
       width: 120,
       align: 'center',
       render: (type) => bloodTransferTypes[type]
+    },
+    {
+      title: 'Số lượng (ml)',
+      dataIndex: 'quantity',
+      key: 'quantity',
+      width: 120,
+      align: 'center',
+      render: (quantity) => quantity ? `${quantity} ml` : '-',
     },
     {
       title: 'Ngày đã chọn',
@@ -139,15 +145,39 @@ const ProfilePage = () => {
         const text = statusList[status];
         switch (text) {
           case 'Đang Chờ': color = 'text-orange-500'; break;
-          case 'Chấp Nhận': color = 'text-blue-500'; break;
+          case 'Hoàn Thành': color = 'text-green-500'; break;
           case 'Từ Chối': color = 'text-red-500'; break;
-          default: color = 'text-green-500';
+          default: color = 'text-blue-500';
         }
         return (
           <span className={`font-bold ${color} border-2 rounded-md p-1`} >
             {text}
           </span>
         );
+      },
+    },
+    {
+      title: 'Ghi chú',
+      dataIndex: 'note',
+      key: 'note',
+      width: 150,
+      align: 'center',
+      render: (note, record) => {
+        if (note && note.trim() !== '') {
+          return (
+            <Tooltip title="Xem ghi chú">
+              <Button
+                type="dashed"
+                variant="dashed"
+                color="cyan"
+                onClick={() => handleOpenNoteModal(record)}
+              >
+                <ReadOutlined />
+              </Button>
+            </Tooltip>
+          );
+        }
+        return <span className="text-gray-400">-</span>;
       },
     },
   ]
@@ -205,15 +235,24 @@ const ProfilePage = () => {
   console.log("user:", user);
   useEffect(() => {
     const fetchDonateApplication = async () => {
-      const donateApplicationRes = await getAllBloodDonationApplication();
-      console.log("donateApplicationRes:", donateApplicationRes);
+      try {
+        const donateApplicationRes = await getAllBloodDonationApplication();
+        console.log("donateApplicationRes:", donateApplicationRes);
 
-      const donateList = donateApplicationRes.filter(app => app.fullName === user.name);
-      console.log("donateList:", donateList);
-      setRegistrationList(donateList);
+        // Filter by current user's name
+        const donateList = donateApplicationRes.filter(app => app.fullName === user.name);
+        console.log("donateList:", donateList);
+        setRegistrationList(donateList);
+      } catch (error) {
+        console.error("Error fetching donation applications:", error);
+        toast.error("Không thể tải danh sách đơn đăng ký hiến máu");
+      }
     }
-    fetchDonateApplication();
-  }, [])
+    
+    if (user && user.name) {
+      fetchDonateApplication();
+    }
+  }, [user])
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -280,24 +319,35 @@ const ProfilePage = () => {
     }
   };
 
+  // Handler cho modal ghi chú
+  const handleOpenNoteModal = (record) => {
+    setNoteData(record.note || '');
+    setIsNoteModalOpen(true);
+  };
+
+  const handleNoteModalCancel = () => {
+    setIsNoteModalOpen(false);
+    setNoteData('');
+  };
+
 
   return (
     <div className="max-w-[1200px] mx-auto p-8">
       <div className="rounded-lg shadow-md bg-white p-6">
-        <h2 className="text-4xl font-bold text-indigo-900 mb-6">About You</h2>
+        <h2 className="text-4xl font-bold text-indigo-900 mb-6">Thông tin cá nhân</h2>
 
         <div className="flex border-b-2 border-indigo-100 mb-10">
           <div
             className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'profile' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
             onClick={() => setActiveTab('profile')}
           >
-            PROFILE
+            HỒ SƠ
           </div>
           <div
             className={`py-2 font-semibold text-indigo-600 cursor-pointer border-b-3 mr-8 text-[16px] tracking-wider transition-all ${activeTab === 'registration' ? 'text-indigo-900 border-b-3 border-indigo-900' : 'border-transparent'}`}
             onClick={() => setActiveTab('registration')}
           >
-            REGISTRATION
+            LỊCH SỬ HIẾN MÁU
           </div>
         </div>
 
@@ -317,7 +367,7 @@ const ProfilePage = () => {
               <div className="grid grid-cols-2 gap-x-12 gap-y-6 w-full max-w-2xl mx-auto">
                 <div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NAME</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">HỌ VÀ TÊN</label>
                     <input
                       name="name"
                       value={form.name || form.fullName || ''}
@@ -326,7 +376,7 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">PHONE</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">SỐ ĐIỆN THOẠI</label>
                     <input
                       name="phone"
                       value={form.phone || ''}
@@ -335,14 +385,13 @@ const ProfilePage = () => {
                     />
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">BLOOD TYPE</label>
+                    <label className="text-base font-semibold uppercase tracking-wider min-w-[180px] text-left">NHÓM MÁU</label>
                     <select
                       name="bloodType"
                       value={form.bloodType || ''}
                       onChange={handleChange}
                       className="py-3.5 px-4 border-2 border-indigo-100 rounded-lg text-lg bg-white transition-all flex-1 max-w-[700px] hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)]"
                     >
-                      <option value="">-- Chọn nhóm máu --</option>
                       {bloodTypes.map(type => (
                         <option key={type} value={type}>{type}</option>
                       ))}
@@ -359,7 +408,7 @@ const ProfilePage = () => {
                     className="w-full py-3 px-4 border-2 border-indigo-100 rounded-lg text-lg transition-all hover:border-indigo-200 focus:border-indigo-900 focus:outline-none focus:shadow-[0_0_0_3px_rgba(26,35,126,0.1)] cursor-not-allowed"
                   />
                   <div className="flex flex-col gap-1 w-full mb-3 mt-3">
-                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GENDER</label>
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">GIỚI TÍNH</label>
                     <select
                       name="gender"
                       value={form.gender || ''}
@@ -372,7 +421,7 @@ const ProfilePage = () => {
                     </select>
                   </div>
                   <div className="flex flex-col gap-1 w-full mb-3">
-                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">BIRTH DATE</label>
+                    <label className="block text-base font-semibold uppercase tracking-wider mb-1 text-left">NGÀY SINH</label>
                     <input
                       name="dob"
                       value={form.dob || ''}
@@ -393,7 +442,7 @@ const ProfilePage = () => {
               className="!bg-indigo-900 !text-white border-none font-semibold text-lg py-3 px-12 rounded-lg shadow-md transition-all hover:!bg-indigo-800 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
               onClick={handleSave}
             >
-              SAVE
+              LƯU
             </button>
           </div>
         )}
@@ -457,6 +506,26 @@ const ProfilePage = () => {
             ))} */}
           </>
         )}
+
+        {/* Modal ghi chú */}
+          <Modal
+            title="Ghi chú"
+            open={isNoteModalOpen}
+            onCancel={handleNoteModalCancel}
+            footer={[]}
+          >
+            <div className="p-4">
+              {noteData?.trim() ? (
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-gray-800 whitespace-pre-wrap">{noteData}</p>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 italic">
+                  Không có ghi chú
+                </div>
+              )}
+            </div>
+          </Modal>
       </div>
     </div>
   )

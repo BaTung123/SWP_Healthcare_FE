@@ -63,7 +63,7 @@ function LoginPage() {
         const userId = payload["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"];
         const userResponse = await GetAuthenByUserId(userId)
         setUser(userResponse.data);
-        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role }));
+        localStorage.setItem('user', JSON.stringify({ email: form.email, token, role, id: userId }));
 
         toast.success('Đăng nhập thành công!');
 

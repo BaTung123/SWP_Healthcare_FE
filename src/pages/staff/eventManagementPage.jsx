@@ -1,5 +1,14 @@
 import React, { useState } from "react";
 import { CreateEvent } from "../../services/bloodDonationEvent";
+import { toast, ToastContainer } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
+// Tính ngày mai và ngày kết thúc +7 ngày
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+const nextWeek = new Date(tomorrow);
+nextWeek.setDate(tomorrow.getDate() + 7);
+const formatDate = (date) => date.toISOString().slice(0, 10);
 
 const EventRegistrationForm = () => {
   const [form, setForm] = useState({
@@ -8,8 +17,8 @@ const EventRegistrationForm = () => {
     locationName: "",
     locationAddress: "",
     targetParticipant: "",
-    eventStartTime: "",
-    eventEndTime: "",
+    eventStartTime: formatDate(tomorrow),
+    eventEndTime: formatDate(nextWeek),
     status: 0,
   });
   const [error, setError] = useState("");
@@ -25,11 +34,12 @@ const EventRegistrationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
     if (Number(form.targetParticipant) > 100) {
       setError("Số người hiến máu mục tiêu tối đa là 100.");
       return;
     }
-    // Chuẩn hóa dữ liệu gửi API
+
     const eventBody = {
       name: form.name,
       type: form.type,
@@ -40,13 +50,14 @@ const EventRegistrationForm = () => {
       eventEndTime: new Date(form.eventEndTime).toISOString(),
       status: form.status ? 1 : 0,
     };
-    console.log("eventBody:", eventBody);
+
     try {
-      const res = await CreateEvent(eventBody);
-      alert("Tạo sự kiện thành công!");
-      // setForm({ ... }); // Reset nếu muốn
+      await CreateEvent(eventBody);
+      toast.success("Tạo sự kiện thành công!");
+      // Reset form nếu muốn:
+      // setForm({ name: "", type: "", locationName: "", ... });
     } catch (err) {
-      alert("Tạo sự kiện thất bại!");
+      toast.error("Tạo sự kiện thất bại!");
     }
   };
 
@@ -58,7 +69,6 @@ const EventRegistrationForm = () => {
         </h1>
 
         <form className="flex flex-col space-y-4" onSubmit={handleSubmit}>
-          {/* Tên sự kiện và Loại sự kiện */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
@@ -94,7 +104,6 @@ const EventRegistrationForm = () => {
             </div>
           </div>
 
-          {/* Cơ sở tổ chức và Địa điểm */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
@@ -126,7 +135,6 @@ const EventRegistrationForm = () => {
             </div>
           </div>
 
-          {/* Ngày bắt đầu và Ngày kết thúc */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
@@ -138,6 +146,7 @@ const EventRegistrationForm = () => {
                 value={form.eventStartTime}
                 onChange={handleChange}
                 required
+                min={formatDate(new Date())}
                 className="w-full h-[36.8px] border border-gray-300 rounded-md px-3 py-2"
               />
             </div>
@@ -157,7 +166,6 @@ const EventRegistrationForm = () => {
             </div>
           </div>
 
-          {/* Số người hiến máu mục tiêu */}
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block font-semibold mb-1">
@@ -177,19 +185,6 @@ const EventRegistrationForm = () => {
             </div>
           </div>
 
-          {/* Trạng thái hoạt động */}
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              name="status"
-              checked={form.status}
-              onChange={handleChange}
-              className="border border-gray-300 rounded-md px-3 py-2"
-            />
-            <label className="font-semibold">Sự kiện đang hoạt động</label>
-          </div>
-
-          {/* Nút gửi */}
           <button
             type="submit"
             className="p-3 !text-white !bg-[#b30000] rounded-md font-bold hover:!bg-[#990000] transition-colors duration-300 ease-in-out"
@@ -197,9 +192,13 @@ const EventRegistrationForm = () => {
             Đăng ký sự kiện
           </button>
         </form>
+
         {error && (
           <div className="text-red-500 font-semibold text-center mt-2">{error}</div>
         )}
+
+        {/* Toast container đặt ở đây để toast hiển thị đúng vị trí */}
+        <ToastContainer position="top-right" autoClose={3000} />
       </div>
     </div>
   );

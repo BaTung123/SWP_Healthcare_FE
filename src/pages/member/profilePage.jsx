@@ -21,7 +21,7 @@ const bloodTransferTypes = [
 ];
 
 const statusList = [
-  'Đang Chờ', 'Chấp Nhận', 'Đã Xuất', 'Từ Chối'
+  'Đang Chờ', 'Chấp Nhận', 'Đã Hiến', 'Từ Chối'
 ];
 
 function normalizeGender(gender) {
@@ -167,7 +167,7 @@ const ProfilePage = () => {
               <Button
                 type="dashed"
                 variant="dashed"
-                color="cyan"
+                color={record.status === 3 ? "red" : "cyan"}
                 onClick={() => handleOpenNoteModal(record)}
               >
                 <ReadOutlined />

@@ -169,6 +169,16 @@ const RequesterDonorPage = () => {
             console.log("bloodDropFormData:", bloodDropFormData);
             const createBloodImportRes = await CreateBloodImportApplication(bloodDropFormData);
             console.log("createBloodImportRes:", createBloodImportRes);
+            const bloodImportObj = createBloodImportRes.data;
+            console.log("bloodImportObj:", bloodImportObj);
+            const bloodImportSend = {
+                id: bloodImportObj.id,
+                status: 1,
+                note: ""
+            }
+            console.log("bloodImportSend:", bloodImportSend);
+            const updateBloodImportStatus = await updateBloodImportApplication(bloodImportSend);
+            console.log("updateBloodImportStatus:", updateBloodImportStatus);
 
             if (createBloodImportRes.code === 201) {
                 // Tự động cập nhật blood storage khi tạo đơn nhập máu thành công
@@ -369,7 +379,7 @@ const RequesterDonorPage = () => {
         }
 
         // Kiểm tra nhịp tim (bắt buộc)
-        if (!healthCheckData.heartRate?.trim()) {
+        if (healthCheckData.heartRate === null || healthCheckData.heartRate === undefined) {
             setHealthCheckError("Vui lòng nhập nhịp tim!");
             return;
         }
@@ -381,7 +391,7 @@ const RequesterDonorPage = () => {
         }
 
         // Kiểm tra nhiệt độ (bắt buộc)
-        if (!healthCheckData.temperature?.trim()) {
+        if (healthCheckData.temperature === null || healthCheckData.temperature === undefined) {
             setHealthCheckError("Vui lòng nhập nhiệt độ!");
             return;
         }
@@ -393,7 +403,7 @@ const RequesterDonorPage = () => {
         }
 
         // Kiểm tra hemoglobin (bắt buộc)
-        if (!healthCheckData.hemoglobin?.trim()) {
+        if (healthCheckData.hemoglobin === null || healthCheckData.hemoglobin === undefined) {
             setHealthCheckError("Vui lòng nhập hemoglobin!");
             return;
         }
@@ -405,7 +415,7 @@ const RequesterDonorPage = () => {
         }
 
         // Kiểm tra cân nặng (bắt buộc)
-        if (!healthCheckData.weight?.trim()) {
+        if (healthCheckData.weight === null || healthCheckData.weight === undefined) {
             setHealthCheckError("Vui lòng nhập cân nặng!");
             return;
         }
@@ -417,7 +427,7 @@ const RequesterDonorPage = () => {
         }
 
         // Kiểm tra chiều cao (bắt buộc)
-        if (!healthCheckData.height?.trim()) {
+        if (healthCheckData.height === null || healthCheckData.height === undefined) {
             setHealthCheckError("Vui lòng nhập chiều cao!");
             return;
         }
@@ -761,7 +771,7 @@ const RequesterDonorPage = () => {
                 width: 280,
                 render: (_, record) => (
                     <span className="flex items-center justify-center gap-2">
-                        {record.status !== "Từ Chối" && (
+                        {record.status !== "Từ Chối" && record.status !== "Đã Nhập" && (
                             <Tooltip title="Gửi máu vào kho">
                                 <Button
                                     type="dashed"
@@ -774,7 +784,7 @@ const RequesterDonorPage = () => {
                                 </Button>
                             </Tooltip>
                         )}
-                        {record.status === "Đang Chờ" && (
+                        {record.status !== "Từ Chối" && record.status !== "Đã Nhập" && (
                             <>
                                 <Tooltip title="Thông tin máu">
                                     <Button
@@ -787,19 +797,32 @@ const RequesterDonorPage = () => {
                                         <EditOutlined rotate={90} />
                                     </Button>
                                 </Tooltip>
+
+                                <Tooltip title="Trạng thái">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="blue"
+                                        onClick={() => handleOpenNewModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <AuditOutlined />
+                                    </Button>
+                                </Tooltip>
+
+                                <Tooltip title="Ghi chú">
+                                    <Button
+                                        type="dashed"
+                                        variant="dashed"
+                                        color="cyan"
+                                        onClick={() => handleOpenNoteModal(record)}
+                                        disabled={loading}
+                                    >
+                                        <ReadOutlined />
+                                    </Button>
+                                </Tooltip>
                             </>
                         )}
-                        <Tooltip title="Trạng thái">
-                            <Button
-                                type="dashed"
-                                variant="dashed"
-                                color="blue"
-                                onClick={() => handleOpenNewModal(record)}
-                                disabled={loading}
-                            >
-                                <AuditOutlined />
-                            </Button>
-                        </Tooltip>
                         <Tooltip title="Thông tin sức khỏe">
                             <Button
                                 type="dashed"
@@ -811,17 +834,7 @@ const RequesterDonorPage = () => {
                                 <AuditOutlined />
                             </Button>
                         </Tooltip>
-                        <Tooltip title="Ghi chú">
-                            <Button
-                                type="dashed"
-                                variant="dashed"
-                                color="cyan"
-                                onClick={() => handleOpenNoteModal(record)}
-                                disabled={loading}
-                            >
-                                <ReadOutlined />
-                            </Button>
-                        </Tooltip>
+                        
                         {record.status === "Từ Chối" && (
                             <Tooltip title="Xem lý do từ chối">
                                 <Button
@@ -1082,6 +1095,7 @@ const RequesterDonorPage = () => {
                                 className="w-full border border-gray-200 rounded-lg px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-[#b30000] transition"
                                 min={bloodDropFormData.needDate}
                                 style={{ width: '100%' }}
+                                disabled={true}
                             />
                             <small className="text-gray-500 mt-1">
                                 Ngày được đề xuất từ thời gian hiến máu: {dayjs(bloodDropFormData.needDate).format('DD/MM/YYYY')}

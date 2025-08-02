@@ -29,3 +29,13 @@ export const GetAllEvents = async () => {
     throw error;
   }
 };
+
+export const GetEventById = async (eventId) => {
+  try {
+    const response = await instance.get(`/Event/${eventId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Lỗi khi lấy thông tin Event:", error.response?.data || error.message);
+    throw error;
+  }
+};

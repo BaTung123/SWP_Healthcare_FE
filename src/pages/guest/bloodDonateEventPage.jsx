@@ -2,8 +2,8 @@ import { useEffect, useState, useContext } from "react";
 import { Card, Badge, Button, Modal, Typography, DatePicker } from "antd";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
-import { GetAllEvents, UpdateEventStatus } from "../../services/bloodDonationEvent";
-import { getAllBloodDonationApplication } from "../../services/donorRegistration";
+import { GetAllEvents } from "../../services/bloodDonationEvent";
+import { CreateBloodDonationApplication } from "../../services/donorRegistration";
 import dayjs from "dayjs";
 import UserContext from "../../contexts/UserContext";
 
@@ -17,7 +17,7 @@ function getBloodGroupStringFromType(type) {
   return "";
 }
 const donationTypes = [
-  "Toàn phần", "Tiểu cầu", "Huyết tương"
+  "Toàn phần", "Hồng cầu", "Tiểu cầu", "Huyết tương", 
 ];
 const genders = ["Nam", "Nữ", "Khác"];
 
@@ -51,49 +51,18 @@ const BloodDonationEventPage = () => {
     try {
       const apiEvents = await GetAllEvents();
       console.log('apiEvents:', apiEvents); 
-      const eventList = apiEvents.data.events;
+      
+      // Kiểm tra format của response
+      let eventList = [];
+      if (apiEvents && apiEvents.data) {
+        eventList = apiEvents.data.events || apiEvents.data || [];
+      }
       console.log('eventList:', eventList); 
-      const apiDonateApllication = await getAllBloodDonationApplication();
-      console.log('apiDonateApllication:', apiDonateApllication);
-
-      await Promise.all(
-        eventList.map(async (event) => {
-          const now = dayjs();
-          const start = dayjs(event.eventStartTime);
-          const end = dayjs(event.eventEndTime);
-          const donateApplicationList = apiDonateApllication.filter(app => app.eventId === event.id);
-          const donateApplicationCount = donateApplicationList.length;
-
-          if (now.isAfter(start) && now.isBefore(end)) {
-            const updatedEventData = {
-              ...event,
-              status: 1
-            }
-            const updatedEventRes = await UpdateEventStatus(updatedEventData)
-            console.log("updatedEventRes:", updatedEventRes);
-          }
-          else if (now.isAfter(end)) {
-            const updatedEventData = {
-              ...event,
-              status: 3
-            }
-            const updatedEventRes = await UpdateEventStatus(updatedEventData)
-            console.log("updatedEventRes:", updatedEventRes);
-          } 
-          else if (donateApplicationCount === event.targetParticipant) {
-            const updatedEventData = {
-              ...event,
-              status: 2
-            }
-            const updatedEventRes = await UpdateEventStatus(updatedEventData)
-            console.log("updatedEventRes:", updatedEventRes);
-          }
-        })
-      )
-
-      const refreshedEvents = await GetAllEvents();
-      setEvents(refreshedEvents.data.events);
+      
+      // Chỉ hiển thị danh sách sự kiện, không tự động cập nhật trạng thái
+      setEvents(eventList);
     } catch (error) {
+      console.error("Lỗi khi tải danh sách sự kiện:", error);
       setEvents([]);
       toast.error("Không thể tải danh sách sự kiện");
     } finally {
@@ -120,10 +89,10 @@ const BloodDonationEventPage = () => {
     if (!formData.toDate) {
       newErrors.toDate = "Vui lòng chọn ngày sẵn sàng hiến.";
     } else if (selectedEvent) {
-      const start = dayjs(selectedEvent.eventDate, "YYYY-MM-DD");
-      const end = dayjs(selectedEvent.endDate, "YYYY-MM-DD");
+      const start = dayjs(selectedEvent.eventStartTime || selectedEvent.startDate || selectedEvent.eventDate, "YYYY-MM-DD");
+      const end = dayjs(selectedEvent.eventEndTime || selectedEvent.endDate, "YYYY-MM-DD");
       const chosen = dayjs(formData.toDate, "DD/MM/YYYY");
-      if (chosen.isBefore(start, 'day') || chosen.isAfter(end, 'day')) {
+      if (start.isValid() && end.isValid() && (chosen.isBefore(start, 'day') || chosen.isAfter(end, 'day'))) {
         newErrors.toDate = `Ngày sẵn sàng hiến phải trong khoảng từ ${start.format("DD/MM/YYYY")} đến ${end.format("DD/MM/YYYY")}`;
       }
     }
@@ -145,23 +114,23 @@ const BloodDonationEventPage = () => {
       }
       
       // Map bloodGroup và donationType sang số nếu cần
-      const donationTypeMap = {"Toàn phần":0,"Tiểu cầu":1,"Huyết tương":2};
+      const donationTypeMap = {"Toàn phần":0,"Hồng cầu":1, "Tiểu cầu":2,"Huyết tương":3};
       // Chuyển đổi ngày sinh và ngày sẵn sàng hiến
       const dob = formData.birthDate ? new Date(formData.birthDate) : null;
       const toDate = formData.toDate ? dayjs(formData.toDate, "DD/MM/YYYY").toDate() : null;
-      const reqBody = {
-        userId,
-        eventId: selectedEvent?.eventId || 0,
-        fullName: formData.fullName,
-        dob: dob ? dob.toISOString() : null,
-        gender: formData.gender,
-        bloodType: bloodGroupMap[formData.bloodGroup] ?? 0,
-        bloodTransferType: donationTypeMap[formData.donationType] ?? 0,
-        quantity: Number(formData.quantity),
-        request: formData.note || "",
-        phoneNumber: formData.phone,
-        donationEndDate: toDate ? toDate.toISOString().slice(0, 10) : "1970-01-01"
-      };
+             const reqBody = {
+         userId,
+         eventId: selectedEvent?.id || 0,
+         fullName: formData.fullName,
+         dob: dob ? dob.toISOString() : null,
+         gender: formData.gender,
+         bloodType: bloodGroupMap[formData.bloodGroup] ?? 0,
+         bloodTransferType: donationTypeMap[formData.donationType] ?? 0,
+         quantity: Number(formData.quantity),
+         note: formData.note || "Hiến máu lần đầu",
+         phoneNumber: formData.phone,
+         donationEndDate: toDate ? toDate.toISOString().slice(0, 10) : "1970-01-01"
+       };
       await CreateBloodDonationApplication(reqBody);
       toast.success("Đăng ký thành công! Cảm ơn bạn đã tham gia hiến máu.");
       setShowRegisterModal(false);
@@ -178,6 +147,7 @@ const BloodDonationEventPage = () => {
       });
       setErrors({});
     } catch (error) {
+      console.error("Lỗi khi đăng ký:", error);
       toast.error("Đăng ký thất bại. Vui lòng thử lại!");
     } finally {
       setSubmitting(false);
@@ -232,11 +202,11 @@ const BloodDonationEventPage = () => {
             <div className="group" key={event.id}>
               <Card
                 className="transition-transform duration-300 hover:scale-105 hover:shadow-xl relative"
-                title={event.name}
+                title={event.name || event.title || 'Sự kiện hiến máu'}
                 extra={(() => {
                   const now = dayjs();
-                  const start = dayjs(event.eventStartTime);
-                  const end = dayjs(event.eventEndTime);
+                  const start = dayjs(event.eventStartTime || event.startDate || event.eventDate);
+                  const end = dayjs(event.eventEndTime || event.endDate);
 
                   let badgeProps = {
                     status: "processing",
@@ -256,20 +226,27 @@ const BloodDonationEventPage = () => {
                       text: <span style={{ fontSize: 16, color: "#faad14" }}>Đã đầy</span>,
                     };
                   } else {
-                    if (now.isBefore(start)) {
-                      badgeProps = {
-                        status: "processing",
-                        text: <span style={{ fontSize: 16 }}>Sắp diễn ra</span>,
-                      };
-                    } else if (now.isAfter(end)) {
-                      badgeProps = {
-                        status: "error",
-                        text: <span style={{ fontSize: 16, color: "#ff4d4f" }}>Đã kết thúc</span>,
-                      };
+                    if (start.isValid() && end.isValid()) {
+                      if (now.isBefore(start)) {
+                        badgeProps = {
+                          status: "processing",
+                          text: <span style={{ fontSize: 16 }}>Sắp diễn ra</span>,
+                        };
+                      } else if (now.isAfter(end)) {
+                        badgeProps = {
+                          status: "error",
+                          text: <span style={{ fontSize: 16, color: "#ff4d4f" }}>Đã kết thúc</span>,
+                        };
+                      } else {
+                        badgeProps = {
+                          status: "success",
+                          text: <span style={{ fontSize: 16, color: "#52c41a" }}>Đang diễn ra</span>,
+                        };
+                      }
                     } else {
                       badgeProps = {
-                        status: "success",
-                        text: <span style={{ fontSize: 16, color: "#52c41a" }}>Đang diễn ra</span>,
+                        status: "default",
+                        text: <span style={{ fontSize: 16, color: "#888" }}>Không xác định</span>,
                       };
                     }
                   }
@@ -278,24 +255,24 @@ const BloodDonationEventPage = () => {
                 style={{ width: "100%" }}
               >
                 <p><strong>Loại sự kiện:</strong> {
-                  event.type === 'emergency' ? 'Hiến máu khẩn cấp'
-                  : event.type === 'regular' ? 'Hiến máu định kỳ'
-                  : event.type === 'campaign' ? 'Chiến dịch hiến máu'
-                  : event.type === 'festival' ? 'Sự kiện lễ hội'
-                  : event.type
+                  (event.type || event.eventType) === 'emergency' ? 'Hiến máu khẩn cấp'
+                  : (event.type || event.eventType) === 'regular' ? 'Hiến máu định kỳ'
+                  : (event.type || event.eventType) === 'campaign' ? 'Chiến dịch hiến máu'
+                  : (event.type || event.eventType) === 'festival' ? 'Sự kiện lễ hội'
+                  : (event.type || event.eventType) || 'Hiến máu thường'
                 }</p>
-                <p><strong>Địa điểm:</strong> {event.locationName}</p>
-                <p><strong>Địa chỉ:</strong> {event.locationAddress}</p>
+                <p><strong>Địa điểm:</strong> {event.locationName || event.location || 'Chưa có thông tin'}</p>
+                <p><strong>Địa chỉ:</strong> {event.locationAddress || event.address || 'Chưa có thông tin'}</p>
                 <p>
-                  <strong>Thời gian:</strong> {dayjs(event.eventDate).format("DD/MM/YYYY")} - {dayjs(event.endDate).format("DD/MM/YYYY")}
+                  <strong>Thời gian:</strong> {dayjs(event.eventStartTime || event.startDate || event.eventDate).isValid() ? dayjs(event.eventStartTime || event.startDate || event.eventDate).format("DD/MM/YYYY") : 'Chưa có thông tin'} - {dayjs(event.eventEndTime || event.endDate).isValid() ? dayjs(event.eventEndTime || event.endDate).format("DD/MM/YYYY") : 'Chưa có thông tin'}
                 </p>
-                <p><strong>Chỉ tiêu người tham gia:</strong> {event.targetDonors}</p>
-                {event.description && <p><strong>Mô tả:</strong> {event.description}</p>}
+                <p><strong>Chỉ tiêu người tham gia:</strong> {event.targetParticipant || event.targetDonors || event.maxParticipants || 0}</p>
+                {(event.description || event.content) && <p><strong>Mô tả:</strong> {event.description || event.content}</p>}
                 {(() => {
                   const now = dayjs();
-                  const start = dayjs(event.eventDate);
-                  const end = dayjs(event.endDate);
-                  const isOngoing = now.isAfter(start) && now.isBefore(end);
+                  const start = dayjs(event.eventStartTime || event.startDate || event.eventDate);
+                  const end = dayjs(event.eventEndTime || event.endDate);
+                  const isOngoing = start.isValid() && end.isValid() && now.isAfter(start) && now.isBefore(end);
                   return isOngoing ? (
                     <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                       <Button
@@ -328,9 +305,9 @@ const BloodDonationEventPage = () => {
           {selectedEvent && (
             <div style={{ marginBottom: 16, textAlign: "center" }}>
               <Text strong>Thời gian: </Text>
-              <Text>{dayjs(selectedEvent.eventDate).format("DD/MM/YYYY")} - {dayjs(selectedEvent.endDate).format("DD/MM/YYYY")}</Text><br />
+              <Text>{dayjs(selectedEvent.eventStartTime || selectedEvent.startDate || selectedEvent.eventDate).isValid() ? dayjs(selectedEvent.eventStartTime || selectedEvent.startDate || selectedEvent.eventDate).format("DD/MM/YYYY") : 'Chưa có thông tin'} - {dayjs(selectedEvent.eventEndTime || selectedEvent.endDate).isValid() ? dayjs(selectedEvent.eventEndTime || selectedEvent.endDate).format("DD/MM/YYYY") : 'Chưa có thông tin'}</Text><br />
               <Text strong>Địa điểm: </Text>
-              <Text>{selectedEvent.locationName}</Text>
+              <Text>{selectedEvent.locationName || selectedEvent.location || 'Chưa có thông tin'}</Text>
             </div>
           )}
           <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -425,9 +402,9 @@ const BloodDonationEventPage = () => {
                 placeholder="Chọn ngày sẵn sàng hiến"
                 disabledDate={date => {
                   if (!selectedEvent) return false;
-                  const start = dayjs(selectedEvent.eventDate);
-                  const end = dayjs(selectedEvent.endDate);
-                  return date.isBefore(start, 'day') || date.isAfter(end, 'day');
+                  const start = dayjs(selectedEvent.eventStartTime || selectedEvent.startDate || selectedEvent.eventDate);
+                  const end = dayjs(selectedEvent.eventEndTime || selectedEvent.endDate);
+                  return start.isValid() && end.isValid() && (date.isBefore(start, 'day') || date.isAfter(end, 'day'));
                 }}
               />
               {errors.toDate && <span className="text-red-500 text-xs mt-1">{errors.toDate}</span>}

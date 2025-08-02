@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useContext } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { CreateBloodDonationApplication } from "../../services/donorRegistration";
+import { GetEventById } from "../../services/bloodDonationEvent";
 import { DatePicker } from "antd";
 import UserContext from "../../contexts/UserContext";
 
@@ -41,7 +42,9 @@ const DONATION_TYPE_MAP = {
 };
 
 const DonationRegisterPage = () => {
+  // State declarations
   const [loading, setLoading] = useState(false);
+  const [donateEvent, setDonateEvent] = useState(null); // Khai báo donateEvent state
   
   const { user } = useContext(UserContext);
   const navigate = useNavigate();
@@ -89,6 +92,23 @@ const DonationRegisterPage = () => {
        });
     }
   }, [user]);
+
+  // Fetch event data if eventId exists
+  useEffect(() => {
+    const fetchEventData = async () => {
+      if (eventId) {
+        try {
+          const eventData = await GetEventById(eventId);
+          setDonateEvent(eventData);
+        } catch (error) {
+          console.error("Lỗi khi lấy thông tin sự kiện:", error);
+          toast.error("Không thể lấy thông tin sự kiện hiến máu.");
+        }
+      }
+    };
+
+    fetchEventData();
+  }, [eventId]);
   const [errors, setErrors] = useState({});
   console.log("formData:", formData);
 

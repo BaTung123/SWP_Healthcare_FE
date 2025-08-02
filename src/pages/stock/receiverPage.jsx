@@ -22,8 +22,8 @@ const statusList = [
 ];
 
 const statusOptions = [
-  { value: 'Chấp Nhận', label: 'Chấp Nhận' },
-  { value: 'Từ Chối', label: 'Từ Chối' },
+  { value: 'Đã Nhập', label: 'Đã Nhập' },
+  // { value: 'Từ Chối', label: 'Từ Chối' },
 ];
 
 const ReceiverPage = () => {
@@ -121,7 +121,7 @@ const ReceiverPage = () => {
       console.log("importListRes", importListRes);
       const importList = importListRes.data.bloodImports;
       console.log("importList", importList);
-      const importObj = importList.find(item => item.bloodDonationApplicationId === editingRecord.id && item.status === 0);
+      const importObj = importList.find(item => item.bloodDonationApplicationId === editingRecord.id && item.status === 1);
       console.log("importObj", importObj);
       if (!importObj) {
         toast.error("Vui lòng chờ y tá tạo đơn nhập máu.");
@@ -346,13 +346,12 @@ const ReceiverPage = () => {
       dataIndex: 'status',
       key: 'status',
       align: 'center',
-      width: 110,
       render: (status) => {
         let color;
         let text = status;
         switch (status) {
           case 'Đang Chờ': color = 'text-orange-500'; break;
-          case 'Đã Duyệt': color = 'text-blue-500'; break;
+          case 'Đã Nhập': color = 'text-blue-500'; break;
           case 'Từ Chối': color = 'text-red-500'; break;
           default: color = 'text-green-500';
         }
@@ -370,8 +369,8 @@ const ReceiverPage = () => {
       width: 220,
       render: (_, record) => (
         <span className="flex items-center justify-center gap-2">
-          {record.status === "Đang Chờ" && (
-            <Tooltip title="Sửa">
+          {record.status === "Chấp Nhận" && (
+            <Tooltip title="Sửa trạng thái">
               <Button type="dashed" variant="dashed" color="cyan" onClick={() => handleEdit(record)}>
                 <EditOutlined />
               </Button>
